@@ -1,8 +1,4 @@
-<Page
-    x:Class="CSIViewer.Views.HistoryPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="{ThemeResource PageBackgroundBrush}">
+﻿<?xml version="1.0" encoding="utf-8"?><Page x:Class="CSIViewer.Views.HistoryPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="{ThemeResource PageBackgroundBrush}" xmlns:loc="using:CSIViewer.Presentation">
     <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -12,9 +8,8 @@
         </Grid.RowDefinitions>
 
         <StackPanel Spacing="4">
-            <TextBlock Text="Historial" Style="{StaticResource PageTitleStyle}" />
-            <TextBlock Text="Sesiones anteriores, duración, ruta, resultado y motivo de cierre."
-                       Style="{StaticResource MutedTextStyle}" />
+            <TextBlock Text="Historial" Style="{StaticResource PageTitleStyle}" loc:Translate.Text="Historial" />
+            <TextBlock Text="Sesiones anteriores, duración, ruta, resultado y motivo de cierre." Style="{StaticResource MutedTextStyle}" loc:Translate.Text="Sesiones anteriores, duración, ruta, resultado y motivo de cierre." />
         </StackPanel>
 
         <Grid Grid.Row="1" ColumnSpacing="10">
@@ -23,17 +18,13 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox x:Name="SearchBox" PlaceholderText="Buscar por equipo, ID o motivo…"
-                     TextChanged="SearchBox_TextChanged" />
-            <ComboBox x:Name="ResultFilter" Grid.Column="1" SelectedIndex="0"
-                      SelectionChanged="ResultFilter_SelectionChanged" MinWidth="170">
-                <ComboBoxItem Content="Todos los resultados" Tag="All" />
-                <ComboBoxItem Content="Correctas" Tag="Success" />
-                <ComboBoxItem Content="Fallidas" Tag="Failed" />
+            <TextBox x:Name="SearchBox" PlaceholderText="Buscar por equipo, ID o motivo…" TextChanged="SearchBox_TextChanged" loc:Translate.PlaceholderText="Buscar por equipo, ID o motivo…" />
+            <ComboBox x:Name="ResultFilter" Grid.Column="1" SelectedIndex="0" SelectionChanged="ResultFilter_SelectionChanged" MinWidth="170">
+                <ComboBoxItem Content="Todos los resultados" Tag="All" loc:Translate.Content="Todos los resultados" />
+                <ComboBoxItem Content="Correctas" Tag="Success" loc:Translate.Content="Correctas" />
+                <ComboBoxItem Content="Fallidas" Tag="Failed" loc:Translate.Content="Fallidas" />
             </ComboBox>
-            <Button Grid.Column="2" Content="Borrar historial" Click="ClearHistory_Click"
-                    Style="{StaticResource DangerButtonStyle}"
-                    AutomationProperties.AutomationId="ClearHistoryButton" />
+            <Button Grid.Column="2" Content="Borrar historial" Click="ClearHistory_Click" Style="{StaticResource DangerButtonStyle}" AutomationProperties.AutomationId="ClearHistoryButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Borrar historial" />
         </Grid>
 
         <InfoBar x:Name="HistoryInfoBar" Grid.Row="2" IsOpen="False" IsClosable="True" />
@@ -48,23 +39,18 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Border Width="38" Height="38" CornerRadius="9"
-                                    Background="{ThemeResource BrandSoftBrush}">
-                                <FontIcon Glyph="&#xE81C;" FontSize="18" Foreground="{ThemeResource BrandBrush}" />
+                            <Border Width="38" Height="38" CornerRadius="9" Background="{ThemeResource BrandSoftBrush}">
+                                <FontIcon Glyph="" FontSize="18" Foreground="{ThemeResource BrandBrush}" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock Text="{Binding RemoteName}" FontWeight="SemiBold" />
-                                <TextBlock Text="{Binding RemoteDeviceId}" FontFamily="Consolas" FontSize="12"
-                                           Style="{StaticResource MutedTextStyle}" />
-                                <TextBlock Text="{Binding DisconnectReason}" Style="{StaticResource MutedTextStyle}"
-                                           FontSize="12" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding RemoteDeviceId}" FontFamily="Consolas" FontSize="12" Style="{StaticResource MutedTextStyle}" />
+                                <TextBlock Text="{Binding DisconnectReason}" Style="{StaticResource MutedTextStyle}" FontSize="12" TextWrapping="Wrap" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="2">
                                 <TextBlock Text="{Binding StartedUtc}" FontSize="12" HorizontalAlignment="Right" />
-                                <TextBlock Text="{Binding Duration}" FontSize="12" HorizontalAlignment="Right"
-                                           Style="{StaticResource MutedTextStyle}" />
-                                <TextBlock Text="{Binding Result}" FontSize="12" HorizontalAlignment="Right"
-                                           FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding Duration}" FontSize="12" HorizontalAlignment="Right" Style="{StaticResource MutedTextStyle}" />
+                                <TextBlock Text="{Binding Result}" FontSize="12" HorizontalAlignment="Right" FontWeight="SemiBold" />
                             </StackPanel>
                         </Grid>
                     </DataTemplate>

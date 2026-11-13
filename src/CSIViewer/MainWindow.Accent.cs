@@ -22,7 +22,10 @@ public sealed partial class MainWindow
         AccentMenu.Opening += (_, _) =>
         {
             foreach (var item in AccentMenu.Items.OfType<ToggleMenuFlyoutItem>())
+            {
                 item.IsChecked = item.Tag is AccentColor color && color == AccentPalette.Normalize(_state.Settings.AccentColor);
+                if (item.Tag is AccentColor value) item.Text = AccentPalette.Choices.First(x => x.Value == value).Name;
+            }
         };
     }
 
@@ -34,7 +37,7 @@ public sealed partial class MainWindow
         try { await _settingsStore.SaveAsync(_state.Settings); }
         catch (Exception)
         {
-            _state.LastError = "El color se ha aplicado, pero no se pudo guardar para el próximo inicio.";
+            _state.LastError = global::CSIViewer.Core.Localization.Text("El color se ha aplicado, pero no se pudo guardar para el próximo inicio.");
         }
     }
 }

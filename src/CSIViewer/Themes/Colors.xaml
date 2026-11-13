@@ -22,6 +22,9 @@
         </ResourceDictionary>
 
         <ResourceDictionary x:Key="Light">
+            <!-- Keep the navigation pane neutral instead of showing wallpaper-tinted Mica. -->
+            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#F3F3F3" />
+            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#F3F3F3" />
             <SolidColorBrush x:Key="BrandBrush" Color="#0067C0" />
             <SolidColorBrush x:Key="BrandSoftBrush" Color="#E8F4FF" />
             <SolidColorBrush x:Key="ChatSentBrush" Color="#D7ECFF" />

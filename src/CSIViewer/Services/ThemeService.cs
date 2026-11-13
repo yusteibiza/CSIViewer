@@ -21,6 +21,7 @@ public static class ThemeService
         if (target is not null)
         {
             target.RequestedTheme = Current;
+            CSIViewer.Presentation.Translate.Apply(target, App.Services.GetRequiredService<AppState>().Settings.Language);
             CSIViewer.Presentation.AccentAppearance.Apply(App.Services.GetRequiredService<AppState>().Settings.AccentColor, target);
         }
     }

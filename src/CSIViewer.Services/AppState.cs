@@ -26,7 +26,7 @@ public sealed partial class AppState : ObservableObject
     private bool _usesCustomPassword;
 
     [ObservableProperty]
-    private string _serverStatus = "Sin conexión";
+    private string _serverStatus = global::CSIViewer.Core.Localization.Text("Sin conexión");
 
     [ObservableProperty]
     private bool _isServerOnline;
@@ -47,7 +47,7 @@ public sealed partial class AppState : ObservableObject
     private string _remoteDeviceId = "—";
 
     [ObservableProperty]
-    private string _remoteDeviceName = "Ninguno";
+    private string _remoteDeviceName = global::CSIViewer.Core.Localization.Text("Ninguno");
 
     [ObservableProperty]
     private bool _isSessionActive;
@@ -123,7 +123,7 @@ public sealed partial class AppState : ObservableObject
             ActivePermissions = SessionPermissions.None;
             Transport = TransportKind.Relay;
             RemoteDeviceId = "—";
-            RemoteDeviceName = "Ninguno";
+            RemoteDeviceName = global::CSIViewer.Core.Localization.Text("Ninguno");
             ActiveSessionId = null;
             StatusMessage = "Listo";
         });

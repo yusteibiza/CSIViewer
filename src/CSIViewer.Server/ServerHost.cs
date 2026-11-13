@@ -126,7 +126,7 @@ public sealed class ServerHost : IAsyncDisposable
                 {
                     throw new InvalidOperationException(
                         "No se encontró el certificado HTTPS en CurrentUser\\My ni LocalMachine\\My. " +
-                        "Comprueba la huella y que tenga clave privada.");
+                        global::CSIViewer.Core.Localization.Text("Comprueba la huella y que tenga clave privada."));
                 }
 
                 if (certificate is not null)
@@ -212,7 +212,7 @@ public sealed class ServerHost : IAsyncDisposable
             app.MapGet("/api/health", () => Results.Ok(new
             {
                 status = "ok",
-                server = "CSIViewer Servidor",
+                server = global::CSIViewer.Core.Localization.Text("CSIViewer Servidor"),
                 utc = DateTimeOffset.UtcNow
             }));
 
@@ -242,7 +242,7 @@ public sealed class ServerHost : IAsyncDisposable
                         "device.registration_denied",
                         null,
                         null,
-                        "Nombre de dispositivo no válido",
+                        global::CSIViewer.Core.Localization.Text("Nombre de dispositivo no válido"),
                         CancellationToken.None);
                     return Results.BadRequest(new { error = "invalid_name" });
                 }
@@ -253,7 +253,7 @@ public sealed class ServerHost : IAsyncDisposable
                         "device.registration_denied",
                         null,
                         null,
-                        "Clave pública no válida",
+                        global::CSIViewer.Core.Localization.Text("Clave pública no válida"),
                         CancellationToken.None);
                     return Results.BadRequest(new { error = "invalid_public_key" });
                 }
@@ -264,7 +264,7 @@ public sealed class ServerHost : IAsyncDisposable
                         "device.registration_denied",
                         null,
                         null,
-                        "Registro deshabilitado: no hay código de inscripción",
+                        global::CSIViewer.Core.Localization.Text("Registro deshabilitado: no hay código de inscripción"),
                         CancellationToken.None);
                     app.Logger.LogWarning(
                         LogEvents.AuthenticationFailed,
@@ -281,7 +281,7 @@ public sealed class ServerHost : IAsyncDisposable
                         "device.registration_denied",
                         null,
                         null,
-                        "Código de inscripción incorrecto",
+                        global::CSIViewer.Core.Localization.Text("Código de inscripción incorrecto"),
                         CancellationToken.None);
                     app.Logger.LogWarning(
                         LogEvents.AuthenticationFailed,
@@ -294,7 +294,7 @@ public sealed class ServerHost : IAsyncDisposable
                 try
                 {
                     var device = await registry.RegisterAsync(request.Name, request.PublicKey, cancellationToken);
-                    await registry.AuditAsync("device.registered", device.Id, null, "Registro de dispositivo", cancellationToken);
+                    await registry.AuditAsync("device.registered", device.Id, null, global::CSIViewer.Core.Localization.Text("Registro de dispositivo"), cancellationToken);
                     return Results.Ok(new RegisterDeviceResponse(device.Id, device.Name));
                 }
                 catch (ArgumentException)
@@ -331,7 +331,7 @@ public sealed class ServerHost : IAsyncDisposable
                     "device.revoked",
                     deviceId,
                     null,
-                    "Dispositivo revocado por el administrador local",
+                    global::CSIViewer.Core.Localization.Text("Dispositivo revocado por el administrador local"),
                     CancellationToken.None).ConfigureAwait(false);
                 await hub.DisconnectDeviceAsync(deviceId, "revoked", cancellationToken).ConfigureAwait(false);
                 loggerFactory.CreateLogger("Security").LogWarning("Device {DeviceId} revoked", deviceId);
@@ -418,14 +418,14 @@ public sealed class ServerHost : IAsyncDisposable
                         if (envelope is null)
                         {
                             await connection.SendJsonAsync(ProtocolJson.Create(MessageTypes.Error,
-                                new ErrorPayload("invalid_message", "Mensaje no válido")), context.RequestAborted);
+                                new ErrorPayload("invalid_message", global::CSIViewer.Core.Localization.Text("Mensaje no válido"))), context.RequestAborted);
                             continue;
                         }
 
                         if (!authenticated && envelope.Type != MessageTypes.AuthRequest)
                         {
                             await connection.SendJsonAsync(ProtocolJson.Create(MessageTypes.AuthError,
-                                new AuthError("not_authenticated", "Autentícate antes de enviar mensajes")), context.RequestAborted);
+                                new AuthError("not_authenticated", global::CSIViewer.Core.Localization.Text("Autentícate antes de enviar mensajes"))), context.RequestAborted);
                             continue;
                         }
 
@@ -441,7 +441,7 @@ public sealed class ServerHost : IAsyncDisposable
                                 if (DateTimeOffset.UtcNow - nonceIssuedUtc > TimeSpan.FromSeconds(30))
                                 {
                                     await connection.SendJsonAsync(ProtocolJson.Create(MessageTypes.AuthError,
-                                        new AuthError("expired", "El desafío ha caducado")), context.RequestAborted);
+                                        new AuthError("expired", global::CSIViewer.Core.Localization.Text("El desafío ha caducado"))), context.RequestAborted);
                                     await connection.CloseAsync("challenge_expired");
                                     return;
                                 }
@@ -457,7 +457,7 @@ public sealed class ServerHost : IAsyncDisposable
                                         CancellationToken.None);
                                     await connection.SendJsonAsync(
                                         ProtocolJson.Create(MessageTypes.AuthError,
-                                            new AuthError("rate_limited", "Demasiados intentos de autenticación")),
+                                            new AuthError("rate_limited", global::CSIViewer.Core.Localization.Text("Demasiados intentos de autenticación"))),
                                         context.RequestAborted);
                                     await connection.CloseAsync("auth_rate_limited");
                                     return;
@@ -473,10 +473,10 @@ public sealed class ServerHost : IAsyncDisposable
                                         "auth.failed",
                                         payload?.DeviceId,
                                         null,
-                                        "Solicitud de autenticación no válida",
+                                        global::CSIViewer.Core.Localization.Text("Solicitud de autenticación no válida"),
                                         CancellationToken.None);
                                     await connection.SendJsonAsync(ProtocolJson.Create(MessageTypes.AuthError,
-                                        new AuthError("invalid_auth", "Solicitud de autenticación no válida")), context.RequestAborted);
+                                        new AuthError("invalid_auth", global::CSIViewer.Core.Localization.Text("Solicitud de autenticación no válida"))), context.RequestAborted);
                                     continue;
                                 }
 
@@ -565,12 +565,12 @@ public sealed class ServerHost : IAsyncDisposable
                                         "session.request_denied",
                                         connection.DeviceId,
                                         null,
-                                        "Solicitud de conexión no válida",
+                                        global::CSIViewer.Core.Localization.Text("Solicitud de conexión no válida"),
                                         CancellationToken.None);
                                     await SendErrorAsync(
                                         connection,
                                         "invalid_connect",
-                                        "Solicitud de conexión no válida",
+                                        global::CSIViewer.Core.Localization.Text("Solicitud de conexión no válida"),
                                         context.RequestAborted);
                                     break;
                                 }
@@ -582,12 +582,12 @@ public sealed class ServerHost : IAsyncDisposable
                                         "session.request_denied",
                                         connection.DeviceId,
                                         payload.TargetId,
-                                        "Límite de solicitudes de conexión",
+                                        global::CSIViewer.Core.Localization.Text("Límite de solicitudes de conexión"),
                                         CancellationToken.None);
                                     await SendErrorAsync(
                                         connection,
                                         "rate_limited",
-                                        "Demasiadas solicitudes de conexión. Espera un minuto.",
+                                        global::CSIViewer.Core.Localization.Text("Demasiadas solicitudes de conexión. Espera un minuto."),
                                         context.RequestAborted);
                                     break;
                                 }
@@ -596,7 +596,7 @@ public sealed class ServerHost : IAsyncDisposable
                                 connectRequests.RemoveAll(x => now - x > TimeSpan.FromMinutes(1));
                                 if (connectRequests.Count >= 5)
                                 {
-                                    await SendErrorAsync(connection, "rate_limited", "Demasiadas solicitudes de conexión. Espera un minuto.", context.RequestAborted);
+                                    await SendErrorAsync(connection, "rate_limited", global::CSIViewer.Core.Localization.Text("Demasiadas solicitudes de conexión. Espera un minuto."), context.RequestAborted);
                                     break;
                                 }
 
@@ -604,13 +604,13 @@ public sealed class ServerHost : IAsyncDisposable
 
                                 if (payload.TargetId == connection.DeviceId)
                                 {
-                                    await SendErrorAsync(connection, "self_connect", "No puedes conectarte a tu propio equipo", context.RequestAborted);
+                                    await SendErrorAsync(connection, "self_connect", global::CSIViewer.Core.Localization.Text("No puedes conectarte a tu propio equipo"), context.RequestAborted);
                                     break;
                                 }
 
                                 if (!hub.TryGet(payload.TargetId, out var target))
                                 {
-                                    await SendErrorAsync(connection, "host_offline", "El equipo remoto no está disponible", context.RequestAborted);
+                                    await SendErrorAsync(connection, "host_offline", global::CSIViewer.Core.Localization.Text("El equipo remoto no está disponible"), context.RequestAborted);
                                     break;
                                 }
 
@@ -631,10 +631,10 @@ public sealed class ServerHost : IAsyncDisposable
                                     var (code, message) = admission switch
                                     {
                                         SessionAdmissionResult.ControllerBusy =>
-                                            ("controller_busy", "Este equipo ya tiene una sesión con el host."),
+                                            ("controller_busy", global::CSIViewer.Core.Localization.Text("Este equipo ya tiene una sesión con el host.")),
                                         SessionAdmissionResult.HostFull =>
-                                            ("host_full", "El equipo remoto alcanzó el límite de sesiones simultáneas."),
-                                        _ => ("session_exists", "La sesión ya existe")
+                                            ("host_full", global::CSIViewer.Core.Localization.Text("El equipo remoto alcanzó el límite de sesiones simultáneas.")),
+                                        _ => ("session_exists", global::CSIViewer.Core.Localization.Text("La sesión ya existe"))
                                     };
                                     await SendErrorAsync(
                                         connection,
@@ -660,7 +660,7 @@ public sealed class ServerHost : IAsyncDisposable
                                 if (controllerDevice is null)
                                 {
                                     hub.RemoveSession(sessionGuid);
-                                    await SendErrorAsync(connection, "unknown_device", "Dispositivo no registrado", context.RequestAborted);
+                                    await SendErrorAsync(connection, "unknown_device", global::CSIViewer.Core.Localization.Text("Dispositivo no registrado"), context.RequestAborted);
                                     break;
                                 }
 
@@ -686,7 +686,7 @@ public sealed class ServerHost : IAsyncDisposable
                                     await SendErrorAsync(
                                         connection,
                                         "host_unreachable",
-                                        "No se pudo contactar con el equipo remoto",
+                                        global::CSIViewer.Core.Localization.Text("No se pudo contactar con el equipo remoto"),
                                         context.RequestAborted);
                                     logger.LogWarning(LogEvents.ConnectionClosed, "Could not forward connect request");
                                 }
@@ -708,14 +708,14 @@ public sealed class ServerHost : IAsyncDisposable
                                     route.HostId != connection.DeviceId ||
                                     !hub.TryGet(route.ControllerId, out var controller))
                                 {
-                                    await SendErrorAsync(connection, "invalid_session", "Sesión no válida", context.RequestAborted);
+                                    await SendErrorAsync(connection, "invalid_session", global::CSIViewer.Core.Localization.Text("Sesión no válida"), context.RequestAborted);
                                     break;
                                 }
 
                                 var hostDevice = await registry.GetAsync(connection.DeviceId!, context.RequestAborted);
                                 if (hostDevice is null)
                                 {
-                                    await SendErrorAsync(connection, "unknown_device", "Dispositivo no registrado", context.RequestAborted);
+                                    await SendErrorAsync(connection, "unknown_device", global::CSIViewer.Core.Localization.Text("Dispositivo no registrado"), context.RequestAborted);
                                     break;
                                 }
 
@@ -929,7 +929,7 @@ public sealed class ServerHost : IAsyncDisposable
                     if (!settings.ListenOnAllInterfaces)
                     {
                         UpnpFailed = true;
-                        _upnpMessages.Add("UPnP requiere activar las conexiones desde otros equipos.");
+                        _upnpMessages.Add(global::CSIViewer.Core.Localization.Text("UPnP requiere activar las conexiones desde otros equipos."));
                     }
                     else
                     {

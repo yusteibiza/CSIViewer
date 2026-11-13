@@ -57,17 +57,17 @@ public sealed partial class HostPage : Page
             ? (_state.TemporaryPasswordDisplay == "-" ? "-" : _state.TemporaryPasswordDisplay)
             : "••••••••";
         PasswordExpiryText.Text = _state.UsesCustomPassword
-            ? "Contraseña propia (sin caducidad)."
+            ? global::CSIViewer.Core.Localization.Text("Contraseña propia (sin caducidad).")
             : _state.TemporaryPasswordExpiresUtc is { } expiry
                 ? $"Caduca: {expiry.ToLocalTime():dd/MM/yyyy HH:mm} (hora local)."
-                : "Sin caducidad configurada.";
+                : global::CSIViewer.Core.Localization.Text("Sin caducidad configurada.");
 
         var online = _state.IsServerOnline;
         StatusDot.Fill = (Brush)XamlApplication.Current.Resources[online ? "OnlineBrush" : "OfflineBrush"];
-        StatusText.Text = online ? "Listo para conectar" : "Sin conexión";
+        StatusText.Text = online ? global::CSIViewer.Core.Localization.Text("Listo para conectar") : global::CSIViewer.Core.Localization.Text("Sin conexión");
         StatusDetailText.Text = online
-            ? "El equipo está disponible para recibir una sesión."
-            : "Sin conexión con el servidor. Reintentando…";
+            ? global::CSIViewer.Core.Localization.Text("El equipo está disponible para recibir una sesión.")
+            : global::CSIViewer.Core.Localization.Text("Sin conexión con el servidor. Reintentando…");
 
         _updatingToggle = true;
         AllowIncomingSwitch.IsOn = _state.Settings.AllowIncomingConnections;
@@ -77,13 +77,13 @@ public sealed partial class HostPage : Page
         {
             SessionText.Text = _state.IsController
                 ? $"Controlando {_state.RemoteDeviceName} ({_state.RemoteDeviceId})."
-                : $"Sesión remota de {_state.RemoteDeviceName} ({_state.RemoteDeviceId}).";
+                : global::CSIViewer.Core.Localization.Format("Sesión remota de {0} ({1}).",_state.RemoteDeviceName,_state.RemoteDeviceId);
             EndSessionButton.IsEnabled = true;
             ChatButton.IsEnabled = _state.ActivePermissions.HasFlag(SessionPermissions.Chat);
         }
         else
         {
-            SessionText.Text = "No hay ninguna sesión activa.";
+            SessionText.Text = global::CSIViewer.Core.Localization.Text("No hay ninguna sesión activa.");
             EndSessionButton.IsEnabled = false;
             ChatButton.IsEnabled = false;
         }
@@ -113,11 +113,11 @@ public sealed partial class HostPage : Page
 
     private async void ChangePassword_Click(object sender, RoutedEventArgs e)
     {
-        var passwordBox = new PasswordBox { PlaceholderText = "Nueva contraseña", MinWidth = 320 };
-        var confirmBox = new PasswordBox { PlaceholderText = "Repite la contraseña", MinWidth = 320 };
+        var passwordBox = new PasswordBox { PlaceholderText = global::CSIViewer.Core.Localization.Text("Nueva contraseña"), MinWidth = 320 };
+        var confirmBox = new PasswordBox { PlaceholderText = global::CSIViewer.Core.Localization.Text("Repite la contraseña"), MinWidth = 320 };
         var persistBox = new CheckBox
         {
-            Content = "Mantener esta contraseña al reiniciar",
+            Content = global::CSIViewer.Core.Localization.Text("Mantener esta contraseña al reiniciar"),
             IsChecked = true
         };
         var errorText = new TextBlock
@@ -127,7 +127,7 @@ public sealed partial class HostPage : Page
             Visibility = Visibility.Collapsed
         };
         var content = new StackPanel { Spacing = 8 };
-        content.Children.Add(new TextBlock { Text = "Contraseña (8-64 caracteres)" });
+        content.Children.Add(new TextBlock { Text = global::CSIViewer.Core.Localization.Text("Contraseña (8-64 caracteres)") });
         content.Children.Add(passwordBox);
         content.Children.Add(confirmBox);
         content.Children.Add(persistBox);
@@ -137,9 +137,9 @@ public sealed partial class HostPage : Page
         {
             RequestedTheme = ThemeService.Current,
             XamlRoot = MainWindow.Instance?.Content?.XamlRoot,
-            Title = "Cambiar contraseña temporal",
-            PrimaryButtonText = "Guardar",
-            CloseButtonText = "Cancelar",
+            Title = global::CSIViewer.Core.Localization.Text("Cambiar contraseña temporal"),
+            PrimaryButtonText = global::CSIViewer.Core.Localization.Text("Guardar"),
+            CloseButtonText = global::CSIViewer.Core.Localization.Text("Cancelar"),
             DefaultButton = ContentDialogButton.Primary,
             Content = content
         };
@@ -151,7 +151,7 @@ public sealed partial class HostPage : Page
 
         if (passwordBox.Password != confirmBox.Password)
         {
-            await ShowMessageAsync("Las contraseñas no coinciden.");
+            await ShowMessageAsync(global::CSIViewer.Core.Localization.Text("Las contraseñas no coinciden."));
             return;
         }
 
@@ -172,7 +172,7 @@ public sealed partial class HostPage : Page
         {
             RequestedTheme = ThemeService.Current,
             XamlRoot = MainWindow.Instance?.Content?.XamlRoot,
-            Title = "Contraseña no válida",
+            Title = global::CSIViewer.Core.Localization.Text("Contraseña no válida"),
             Content = message,
             CloseButtonText = "Aceptar",
             DefaultButton = ContentDialogButton.Close

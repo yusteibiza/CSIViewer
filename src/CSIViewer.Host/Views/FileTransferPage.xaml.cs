@@ -98,7 +98,7 @@ public sealed partial class FileTransferPage : Page
         if (!_state.IsSessionActive)
         {
             TransferStatusBar.Severity = InfoBarSeverity.Warning;
-            TransferStatusBar.Message = "Inicia una sesión con permiso de archivos para transferir.";
+            TransferStatusBar.Message = global::CSIViewer.Core.Localization.Text("Inicia una sesión con permiso de archivos para transferir.");
         }
 
         UpdateSummary();
@@ -116,7 +116,7 @@ public sealed partial class FileTransferPage : Page
         {
             SummaryText.Text = interrupted > 0
                 ? $"{interrupted} transferencia(s) interrumpida(s)"
-                : "Sin transferencias activas";
+                : global::CSIViewer.Core.Localization.Text("Sin transferencias activas");
         }
         else
         {
@@ -173,7 +173,7 @@ public sealed partial class FileTransferPage : Page
         SendFilesButton.IsEnabled = false;
         SendFolderButton.IsEnabled = false;
         TransferStatusBar.Severity = InfoBarSeverity.Informational;
-        TransferStatusBar.Message = "Preparando transferencia…";
+        TransferStatusBar.Message = global::CSIViewer.Core.Localization.Text("Preparando transferencia…");
         TransferStatusBar.IsOpen = true;
 
         try
@@ -182,13 +182,13 @@ public sealed partial class FileTransferPage : Page
             if (!_isLoaded || sessionId != _browserSessionId) return;
             TransferStatusBar.Severity = result.IsSuccess ? InfoBarSeverity.Success : InfoBarSeverity.Error;
             TransferStatusBar.Message = result.IsSuccess
-                ? $"Transferencia completada: {result.Value} archivo(s)."
-                : result.Error?.Message ?? "No se pudo transferir.";
+                ? global::CSIViewer.Core.Localization.Format("Transferencia completada: {0} archivo(s).",result.Value)
+                : result.Error?.Message ?? global::CSIViewer.Core.Localization.Text("No se pudo transferir.");
         }
         catch (Exception ex)
         {
             TransferStatusBar.Severity = InfoBarSeverity.Error;
-            TransferStatusBar.Message = "La transferencia falló: " + ex.Message;
+            TransferStatusBar.Message = global::CSIViewer.Core.Localization.Text("La transferencia falló: ") + ex.Message;
         }
         finally
         {
@@ -222,7 +222,7 @@ public sealed partial class FileTransferPage : Page
         {
             TransferStatusBar.Severity = InfoBarSeverity.Warning;
             TransferStatusBar.Message =
-                "No se pudo reanudar. Si la sesión cambió, vuelve a seleccionar los archivos y la carpeta de destino.";
+                global::CSIViewer.Core.Localization.Text("No se pudo reanudar. Si la sesión cambió, vuelve a seleccionar los archivos y la carpeta de destino.");
             TransferStatusBar.IsOpen = true;
         }
     }
@@ -278,7 +278,7 @@ public sealed partial class FileTransferPage : Page
         catch
         {
             TransferStatusBar.Severity = InfoBarSeverity.Error;
-            TransferStatusBar.Message = "No se pudo abrir la carpeta de descargas.";
+            TransferStatusBar.Message = global::CSIViewer.Core.Localization.Text("No se pudo abrir la carpeta de descargas.");
             TransferStatusBar.IsOpen = true;
         }
     }

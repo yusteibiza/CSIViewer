@@ -51,8 +51,8 @@ public sealed partial class HistoryPage : Page
         if (_state.History.Count == 0)
         {
             HistoryInfoBar.Severity = InfoBarSeverity.Informational;
-            HistoryInfoBar.Title = "No hay historial";
-            HistoryInfoBar.Message = "Todavía no hay conexiones guardadas que borrar.";
+            HistoryInfoBar.Title = global::CSIViewer.Core.Localization.Text("No hay historial");
+            HistoryInfoBar.Message = global::CSIViewer.Core.Localization.Text("Todavía no hay conexiones guardadas que borrar.");
             HistoryInfoBar.IsOpen = true;
             return;
         }
@@ -61,11 +61,11 @@ public sealed partial class HistoryPage : Page
         {
             RequestedTheme = ThemeService.Current,
             XamlRoot = XamlRoot,
-            Title = "Borrar todo el historial",
-            Content = "Se eliminarán permanentemente todas las conexiones guardadas en este equipo. " +
-                      "No se borran los dispositivos, los contactos ni las sesiones activas.",
+            Title = global::CSIViewer.Core.Localization.Text("Borrar todo el historial"),
+            Content = global::CSIViewer.Core.Localization.Text("Se eliminarán permanentemente todas las conexiones guardadas en este equipo. ") +
+                      global::CSIViewer.Core.Localization.Text("No se borran los dispositivos, los contactos ni las sesiones activas."),
             PrimaryButtonText = "Borrar todo",
-            CloseButtonText = "Cancelar",
+            CloseButtonText = global::CSIViewer.Core.Localization.Text("Cancelar"),
             DefaultButton = ContentDialogButton.Close
         };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary)
@@ -79,14 +79,14 @@ public sealed partial class HistoryPage : Page
             _state.History.Clear();
             HistoryInfoBar.Severity = InfoBarSeverity.Success;
             HistoryInfoBar.Title = "Historial borrado";
-            HistoryInfoBar.Message = "Todas las conexiones guardadas se han eliminado.";
+            HistoryInfoBar.Message = global::CSIViewer.Core.Localization.Text("Todas las conexiones guardadas se han eliminado.");
             HistoryInfoBar.IsOpen = true;
             ApplyFilter();
         }
         catch (Exception ex)
         {
             HistoryInfoBar.Severity = InfoBarSeverity.Error;
-            HistoryInfoBar.Title = "No se pudo borrar el historial";
+            HistoryInfoBar.Title = global::CSIViewer.Core.Localization.Text("No se pudo borrar el historial");
             HistoryInfoBar.Message = ex.GetBaseException().Message;
             HistoryInfoBar.IsOpen = true;
         }

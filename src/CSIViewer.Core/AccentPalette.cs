@@ -2,8 +2,9 @@ namespace CSIViewer.Core;
 
 public enum AccentColor { System, Blue, Green, Teal, Purple, Pink, Orange, Red }
 
-public sealed record AccentChoice(AccentColor Value, string Name, string PreviewColor)
+public sealed record AccentChoice(AccentColor Value, string SourceName, string PreviewColor)
 {
+    public string Name => Localization.Text(SourceName);
     public override string ToString() => Name;
 }
 

@@ -61,21 +61,21 @@ public sealed partial class RemoteClient
         ThrowIfDisposed();
         if (!await _connectGate.WaitAsync(0, cancellationToken).ConfigureAwait(false))
         {
-            return Result<bool>.Fail("busy", "Ya hay una conexión en curso.");
+            return Result<bool>.Fail("busy", global::CSIViewer.Core.Localization.Text("Ya hay una conexión en curso."));
         }
 
         try
         {
             if (_state.IsSessionActive)
             {
-                return Result<bool>.Fail("busy", "Ya hay una sesión activa.");
+                return Result<bool>.Fail("busy", global::CSIViewer.Core.Localization.Text("Ya hay una sesión activa."));
             }
 
             lock (_sessionLock)
             {
                 if (_pendingConnect is not null)
                 {
-                    return Result<bool>.Fail("pending", "Ya hay una conexión en curso.");
+                    return Result<bool>.Fail("pending", global::CSIViewer.Core.Localization.Text("Ya hay una conexión en curso."));
                 }
             }
 
@@ -89,7 +89,7 @@ public sealed partial class RemoteClient
                 {
                     return Result<bool>.Fail(
                         "server_offline",
-                        "No se pudo conectar con el servidor: " + ex.GetBaseException().Message);
+                        global::CSIViewer.Core.Localization.Text("No se pudo conectar con el servidor: ") + ex.GetBaseException().Message);
                 }
             }
 
@@ -98,23 +98,23 @@ public sealed partial class RemoteClient
             {
                 return Result<bool>.Fail(
                     "server_offline",
-                    "El servidor no está disponible. Revisa la configuración.");
+                    global::CSIViewer.Core.Localization.Text("El servidor no está disponible. Revisa la configuración."));
             }
 
             if (_state.Identity is null)
             {
-                return Result<bool>.Fail("no_identity", "La identidad del equipo no está disponible.");
+                return Result<bool>.Fail("no_identity", global::CSIViewer.Core.Localization.Text("La identidad del equipo no está disponible."));
             }
 
             targetId = new string(targetId.Where(char.IsAsciiDigit).ToArray());
             if (targetId.Length != 9)
             {
-                return Result<bool>.Fail("invalid_id", "El ID debe tener 9 dígitos.");
+                return Result<bool>.Fail("invalid_id", global::CSIViewer.Core.Localization.Text("El ID debe tener 9 dígitos."));
             }
 
             if (string.IsNullOrWhiteSpace(password))
             {
-                return Result<bool>.Fail("invalid_password", "Introduce la contraseña temporal.");
+                return Result<bool>.Fail("invalid_password", global::CSIViewer.Core.Localization.Text("Introduce la contraseña temporal."));
             }
 
             if (chatOnly)
@@ -156,7 +156,7 @@ public sealed partial class RemoteClient
                 if (_pendingConnect is not null)
                 {
                     handshake.Dispose();
-                    return Result<bool>.Fail("pending", "Ya hay una conexión en curso.");
+                    return Result<bool>.Fail("pending", global::CSIViewer.Core.Localization.Text("Ya hay una conexión en curso."));
                 }
 
                 _pendingConnect = pending;
@@ -167,7 +167,7 @@ public sealed partial class RemoteClient
                 _remoteName = targetId;
             }
 
-            SetConnectionState(ConnectionState.Connecting, $"Solicitando conexión con {targetId}…");
+            SetConnectionState(ConnectionState.Connecting, global::CSIViewer.Core.Localization.Format("Solicitando conexión con {0}…",targetId));
             _state.Post(() => _state.LastError = null);
 
             try
@@ -191,13 +191,13 @@ public sealed partial class RemoteClient
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                await FailPendingConnectAsync("Tiempo de espera al enviar la solicitud.")
+                await FailPendingConnectAsync(global::CSIViewer.Core.Localization.Text("Tiempo de espera al enviar la solicitud."))
                     .ConfigureAwait(false);
-                return Result<bool>.Fail("timeout", "Tiempo de espera al enviar la solicitud.");
+                return Result<bool>.Fail("timeout", global::CSIViewer.Core.Localization.Text("Tiempo de espera al enviar la solicitud."));
             }
             catch (Exception ex)
             {
-                await FailPendingConnectAsync("No se pudo enviar la solicitud: " + ex.GetBaseException().Message)
+                await FailPendingConnectAsync(global::CSIViewer.Core.Localization.Text("No se pudo enviar la solicitud: ") + ex.GetBaseException().Message)
                     .ConfigureAwait(false);
                 return Result<bool>.Fail("send_failed", ex.GetBaseException().Message);
             }
@@ -210,15 +210,15 @@ public sealed partial class RemoteClient
             }
             catch (TimeoutException)
             {
-                await FailPendingConnectAsync("El equipo remoto no respondió a tiempo.")
+                await FailPendingConnectAsync(global::CSIViewer.Core.Localization.Text("El equipo remoto no respondió a tiempo."))
                     .ConfigureAwait(false);
-                return Result<bool>.Fail("timeout", "El equipo remoto no respondió a tiempo.");
+                return Result<bool>.Fail("timeout", global::CSIViewer.Core.Localization.Text("El equipo remoto no respondió a tiempo."));
             }
             catch (OperationCanceledException)
             {
-                await FailPendingConnectAsync("La conexión se canceló.")
+                await FailPendingConnectAsync(global::CSIViewer.Core.Localization.Text("La conexión se canceló."))
                     .ConfigureAwait(false);
-                return Result<bool>.Fail("cancelled", "La conexión se canceló.");
+                return Result<bool>.Fail("cancelled", global::CSIViewer.Core.Localization.Text("La conexión se canceló."));
             }
         }
         finally
@@ -255,7 +255,7 @@ public sealed partial class RemoteClient
                 payload.SessionId);
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "Solicitud de conexión no válida.",
+                    global::CSIViewer.Core.Localization.Text("Solicitud de conexión no válida."),
                     "invalid_request")
                 .ConfigureAwait(false);
             return;
@@ -265,7 +265,7 @@ public sealed partial class RemoteClient
         {
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "El acceso está siendo revocado. Solicita una nueva contraseña.",
+                    global::CSIViewer.Core.Localization.Text("El acceso está siendo revocado. Solicita una nueva contraseña."),
                     "revoked")
                 .ConfigureAwait(false);
             return;
@@ -273,14 +273,14 @@ public sealed partial class RemoteClient
 
         if (!_state.Settings.AllowIncomingConnections)
         {
-            await RejectHostRequestAsync(sessionGuid, "El equipo no acepta conexiones entrantes.", "disabled")
+            await RejectHostRequestAsync(sessionGuid, global::CSIViewer.Core.Localization.Text("El equipo no acepta conexiones entrantes."), "disabled")
                 .ConfigureAwait(false);
             return;
         }
 
         if (payload.ExpiresUtc < DateTimeOffset.UtcNow)
         {
-            await RejectHostRequestAsync(sessionGuid, "La solicitud ha caducado.", "expired")
+            await RejectHostRequestAsync(sessionGuid, global::CSIViewer.Core.Localization.Text("La solicitud ha caducado."), "expired")
                 .ConfigureAwait(false);
             return;
         }
@@ -301,7 +301,7 @@ public sealed partial class RemoteClient
             _logger.LogWarning("Rejected connect request with invalid controller signature");
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "La identidad del controlador no es válida.",
+                    global::CSIViewer.Core.Localization.Text("La identidad del controlador no es válida."),
                     "invalid_signature")
                 .ConfigureAwait(false);
             return;
@@ -315,7 +315,7 @@ public sealed partial class RemoteClient
                 payload.FromDeviceId);
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "La clave de identidad del controlador ha cambiado. Verifica la huella.",
+                    global::CSIViewer.Core.Localization.Text("La clave de identidad del controlador ha cambiado. Verifica la huella."),
                     "controller_key_changed")
                 .ConfigureAwait(false);
             return;
@@ -330,9 +330,9 @@ public sealed partial class RemoteClient
         {
             var reason = admissionReason switch
             {
-                "host_full" => "El equipo alcanzó el límite de clientes simultáneos.",
-                "controller_busy" => "Este cliente ya tiene una sesión con el equipo.",
-                _ => "La solicitud de conexión no es válida."
+                "host_full" => global::CSIViewer.Core.Localization.Text("El equipo alcanzó el límite de clientes simultáneos."),
+                "controller_busy" => global::CSIViewer.Core.Localization.Text("Este cliente ya tiene una sesión con el equipo."),
+                _ => global::CSIViewer.Core.Localization.Text("La solicitud de conexión no es válida.")
             };
             await RejectHostRequestAsync(
                     sessionGuid,
@@ -391,7 +391,7 @@ public sealed partial class RemoteClient
                 _sessionManager.TryRemove(sessionGuid, out _, out _);
                 await RejectHostRequestAsync(
                         sessionGuid,
-                        "La solicitud de conexión está duplicada.",
+                        global::CSIViewer.Core.Localization.Text("La solicitud de conexión está duplicada."),
                         "duplicate_session")
                     .ConfigureAwait(false);
                 return;
@@ -404,7 +404,7 @@ public sealed partial class RemoteClient
             {
                 await RejectHostRequestAsync(
                         sessionGuid,
-                        "La conexión con el servidor se perdió.",
+                        global::CSIViewer.Core.Localization.Text("La conexión con el servidor se perdió."),
                         "server_offline")
                     .ConfigureAwait(false);
                 return;
@@ -435,7 +435,7 @@ public sealed partial class RemoteClient
             var pendingAdded = _incomingRequests.ContainsKey(sessionGuid);
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "No se pudo responder a la solicitud entrante.",
+                    global::CSIViewer.Core.Localization.Text("No se pudo responder a la solicitud entrante."),
                     "host_error")
                 .ConfigureAwait(false);
             if (!pendingAdded)
@@ -486,7 +486,7 @@ public sealed partial class RemoteClient
             {
                 await RejectHostRequestAsync(
                         sessionId,
-                        "La solicitud de conexión ha caducado.",
+                        global::CSIViewer.Core.Localization.Text("La solicitud de conexión ha caducado."),
                         "expired")
                     .ConfigureAwait(false);
             }
@@ -557,7 +557,7 @@ public sealed partial class RemoteClient
             (payload.DirectToken?.Length ?? 0) > 1024)
         {
             await FailPendingConnectAsync(
-                    "La respuesta del equipo remoto no es válida.",
+                    global::CSIViewer.Core.Localization.Text("La respuesta del equipo remoto no es válida."),
                     "invalid_session")
                 .ConfigureAwait(false);
             return;
@@ -570,8 +570,8 @@ public sealed partial class RemoteClient
                 "Host key changed for device {DeviceId}; refusing automatic connection",
                 pending.TargetId);
             await FailPendingConnectAsync(
-                    "La clave de identidad del equipo remoto ha cambiado. " +
-                    "Verifica la huella o elimina el equipo conocido antes de continuar.",
+                    global::CSIViewer.Core.Localization.Text("La clave de identidad del equipo remoto ha cambiado. ") +
+                    global::CSIViewer.Core.Localization.Text("Verifica la huella o elimina el equipo conocido antes de continuar."),
                     "host_key_changed")
                 .ConfigureAwait(false);
             return;
@@ -589,7 +589,7 @@ public sealed partial class RemoteClient
 
         if (!DeviceIdentity.Verify(payload.HostPublicKey, transcript, Convert.FromBase64String(payload.Signature)))
         {
-            await FailPendingConnectAsync("La identidad del equipo remoto no es válida.")
+            await FailPendingConnectAsync(global::CSIViewer.Core.Localization.Text("La identidad del equipo remoto no es válida."))
                 .ConfigureAwait(false);
             return;
         }
@@ -614,7 +614,7 @@ public sealed partial class RemoteClient
         {
             _logger.LogWarning(ex, "Remote host supplied an invalid ephemeral key");
             await FailPendingConnectAsync(
-                    "La clave efímera del equipo remoto no es válida.",
+                    global::CSIViewer.Core.Localization.Text("La clave efímera del equipo remoto no es válida."),
                     "invalid_session")
                 .ConfigureAwait(false);
             return;
@@ -659,7 +659,7 @@ public sealed partial class RemoteClient
             _logger.LogInformation(ex, "Direct LAN connection unavailable; using relay");
         }
 
-        SetConnectionState(ConnectionState.Authenticating, "Esperando autorización del equipo remoto…");
+        SetConnectionState(ConnectionState.Authenticating, global::CSIViewer.Core.Localization.Text("Esperando autorización del equipo remoto…"));
 
         try
         {
@@ -672,7 +672,7 @@ public sealed partial class RemoteClient
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Could not send authentication request");
-            await FailPendingConnectAsync("No se pudo enviar la autenticación al equipo remoto.")
+            await FailPendingConnectAsync(global::CSIViewer.Core.Localization.Text("No se pudo enviar la autenticación al equipo remoto."))
                 .ConfigureAwait(false);
         }
     }
@@ -701,7 +701,7 @@ public sealed partial class RemoteClient
             var reason = !string.IsNullOrWhiteSpace(payload.Reason) &&
                          MessageValidation.IsValidReason(payload.Reason)
                 ? payload.Reason
-                : "El equipo remoto rechazó la conexión.";
+                : global::CSIViewer.Core.Localization.Text("El equipo remoto rechazó la conexión.");
             await FailPendingConnectAsync(reason)
                 .ConfigureAwait(false);
             return;
@@ -743,7 +743,7 @@ public sealed partial class RemoteClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Could not start outgoing session");
-            await FailPendingConnectAsync("No se pudo iniciar la sesión remota.")
+            await FailPendingConnectAsync(global::CSIViewer.Core.Localization.Text("No se pudo iniciar la sesión remota."))
                 .ConfigureAwait(false);
         }
     }
@@ -791,7 +791,7 @@ public sealed partial class RemoteClient
             return;
         }
 
-        _state.Post(() => _state.StatusMessage = "Verificando contraseña y permisos…");
+        _state.Post(() => _state.StatusMessage = global::CSIViewer.Core.Localization.Text("Verificando contraseña y permisos…"));
 
         var auth = ControlJson.Payload<AuthRequestPayload>(envelope);
         if (auth is null)
@@ -809,7 +809,7 @@ public sealed partial class RemoteClient
                 incoming.SessionId);
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "La solicitud de conexión ha caducado.",
+                    global::CSIViewer.Core.Localization.Text("La solicitud de conexión ha caducado."),
                     "expired")
                 .ConfigureAwait(false);
             return;
@@ -831,7 +831,7 @@ public sealed partial class RemoteClient
                 .ConfigureAwait(false);
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "Demasiados intentos fallidos. Espera antes de reintentar.",
+                    global::CSIViewer.Core.Localization.Text("Demasiados intentos fallidos. Espera antes de reintentar."),
                     "rate_limited")
                 .ConfigureAwait(false);
             return;
@@ -851,7 +851,7 @@ public sealed partial class RemoteClient
                 .ConfigureAwait(false);
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "La contraseña temporal ha caducado. Genera una nueva.",
+                    global::CSIViewer.Core.Localization.Text("La contraseña temporal ha caducado. Genera una nueva."),
                     "password_expired")
                 .ConfigureAwait(false);
             return;
@@ -870,7 +870,7 @@ public sealed partial class RemoteClient
                     "auth.result",
                     new AuthResultPayload(false, SessionPermissions.None, "invalid_password"))
                 .ConfigureAwait(false);
-            await RejectHostRequestAsync(sessionGuid, "Contraseña incorrecta.", "invalid_password")
+            await RejectHostRequestAsync(sessionGuid, global::CSIViewer.Core.Localization.Text("Contraseña incorrecta."), "invalid_password")
                 .ConfigureAwait(false);
             return;
         }
@@ -900,8 +900,8 @@ public sealed partial class RemoteClient
             await RejectHostRequestAsync(
                     sessionGuid,
                     locked
-                        ? "Demasiados intentos fallidos. Espera antes de reintentar."
-                        : "Contraseña incorrecta.",
+                        ? global::CSIViewer.Core.Localization.Text("Demasiados intentos fallidos. Espera antes de reintentar.")
+                        : global::CSIViewer.Core.Localization.Text("Contraseña incorrecta."),
                     rejection)
                 .ConfigureAwait(false);
             return;
@@ -960,7 +960,7 @@ public sealed partial class RemoteClient
         {
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "El acceso está siendo revocado.",
+                    global::CSIViewer.Core.Localization.Text("El acceso está siendo revocado."),
                     "revoked")
                 .ConfigureAwait(false);
             return;
@@ -980,7 +980,7 @@ public sealed partial class RemoteClient
                     "auth.result",
                     new AuthResultPayload(false, SessionPermissions.None, "denied"))
                 .ConfigureAwait(false);
-            await RejectHostRequestAsync(sessionGuid, "El usuario rechazó la conexión.", "denied")
+            await RejectHostRequestAsync(sessionGuid, global::CSIViewer.Core.Localization.Text("El usuario rechazó la conexión."), "denied")
                 .ConfigureAwait(false);
             return;
         }
@@ -1005,7 +1005,7 @@ public sealed partial class RemoteClient
                 .ConfigureAwait(false);
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "La sesión ya no está disponible.",
+                    global::CSIViewer.Core.Localization.Text("La sesión ya no está disponible."),
                     activationReason ?? "not_available")
                 .ConfigureAwait(false);
             return;
@@ -1047,7 +1047,7 @@ public sealed partial class RemoteClient
             var signal = _signal;
             if (signal is null || !signal.IsConnected)
             {
-                throw new IOException("La conexión con el servidor se perdió.");
+                throw new IOException(global::CSIViewer.Core.Localization.Text("La conexión con el servidor se perdió."));
             }
 
             using var sendTimeout = CreateTimeoutToken(
@@ -1074,7 +1074,7 @@ public sealed partial class RemoteClient
             session.Dispose();
             await RejectHostRequestAsync(
                     sessionGuid,
-                    "No se pudo aceptar la sesión entrante.",
+                    global::CSIViewer.Core.Localization.Text("No se pudo aceptar la sesión entrante."),
                     "host_error")
                 .ConfigureAwait(false);
         }
@@ -1103,11 +1103,11 @@ public sealed partial class RemoteClient
         {
             var message = result.Reason switch
             {
-                "invalid_password" => "Contraseña temporal incorrecta.",
-                "password_expired" => "La contraseña temporal ha caducado.",
-                "rate_limited" => "Demasiados intentos. Espera antes de reintentar.",
-                "denied" => "El usuario rechazó la conexión.",
-                _ => "El equipo remoto rechazó la conexión."
+                "invalid_password" => global::CSIViewer.Core.Localization.Text("Contraseña temporal incorrecta."),
+                "password_expired" => global::CSIViewer.Core.Localization.Text("La contraseña temporal ha caducado."),
+                "rate_limited" => global::CSIViewer.Core.Localization.Text("Demasiados intentos. Espera antes de reintentar."),
+                "denied" => global::CSIViewer.Core.Localization.Text("El usuario rechazó la conexión."),
+                _ => global::CSIViewer.Core.Localization.Text("El equipo remoto rechazó la conexión.")
             };
             await FailPendingConnectAsync(message, result.Reason ?? "rejected")
                 .ConfigureAwait(false);
@@ -1145,7 +1145,7 @@ public sealed partial class RemoteClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Could not start authenticated session");
-            await FailPendingConnectAsync("No se pudo iniciar la sesión remota.")
+            await FailPendingConnectAsync(global::CSIViewer.Core.Localization.Text("No se pudo iniciar la sesión remota."))
                 .ConfigureAwait(false);
         }
     }
@@ -1239,7 +1239,7 @@ public sealed partial class RemoteClient
                 ["RemoteName"] = session.RemoteName,
                 ["Role"] = "Controller"
             });
-            SetConnectionState(ConnectionState.Connected, $"Sesión activa con {remoteName}");
+            SetConnectionState(ConnectionState.Connected, global::CSIViewer.Core.Localization.Format("Sesión activa con {0}",remoteName));
 
             await PersistKnownDeviceAsync(
                     remoteId,
@@ -1305,10 +1305,10 @@ public sealed partial class RemoteClient
 
             if (_state.Settings.NotificationsEnabled)
             {
-                _notifications.Show("CSIViewer", $"Sesión iniciada con {remoteName}.");
+                _notifications.Show(global::CSIViewer.Core.Localization.Text("CSIViewer"), global::CSIViewer.Core.Localization.Format("Sesión iniciada con {0}.",remoteName));
             }
 
-            MainWindowSessionBanner?.Invoke($"Sesión de control con {remoteName}.");
+            MainWindowSessionBanner?.Invoke(global::CSIViewer.Core.Localization.Format("Sesión de control con {0}.",remoteName));
         }
         finally
         {
@@ -1419,7 +1419,7 @@ public sealed partial class RemoteClient
                         _logger.LogWarning(ex, "Windows.Graphics.Capture error; falling back to GDI");
                         _modernCaptureDisabled = true;
                         _state.Post(() => _state.LastError =
-                            "Error de captura moderna; usando captura GDI.");
+                            global::CSIViewer.Core.Localization.Text("Error de captura moderna; usando captura GDI."));
                         if (Interlocked.Exchange(ref _modernCaptureFallbackScheduled, 1) == 0)
                         {
                             _ = Task.Run(async () =>
@@ -1457,7 +1457,7 @@ public sealed partial class RemoteClient
                 ex =>
                 {
                     _logger.LogWarning(ex, "Capture error");
-                    _state.Post(() => _state.LastError = "Error de captura de pantalla.");
+                    _state.Post(() => _state.LastError = global::CSIViewer.Core.Localization.Text("Error de captura de pantalla."));
                 });
             _captureRunning = true;
             StartDisplayWatcher();
@@ -1466,7 +1466,7 @@ public sealed partial class RemoteClient
         {
             _captureRunning = false;
             _logger.LogError(ex, "Could not start capture");
-            _state.Post(() => _state.LastError = "No se pudo iniciar la captura de pantalla.");
+            _state.Post(() => _state.LastError = global::CSIViewer.Core.Localization.Text("No se pudo iniciar la captura de pantalla."));
         }
         finally
         {
@@ -1995,6 +1995,8 @@ public sealed partial class RemoteClient
 
             session.Health.RecordActivity(DateTimeOffset.UtcNow);
 
+            if (HandleFeatureFrame(session, kind, plaintext)) return;
+
             if (session.IsController)
             {
                 await HandleControllerFrameAsync(kind, plaintext, session.Permissions, session).ConfigureAwait(false);
@@ -2202,6 +2204,7 @@ public sealed partial class RemoteClient
         }
 
         if (TryHandleFileBrowserControl(envelope, session)) return;
+        if (TryHandleFeaturesControl(envelope, session)) return;
 
         switch (envelope.Type)
         {
@@ -2307,6 +2310,7 @@ public sealed partial class RemoteClient
         }
 
         if (TryHandleFileBrowserControl(envelope, session)) return;
+        if (session is not null && TryHandleFeaturesControl(envelope, session)) return;
 
         switch (envelope.Type)
         {
@@ -2665,7 +2669,7 @@ public sealed partial class RemoteClient
 
         _directReceiveTask = ReceiveDirectAsync(stream, token);
         _logger.LogInformation("Direct LAN session transport established");
-        _state.Post(() => _state.StatusMessage = "Conexión directa LAN establecida.");
+        _state.Post(() => _state.StatusMessage = global::CSIViewer.Core.Localization.Text("Conexión directa LAN establecida."));
     }
 
     private async Task ReceiveDirectAsync(NetworkStream stream, CancellationToken cancellationToken)
@@ -2843,7 +2847,7 @@ public sealed partial class RemoteClient
 
         pending?.Completion.TrySetResult(Result<bool>.Fail(
             "cancelled",
-            "La sesión se canceló."));
+            global::CSIViewer.Core.Localization.Text("La sesión se canceló.")));
 
         _transport = TransportKind.Relay;
         _state.Post(() => _state.Transport = TransportKind.Relay);

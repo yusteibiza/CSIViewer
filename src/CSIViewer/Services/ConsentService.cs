@@ -34,7 +34,7 @@ public sealed class ConsentService : IConsentService
                 var dialog = new ContentDialog
                 {
                     XamlRoot = xamlRoot,
-                    Title = "Solicitud de conexión remota",
+                    Title = global::CSIViewer.Core.Localization.Text("Solicitud de conexión remota"),
                     PrimaryButtonText = "Aceptar seleccionados",
                     CloseButtonText = "Rechazar",
                     DefaultButton = ContentDialogButton.Close,
@@ -44,27 +44,29 @@ public sealed class ConsentService : IConsentService
                 var panel = new StackPanel { Spacing = 10 };
                 panel.Children.Add(new TextBlock
                 {
-                    Text = $"{request.FromName} ({request.FromDeviceId}) quiere conectarse a este equipo.",
+                    Text = global::CSIViewer.Core.Localization.Format("{0} ({1}) quiere conectarse a este equipo.",request.FromName,request.FromDeviceId),
                     TextWrapping = TextWrapping.Wrap
                 });
                 panel.Children.Add(new TextBlock
                 {
-                    Text = "Selecciona los permisos que concedes:",
+                    Text = global::CSIViewer.Core.Localization.Text("Selecciona los permisos que concedes:"),
                     FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
                 });
 
                 var checks = new List<(SessionPermissions Permission, CheckBox Box)>();
-                AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.ViewScreen, "Ver la pantalla");
-                AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.ControlInput, "Controlar ratón y teclado");
+                AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.ViewScreen, global::CSIViewer.Core.Localization.Text("Ver la pantalla"));
+                AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.ControlInput, global::CSIViewer.Core.Localization.Text("Controlar ratón y teclado"));
                 AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.Chat, "Enviar y recibir chat");
-                AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.SendFiles, "Enviar archivos a este equipo");
-                AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.ReceiveFiles, "Recibir archivos de este equipo");
+                AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.SendFiles, global::CSIViewer.Core.Localization.Text("Enviar archivos a este equipo"));
+                AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.ReceiveFiles, global::CSIViewer.Core.Localization.Text("Recibir archivos de este equipo"));
+                AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.Audio, global::CSIViewer.Core.Localization.Text("Escuchar el audio del sistema (sin micrófono)"));
+                AddPermission(checks, panel, request.RequestedPermissions, SessionPermissions.Clipboard, global::CSIViewer.Core.Localization.Text("Compartir el portapapeles de texto en ambos sentidos"));
 
                 if (request.ChatOnly)
                 {
                     panel.Children.Add(new TextBlock
                     {
-                        Text = "Es una sesión de solo chat: no se compartirá la pantalla ni el control.",
+                        Text = global::CSIViewer.Core.Localization.Text("Es una sesión de solo chat: no se compartirá la pantalla ni el control."),
                         TextWrapping = TextWrapping.Wrap
                     });
                 }
@@ -72,14 +74,14 @@ public sealed class ConsentService : IConsentService
                 {
                     panel.Children.Add(new TextBlock
                     {
-                        Text = "Mientras la sesión esté activa verás un aviso permanente y podrás finalizarla en cualquier momento.",
+                        Text = global::CSIViewer.Core.Localization.Text("Mientras la sesión esté activa verás un aviso permanente y podrás finalizarla en cualquier momento."),
                         TextWrapping = TextWrapping.Wrap
                     });
                 }
 
                 panel.Children.Add(new TextBlock
                 {
-                    Text = $"Huella del controlador: {request.Fingerprint}",
+                    Text = global::CSIViewer.Core.Localization.Format("Huella del controlador: {0}",request.Fingerprint),
                     Foreground = (Microsoft.UI.Xaml.Media.Brush)XamlApplication.Current.Resources["MutedTextBrush"],
                     FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
                     FontSize = 12
@@ -147,25 +149,25 @@ public sealed class ConsentService : IConsentService
                 var dialog = new ContentDialog
                 {
                     XamlRoot = xamlRoot,
-                    Title = willOverwrite ? "Confirmar sobrescritura" : "Archivo entrante",
-                    PrimaryButtonText = willOverwrite ? "Sobrescribir" : "Aceptar",
+                    Title = willOverwrite ? "Confirmar sobrescritura" : global::CSIViewer.Core.Localization.Text("Archivo entrante"),
+                    PrimaryButtonText = willOverwrite ? global::CSIViewer.Core.Localization.Text("Sobrescribir") : "Aceptar",
                     CloseButtonText = "Rechazar",
                     DefaultButton = ContentDialogButton.Primary,
                     RequestedTheme = ThemeService.Current
                 };
                 if (willOverwrite)
                 {
-                    dialog.SecondaryButtonText = "Guardar como copia";
+                    dialog.SecondaryButtonText = global::CSIViewer.Core.Localization.Text("Guardar como copia");
                 }
 
                 var detail = willOverwrite
-                    ? $"{fromName} quiere enviar \"{fileName}\" ({FormatSize(size)}). Ya existe un archivo con ese nombre en la carpeta de descargas. Si aceptas, se reemplazará por la versión verificada."
+                    ? global::CSIViewer.Core.Localization.Format("{0} quiere enviar \"{1}\" ({2}). Ya existe un archivo con ese nombre en la carpeta de descargas. Si aceptas, se reemplazará por la versión verificada.",fromName,fileName,FormatSize(size))
                     : destinationExists
-                        ? $"{fromName} quiere enviar \"{fileName}\" ({FormatSize(size)}). Ya existe un archivo con ese nombre; se guardará como una copia con otro nombre."
+                        ? global::CSIViewer.Core.Localization.Format("{0} quiere enviar \"{1}\" ({2}). Ya existe un archivo con ese nombre; se guardará como una copia con otro nombre.",fromName,fileName,FormatSize(size))
                         : $"{fromName} quiere enviar \"{fileName}\" ({FormatSize(size)}).";
                 dialog.Content = new TextBlock
                 {
-                    Text = detail + " El archivo se verifica con SHA-256 y no se ejecuta automáticamente.",
+                    Text = detail + global::CSIViewer.Core.Localization.Text(" El archivo se verifica con SHA-256 y no se ejecuta automáticamente."),
                     TextWrapping = TextWrapping.Wrap
                 };
                 var result = await dialog.ShowAsync();

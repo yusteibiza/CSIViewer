@@ -35,8 +35,8 @@ public sealed class DiagnosticsService
 
         var ok = await _api.CheckHealthAsync(_state.Settings.ServerUrl, cancellationToken).ConfigureAwait(false);
         return ok
-            ? $"Servidor accesible: {_state.Settings.ServerUrl}"
-            : $"No se pudo contactar con {_state.Settings.ServerUrl}";
+            ? global::CSIViewer.Core.Localization.Format("Servidor accesible: {0}",_state.Settings.ServerUrl)
+            : global::CSIViewer.Core.Localization.Format("No se pudo contactar con {0}",_state.Settings.ServerUrl);
     }
 
     public async Task<string> TestStunAsync(CancellationToken cancellationToken = default)
@@ -50,7 +50,7 @@ public sealed class DiagnosticsService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "STUN diagnostic failed");
-            return "STUN no disponible (UDP bloqueado o sin Internet).";
+            return global::CSIViewer.Core.Localization.Text("STUN no disponible (UDP bloqueado o sin Internet).");
         }
     }
 

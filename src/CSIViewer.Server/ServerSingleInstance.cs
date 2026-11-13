@@ -62,7 +62,7 @@ public static class ServerSingleInstance
         {
             try
             {
-                var window = FindWindow(null, "CSIViewer Servidor");
+                var window = FindWindow(null, global::CSIViewer.Core.Localization.Text("CSIViewer Servidor"));
                 if (window != IntPtr.Zero)
                 {
                     ActivateWindow(window);

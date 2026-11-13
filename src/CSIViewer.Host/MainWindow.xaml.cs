@@ -137,7 +137,7 @@ public sealed partial class MainWindow : Window
     {
         Title = "CSIViewer Host";
         AppTitleText.Text = "CSIViewer Host";
-        TopBarHintText.Text = "Equipo anfitrión";
+        TopBarHintText.Text = global::CSIViewer.Core.Localization.Text("Equipo anfitrión");
         NavView.Visibility = Visibility.Collapsed;
         HostFrame.Visibility = Visibility.Visible;
 
@@ -644,8 +644,8 @@ public sealed partial class MainWindow : Window
         if (_state.IsSessionActive)
         {
             SessionBanner.Message = _state.IsController
-                ? $"Sesión de control con {_state.RemoteDeviceName}."
-                : $"Sesión remota de {_state.RemoteDeviceName}. Puedes finalizarla cuando quieras.";
+                ? global::CSIViewer.Core.Localization.Format("Sesión de control con {0}.",_state.RemoteDeviceName)
+                : global::CSIViewer.Core.Localization.Format("Sesión remota de {0}. Puedes finalizarla cuando quieras.",_state.RemoteDeviceName);
             SessionBanner.IsOpen = true;
         }
         else
@@ -771,7 +771,7 @@ public sealed partial class MainWindow : Window
 
     public void SetDeviceId(string deviceId)
     {
-        DeviceIdHeaderText.Text = deviceId == "—" ? "ID —" : $"ID {deviceId}";
+        DeviceIdHeaderText.Text = deviceId == "—" ? global::CSIViewer.Core.Localization.Text("ID —") : $"ID {deviceId}";
     }
 
     public void ShowSessionBanner(bool visible, string message)

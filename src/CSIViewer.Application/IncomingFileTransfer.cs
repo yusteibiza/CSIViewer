@@ -215,7 +215,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
                         hashed += read;
                         if (hashed > size)
                         {
-                            throw new InvalidDataException("El archivo parcial es mayor que el tamaño declarado.");
+                            throw new InvalidDataException(global::CSIViewer.Core.Localization.Text("El archivo parcial es mayor que el tamaño declarado."));
                         }
 
                         hash.AppendData(buffer, 0, read);
@@ -323,7 +323,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
             ThrowIfNotWritable();
             if (ReceivedBytes + data.Length > Size)
             {
-                throw new InvalidDataException("El bloque supera el tamaño declarado del archivo.");
+                throw new InvalidDataException(global::CSIViewer.Core.Localization.Text("El bloque supera el tamaño declarado del archivo."));
             }
 
             await _stream!.WriteAsync(data, cancellationToken).ConfigureAwait(false);
@@ -354,7 +354,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
                 return new IncomingFileCompleteResult(
                     false,
                     null,
-                    $"Faltan {Size - ReceivedBytes} bytes para completar el archivo.");
+                    global::CSIViewer.Core.Localization.Format("Faltan {0} bytes para completar el archivo.",Size - ReceivedBytes));
             }
 
             await _stream!.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -496,12 +496,12 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
 
         if (_completed)
         {
-            throw new InvalidOperationException("La transferencia ya ha finalizado.");
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("La transferencia ya ha finalizado."));
         }
 
         if (_stream is null || _hash is null)
         {
-            throw new InvalidOperationException("La transferencia no está abierta.");
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("La transferencia no está abierta."));
         }
     }
 
@@ -642,7 +642,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
             }
         }
 
-        throw new IOException("No se pudo encontrar un nombre de archivo libre.");
+        throw new IOException(global::CSIViewer.Core.Localization.Text("No se pudo encontrar un nombre de archivo libre."));
     }
 
     private static bool Exists(string path) => File.Exists(path) || Directory.Exists(path);

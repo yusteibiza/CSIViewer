@@ -67,7 +67,7 @@ public sealed partial class ContactsPage : Page
         var nameBox = new TextBox
         {
             Text = existing?.DisplayName ?? "",
-            PlaceholderText = "Nombre del contacto",
+            PlaceholderText = global::CSIViewer.Core.Localization.Text("Nombre del contacto"),
             MaxLength = 80
         };
         var notesBox = new TextBox
@@ -97,14 +97,14 @@ public sealed partial class ContactsPage : Page
         {
             devicePanel.Children.Add(new TextBlock
             {
-                Text = "Todavía no hay dispositivos guardados. Añade uno desde Dispositivos.",
+                Text = global::CSIViewer.Core.Localization.Text("Todavía no hay dispositivos guardados. Añade uno desde Dispositivos."),
                 Style = (Style)XamlApplication.Current.Resources["MutedTextStyle"],
                 TextWrapping = TextWrapping.Wrap
             });
         }
 
         var content = new StackPanel { Spacing = 8 };
-        content.Children.Add(new TextBlock { Text = "Nombre" });
+        content.Children.Add(new TextBlock { Text = global::CSIViewer.Core.Localization.Text("Nombre") });
         content.Children.Add(nameBox);
         content.Children.Add(new TextBlock { Text = "Notas" });
         content.Children.Add(notesBox);
@@ -121,8 +121,8 @@ public sealed partial class ContactsPage : Page
             RequestedTheme = ThemeService.Current,
             XamlRoot = MainWindow.Instance?.Content?.XamlRoot,
             Title = existing is null ? "Nuevo contacto" : "Editar contacto",
-            PrimaryButtonText = "Guardar",
-            CloseButtonText = "Cancelar",
+            PrimaryButtonText = global::CSIViewer.Core.Localization.Text("Guardar"),
+            CloseButtonText = global::CSIViewer.Core.Localization.Text("Cancelar"),
             DefaultButton = ContentDialogButton.Primary,
             Content = content
         };

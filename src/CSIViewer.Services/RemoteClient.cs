@@ -222,8 +222,8 @@ public sealed partial class RemoteClient : IAsyncDisposable
                     {
                         _state.DeviceId = auth.DeviceId;
                         _state.IsServerOnline = true;
-                        _state.ServerStatus = "En línea";
-                        _state.StatusMessage = "Conectado. Disponible para recibir asistencia.";
+                        _state.ServerStatus = global::CSIViewer.Core.Localization.Text("En línea");
+                        _state.StatusMessage = global::CSIViewer.Core.Localization.Text("Conectado. Disponible para recibir asistencia.");
                     });
                     CompleteAuthentication(true);
                 }
@@ -237,8 +237,8 @@ public sealed partial class RemoteClient : IAsyncDisposable
                 _state.Post(() =>
                 {
                     _state.IsServerOnline = false;
-                    _state.ServerStatus = "No autorizado";
-                    _state.LastError = error?.Message ?? "Autenticación rechazada.";
+                    _state.ServerStatus = global::CSIViewer.Core.Localization.Text("No autorizado");
+                    _state.LastError = error?.Message ?? global::CSIViewer.Core.Localization.Text("Autenticación rechazada.");
                 });
                 CompleteAuthentication(false);
                 break;
@@ -274,7 +274,7 @@ public sealed partial class RemoteClient : IAsyncDisposable
                               !string.IsNullOrWhiteSpace(error.Message) &&
                               MessageValidation.IsValidReason(error.Message)
                     ? error.Message
-                    : "No se pudo iniciar la conexión.";
+                    : global::CSIViewer.Core.Localization.Text("No se pudo iniciar la conexión.");
                 await FailPendingConnectAsync(
                         message,
                         error?.Code ?? "connect_failed")
@@ -307,7 +307,7 @@ public sealed partial class RemoteClient : IAsyncDisposable
                                   !string.IsNullOrWhiteSpace(payload.Message) &&
                                   MessageValidation.IsValidReason(payload.Message)
                     ? payload.Message
-                    : "Error del servidor.";
+                    : global::CSIViewer.Core.Localization.Text("Error del servidor.");
                 _logger.LogWarning("Server error: {Code} {Message}", payload?.Code, safeMessage);
                 _state.Post(() => _state.LastError = safeMessage);
 

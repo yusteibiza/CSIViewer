@@ -17,7 +17,7 @@ public sealed class SettingsTests
             MaxWidth = 99999,
             UploadLimitKbps = -10,
             HistoryRetentionDays = 0,
-            Language = "fr",
+            Language = "zz",
             FileConflictPolicy = (FileConflictPolicy)99
         };
 

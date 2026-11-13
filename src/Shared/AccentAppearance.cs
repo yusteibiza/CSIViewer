@@ -24,10 +24,22 @@ public static class AccentAppearance
         "SystemControlForegroundAccentBrush", "SystemControlBackgroundAccentBrush"];
     private static readonly string[] TextKeys = ["AccentTextFillColorPrimaryBrush", "AccentTextFillColorSecondaryBrush",
         "AccentTextFillColorTertiaryBrush", "HyperlinkForeground", "HyperlinkForegroundPointerOver", "HyperlinkForegroundPressed"];
-    private static readonly string[] OnAccentKeys = ["TextOnAccentFillColorPrimaryBrush", "TextOnAccentFillColorSecondaryBrush",
-        "AccentButtonForeground", "AccentButtonForegroundPointerOver", "AccentButtonForegroundPressed"];
+    // Keep Fluent's native TextOnAccent brushes: switches/check glyphs use white
+    // in Light and black in Dark. Only our button aliases need contrast pairing.
+    private static readonly string[] OnAccentKeys = ["AccentButtonForeground", "AccentButtonForegroundPointerOver", "AccentButtonForegroundPressed"];
     private static readonly string[] ColorKeys = ["SystemAccentColor", "SystemAccentColorLight1", "SystemAccentColorLight2",
         "SystemAccentColorLight3", "SystemAccentColorDark1", "SystemAccentColorDark2", "SystemAccentColorDark3"];
+    private static readonly string[] NativeAccentKeys = new[]
+    {
+        "SliderThumbBackground", "SliderTrackValueFill", "RadioButtonOuterEllipseCheckedStroke",
+        "RadioButtonOuterEllipseCheckedFill", "CheckBoxCheckBackgroundStrokeChecked",
+        "CheckBoxCheckBackgroundStrokeIndeterminate", "CheckBoxCheckBackgroundFillChecked",
+        "CheckBoxCheckBackgroundFillIndeterminate", "ToggleSwitchFillOn", "ToggleSwitchStrokeOn",
+        "ToggleButtonBackgroundChecked"
+    }.SelectMany(prefix => new[] { prefix, prefix + "PointerOver", prefix + "Pressed" })
+        .Concat(new[] { "NavigationViewSelectionIndicatorForeground", "TextControlBorderBrushFocused",
+            "ListViewItemSelectionIndicatorBrush", "ListViewItemSelectionIndicatorPointerOverBrush",
+            "ListViewItemSelectionIndicatorPressedBrush" }).ToArray();
 
     public static void Apply(AccentColor choice, FrameworkElement? root)
     {
@@ -54,7 +66,7 @@ public static class AccentAppearance
                 var fill = AccentPalette.Resolve(_current, dark, Rgb(system));
                 var dictionary = (ResourceDictionary)_resources.ThemeDictionaries[theme];
                 foreach (var key in ColorKeys) dictionary[key] = ToColor(fill);
-                foreach (var key in FillKeys.Concat(TextKeys)) SetBrush(dictionary, key, fill);
+                foreach (var key in FillKeys.Concat(TextKeys).Concat(NativeAccentKeys)) SetBrush(dictionary, key, fill);
                 foreach (var key in OnAccentKeys) SetBrush(dictionary, key, AccentPalette.Foreground(fill));
                 SetBrush(dictionary, "BrandSoftBrush", Mix(fill, dark ? 0x202020u : 0xFFFFFFu, 0.15));
             }
@@ -71,7 +83,7 @@ public static class AccentAppearance
     private static ResourceDictionary CreateHighContrast()
     {
         var entries = new List<string>();
-        foreach (var key in FillKeys) entries.Add($"<SolidColorBrush x:Key=\"{key}\" Color=\"{{ThemeResource SystemColorHighlightColor}}\" />");
+        foreach (var key in FillKeys.Concat(NativeAccentKeys)) entries.Add($"<SolidColorBrush x:Key=\"{key}\" Color=\"{{ThemeResource SystemColorHighlightColor}}\" />");
         foreach (var key in TextKeys) entries.Add($"<SolidColorBrush x:Key=\"{key}\" Color=\"{{ThemeResource SystemColorWindowTextColor}}\" />");
         foreach (var key in OnAccentKeys) entries.Add($"<SolidColorBrush x:Key=\"{key}\" Color=\"{{ThemeResource SystemColorHighlightTextColor}}\" />");
         entries.Add("<SolidColorBrush x:Key=\"BrandSoftBrush\" Color=\"{ThemeResource SystemColorButtonFaceColor}\" />");
@@ -81,8 +93,9 @@ public static class AccentAppearance
 
     private static void SetBrush(ResourceDictionary dictionary, string key, uint rgb)
     {
-        if (dictionary.TryGetValue(key, out var value) && value is SolidColorBrush brush) brush.Color = ToColor(rgb);
-        else dictionary[key] = new SolidColorBrush(ToColor(rgb));
+        // Resource lookup can return a Fluent StaticResource alias sharing its
+        // brush with native control glyphs. Never mutate that shared instance.
+        dictionary[key] = new SolidColorBrush(ToColor(rgb));
     }
     private static uint Mix(uint accent, uint background, double weight)
     {

@@ -134,7 +134,7 @@ public sealed class TrayIconService : IDisposable
     private NOTIFYICONDATA CreateIconData()
     {
         var tooltip = _state.IsSessionActive
-            ? $"CSIViewer — sesión con {_state.RemoteDeviceName}"
+            ? global::CSIViewer.Core.Localization.Format("CSIViewer — sesión con {0}",_state.RemoteDeviceName)
             : $"CSIViewer — ID {_state.DeviceId}";
         if (tooltip.Length > 120)
         {
@@ -212,7 +212,7 @@ public sealed class TrayIconService : IDisposable
         try
         {
             AppendMenu(menu, MfString, CommandOpen, "Abrir CSIViewer");
-            AppendMenu(menu, MfString, CommandEndSession, "Finalizar sesión");
+            AppendMenu(menu, MfString, CommandEndSession, global::CSIViewer.Core.Localization.Text("Finalizar sesión"));
             AppendMenu(menu, 0x00000800, 0, null); // MF_SEPARATOR
             AppendMenu(menu, MfString, CommandExit, "Salir");
 

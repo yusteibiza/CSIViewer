@@ -7,8 +7,8 @@ namespace CSIViewer.Server;
 
 public sealed class ServerOptions
 {
-    public string EnrollmentCode { get; set; } = "DEV-1234";
-    public string ServerName { get; set; } = "CSIViewer Servidor";
+    public string EnrollmentCode { get; set; } = global::CSIViewer.Core.Localization.Text("DEV-1234");
+    public string ServerName { get; set; } = global::CSIViewer.Core.Localization.Text("CSIViewer Servidor");
     public int MaxSessionsPerHost { get; set; } = 10;
 }
 
@@ -37,7 +37,7 @@ public sealed class DeviceRegistry
         }
         catch (Exception ex) when (ex is CryptographicException or FormatException)
         {
-            throw new ArgumentException("La clave pública del dispositivo no es válida.", nameof(publicKey), ex);
+            throw new ArgumentException(global::CSIViewer.Core.Localization.Text("La clave pública del dispositivo no es válida."), nameof(publicKey), ex);
         }
 
         await using var db = await _factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
@@ -52,7 +52,7 @@ public sealed class DeviceRegistry
         var device = new ServerDevice
         {
             Id = id,
-            Name = string.IsNullOrWhiteSpace(name) ? "Equipo Windows" : name.Trim(),
+            Name = string.IsNullOrWhiteSpace(name) ? global::CSIViewer.Core.Localization.Text("Equipo Windows") : name.Trim(),
             PublicKey = publicKey,
             CreatedUtc = DateTimeOffset.UtcNow,
             LastSeenUtc = DateTimeOffset.UtcNow

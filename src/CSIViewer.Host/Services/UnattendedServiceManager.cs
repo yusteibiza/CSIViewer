@@ -21,7 +21,7 @@ public sealed class UnattendedServiceManager
             cancellationToken).ConfigureAwait(false);
         if (result.ExitCode != 0)
         {
-            return "No instalado";
+            return global::CSIViewer.Core.Localization.Text("No instalado");
         }
 
         var output = result.Output;
@@ -29,7 +29,7 @@ public sealed class UnattendedServiceManager
             output.Contains("En ejecución", StringComparison.OrdinalIgnoreCase) ||
             output.Contains("En ejecucion", StringComparison.OrdinalIgnoreCase))
         {
-            return "En ejecución";
+            return global::CSIViewer.Core.Localization.Text("En ejecución");
         }
 
         return "Listo";
@@ -86,7 +86,7 @@ public sealed class UnattendedServiceManager
         var host = FindHostExecutable();
         if (host is null)
         {
-            return "No se encontró el agente de inicio CSIViewer.Host.Agent.exe. Reinstala CSIViewer Host.";
+            return global::CSIViewer.Core.Localization.Text("No se encontró el agente de inicio CSIViewer.Host.Agent.exe. Reinstala CSIViewer Host.");
         }
 
         var script = $$"""
@@ -158,31 +158,31 @@ public sealed class UnattendedServiceManager
             using var process = Process.Start(startInfo);
             if (process is null)
             {
-                return "No se pudo iniciar PowerShell con permisos de administrador.";
+                return global::CSIViewer.Core.Localization.Text("No se pudo iniciar PowerShell con permisos de administrador.");
             }
 
             await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
             if (process.ExitCode == 0)
             {
-                return "Operación completada.";
+                return global::CSIViewer.Core.Localization.Text("Operación completada.");
             }
 
             var detail = ReadResultFile(resultFile);
             return string.IsNullOrWhiteSpace(detail)
-                ? $"La operación terminó con código {process.ExitCode}. Revisa los permisos de administrador."
+                ? global::CSIViewer.Core.Localization.Format("La operación terminó con código {0}. Revisa los permisos de administrador.",process.ExitCode)
                 : detail;
         }
         catch (OperationCanceledException)
         {
-            return "Operación cancelada.";
+            return global::CSIViewer.Core.Localization.Text("Operación cancelada.");
         }
         catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
         {
-            return "Permiso de administrador cancelado; no se ha cambiado nada.";
+            return global::CSIViewer.Core.Localization.Text("Permiso de administrador cancelado; no se ha cambiado nada.");
         }
         catch (Exception ex)
         {
-            return "No se pudo completar la operación: " + ex.GetBaseException().Message;
+            return global::CSIViewer.Core.Localization.Text("No se pudo completar la operación: ") + ex.GetBaseException().Message;
         }
         finally
         {

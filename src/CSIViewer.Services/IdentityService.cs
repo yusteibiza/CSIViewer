@@ -104,7 +104,7 @@ public sealed class IdentityService
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Initial device registration failed");
-                    _state.Post(() => _state.ServerStatus = "Servidor no disponible");
+                    _state.Post(() => _state.ServerStatus = global::CSIViewer.Core.Localization.Text("Servidor no disponible"));
                 }
             }
         }
@@ -118,7 +118,7 @@ public sealed class IdentityService
     {
         if (_state.Identity is null)
         {
-            throw new InvalidOperationException("La identidad del dispositivo no está inicializada.");
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("La identidad del dispositivo no está inicializada."));
         }
 
         if (IsValidDeviceId(_state.DeviceId))
@@ -159,12 +159,12 @@ public sealed class IdentityService
         customPassword = customPassword?.Trim() ?? "";
         if (customPassword.Length is < 8 or > 64)
         {
-            throw new ArgumentException("La contraseña debe tener entre 8 y 64 caracteres.");
+            throw new ArgumentException(global::CSIViewer.Core.Localization.Text("La contraseña debe tener entre 8 y 64 caracteres."));
         }
 
         if (customPassword.Any(char.IsControl))
         {
-            throw new ArgumentException("La contraseña contiene caracteres no permitidos.");
+            throw new ArgumentException(global::CSIViewer.Core.Localization.Text("La contraseña contiene caracteres no permitidos."));
         }
 
         await ApplyPasswordAsync(

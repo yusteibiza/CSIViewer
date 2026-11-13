@@ -45,6 +45,11 @@ public sealed partial class RemoteClient
         public ConcurrentDictionary<string, byte> RequestedPulls { get; } = new(StringComparer.Ordinal);
         public int BrowserBusy;
         public int FilePullBusy;
+        public volatile bool AudioEnabled;
+        public volatile bool ClipboardEnabled;
+        public string? PendingClipboardText;
+        public int ClipboardApplyQueued;
+        public SystemAudioStream? AudioStream;
         public DateTimeOffset LastHeartbeatSentUtc { get; set; } = DateTimeOffset.UtcNow;
 
         public string SessionId => Id.ToString("D");
@@ -60,6 +65,9 @@ public sealed partial class RemoteClient
 
         public void MarkDisconnecting()
         {
+            AudioEnabled = ClipboardEnabled = false;
+            Interlocked.Exchange(ref PendingClipboardText, null);
+            Interlocked.Exchange(ref AudioStream, null)?.Dispose();
             StateMachine.TryTransition(ConnectionState.Disconnecting, out _);
             foreach (var request in BrowseRequests.Values) request.TrySetCanceled();
             foreach (var request in PullRequests.Values) request.TrySetCanceled();
@@ -73,6 +81,9 @@ public sealed partial class RemoteClient
 
         public void Dispose()
         {
+            AudioEnabled = ClipboardEnabled = false;
+            Interlocked.Exchange(ref PendingClipboardText, null);
+            Interlocked.Exchange(ref AudioStream, null)?.Dispose();
             foreach (var request in BrowseRequests.Values) request.TrySetCanceled();
             foreach (var request in PullRequests.Values) request.TrySetCanceled();
             foreach (var request in DirectoryRequests.Values) request.TrySetCanceled();
@@ -270,7 +281,7 @@ public sealed partial class RemoteClient
         try
         {
             var frame = session.Crypto.Encrypt(kind, plaintext);
-            if (kind == SessionFrameKind.Video)
+            if (kind is SessionFrameKind.Video or SessionFrameKind.Audio)
             {
                 // Cancelling ClientWebSocket.SendAsync aborts the whole
                 // signaling socket. Video frames are droppable, so never use
@@ -343,13 +354,13 @@ public sealed partial class RemoteClient
         _state.Post(() =>
         {
             _state.StatusMessage = session.ControlOwner
-                ? $"{session.RemoteName} está controlando este equipo."
-                : $"{session.RemoteName} está viendo este equipo.";
+                ? global::CSIViewer.Core.Localization.Format("{0} está controlando este equipo.",session.RemoteName)
+                : global::CSIViewer.Core.Localization.Format("{0} está viendo este equipo.",session.RemoteName);
         });
         MainWindowSessionBanner?.Invoke(
             _state.ActiveSessionCount > 1
-                ? $"{_state.ActiveSessionCount} clientes conectados a este equipo."
-                : $"{session.RemoteName} está conectado a este equipo.");
+                ? global::CSIViewer.Core.Localization.Format("{0} clientes conectados a este equipo.",_state.ActiveSessionCount)
+                : global::CSIViewer.Core.Localization.Format("{0} está conectado a este equipo.",session.RemoteName));
     }
 
     private RemoteSession? FindSession(Guid sessionId)
@@ -493,7 +504,7 @@ public sealed partial class RemoteClient
                 _outgoingFiles.TryRemove(outgoing.Key, out _);
                 MarkTransferInterrupted(
                     outgoing.Key,
-                    "Conexión perdida. La transferencia se conserva para reanudar.");
+                    global::CSIViewer.Core.Localization.Text("Conexión perdida. La transferencia se conserva para reanudar."));
             }
 
             foreach (var incoming in _incomingFiles
@@ -523,7 +534,7 @@ public sealed partial class RemoteClient
                 _incomingFiles.TryRemove(incoming.Key, out _);
                 MarkTransferInterrupted(
                     incoming.Key,
-                    "Conexión perdida. La transferencia se conserva para reanudar.");
+                    global::CSIViewer.Core.Localization.Text("Conexión perdida. La transferencia se conserva para reanudar."));
             }
 
             var ended = DateTimeOffset.UtcNow;
@@ -564,6 +575,7 @@ public sealed partial class RemoteClient
                     : ConnectionState.Disconnected,
                 out _);
             session.Dispose();
+            RefreshClipboardWatcher();
 
             if (_sessions.IsEmpty)
             {
@@ -576,7 +588,7 @@ public sealed partial class RemoteClient
             MainWindowSessionBanner?.Invoke(
                 _state.ActiveSessionCount == 0
                     ? null
-                    : $"{_state.ActiveSessionCount} clientes conectados a este equipo.");
+                    : global::CSIViewer.Core.Localization.Format("{0} clientes conectados a este equipo.",_state.ActiveSessionCount));
         }
         finally
         {

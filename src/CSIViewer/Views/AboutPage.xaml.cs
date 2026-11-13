@@ -18,7 +18,7 @@ public sealed partial class AboutPage : Page
         {
             AboutDeviceIdText.Text = "ID: " + _state.DeviceId;
             AboutFingerprintText.Text = "Huella: " + (_state.Fingerprint == "" ? "—" : _state.Fingerprint);
-            AboutServerText.Text = "Servidor: " + _state.Settings.ServerUrl + " · " + _state.ServerStatus;
+            AboutServerText.Text = global::CSIViewer.Core.Localization.Text("Servidor: ") + _state.Settings.ServerUrl + " · " + _state.ServerStatus;
         };
     }
 }

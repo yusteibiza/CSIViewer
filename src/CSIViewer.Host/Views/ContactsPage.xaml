@@ -1,8 +1,4 @@
-<Page
-    x:Class="CSIViewer.Host.Views.ContactsPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="{ThemeResource PageBackgroundBrush}">
+﻿<?xml version="1.0" encoding="utf-8"?><Page x:Class="CSIViewer.Host.Views.ContactsPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="{ThemeResource PageBackgroundBrush}" xmlns:loc="using:CSIViewer.Presentation">
     <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -12,16 +8,13 @@
 
         <Grid>
             <StackPanel Spacing="4">
-                <TextBlock Text="Contactos" Style="{StaticResource PageTitleStyle}" />
-                <TextBlock Text="Personas que agrupan varios equipos. Pulsa un equipo vinculado para conectarte."
-                           Style="{StaticResource MutedTextStyle}" />
+                <TextBlock Text="Contactos" Style="{StaticResource PageTitleStyle}" loc:Translate.Text="Contactos" />
+                <TextBlock Text="Personas que agrupan varios equipos. Pulsa un equipo vinculado para conectarte." Style="{StaticResource MutedTextStyle}" loc:Translate.Text="Personas que agrupan varios equipos. Pulsa un equipo vinculado para conectarte." />
             </StackPanel>
-            <Button HorizontalAlignment="Right" Content="Añadir contacto" Click="AddContact_Click"
-                    Style="{StaticResource PrimaryButtonStyle}" />
+            <Button HorizontalAlignment="Right" Content="Añadir contacto" Click="AddContact_Click" Style="{StaticResource PrimaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Añadir contacto" />
         </Grid>
 
-        <InfoBar x:Name="ContactsStatusBar" Grid.Row="1" IsOpen="False" Severity="Informational"
-                 IsClosable="True" />
+        <InfoBar x:Name="ContactsStatusBar" Grid.Row="1" IsOpen="False" Severity="Informational" IsClosable="True" />
 
         <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="0">
             <ListView x:Name="ContactsList" SelectionMode="None" Padding="12">
@@ -38,19 +31,17 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <Border Width="40" Height="40" CornerRadius="20"
-                                        Background="{ThemeResource BrandSoftBrush}">
-                                    <FontIcon Glyph="&#xE77B;" FontSize="18" Foreground="{ThemeResource BrandBrush}" />
+                                <Border Width="40" Height="40" CornerRadius="20" Background="{ThemeResource BrandSoftBrush}">
+                                    <FontIcon Glyph="" FontSize="18" Foreground="{ThemeResource BrandBrush}" />
                                 </Border>
                                 <StackPanel Grid.Column="1" Spacing="2">
                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding Notes}" Style="{StaticResource MutedTextStyle}"
-                                               FontSize="12" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Notes}" Style="{StaticResource MutedTextStyle}" FontSize="12" TextWrapping="Wrap" />
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
-                                    <Button Content="Editar" Click="Edit_Click" Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Content="Eliminar" Click="Delete_Click" Style="{StaticResource DangerButtonStyle}" />
-                                </StackPanel>
+                                <loc:WrapPanel Grid.Column="2" Spacing="6">
+                                    <Button Content="Editar" Click="Edit_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Editar" />
+                                    <Button Content="Eliminar" Click="Delete_Click" Style="{StaticResource DangerButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Eliminar" />
+                                </loc:WrapPanel>
                             </Grid>
                             <ItemsControl Grid.Row="1" ItemsSource="{Binding Devices}" Margin="52,0,0,0">
                                 <ItemsControl.ItemsPanel>
@@ -60,15 +51,11 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Button Content="{Binding Alias}" Click="ConnectDevice_Click"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                ToolTipService.ToolTip="{Binding DeviceId}" />
+                                        <Button Content="{Binding Alias}" Click="ConnectDevice_Click" Style="{StaticResource SecondaryButtonStyle}" ToolTipService.ToolTip="{Binding DeviceId}" />
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <TextBlock Grid.Row="1" Text="Sin dispositivos vinculados"
-                                       Style="{StaticResource MutedTextStyle}" FontSize="12"
-                                       Margin="52,0,0,0" Visibility="{Binding EmptyVisibility}" />
+                            <TextBlock Grid.Row="1" Text="Sin dispositivos vinculados" Style="{StaticResource MutedTextStyle}" FontSize="12" Margin="52,0,0,0" Visibility="{Binding EmptyVisibility}" loc:Translate.Text="Sin dispositivos vinculados" />
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>

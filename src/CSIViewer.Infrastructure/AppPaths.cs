@@ -56,16 +56,16 @@ public static class AppPaths
         var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var target = LegacyDataMigration.ResolveWritableDirectory(
             Path.Combine(AppContext.BaseDirectory, "data"),
-            Path.Combine(local, "CSIViewer"));
+            Path.Combine(local, global::CSIViewer.Core.Localization.Text("CSIViewer")));
 
         LegacyDataMigration.Migrate(
             target,
             new[]
             {
-                Path.Combine(local, "CSIViewer"),
+                Path.Combine(local, global::CSIViewer.Core.Localization.Text("CSIViewer")),
                 Path.Combine(local, "RemoteDesktopClient"),
                 Path.Combine(local, "RemoteDesktop"),
-                Path.Combine(local, "CSIViewer")
+                Path.Combine(local, global::CSIViewer.Core.Localization.Text("CSIViewer"))
             },
             environment,
             LegacyDataMigration.IsClientDataFile);

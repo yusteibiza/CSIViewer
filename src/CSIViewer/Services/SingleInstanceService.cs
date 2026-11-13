@@ -53,7 +53,7 @@ public sealed class SingleInstanceService : IDisposable
         {
             try
             {
-                var window = FindWindow(null, "CSIViewer");
+                var window = FindWindow(null, global::CSIViewer.Core.Localization.Text("CSIViewer"));
                 if (window != IntPtr.Zero)
                 {
                     ActivateWindow(window);

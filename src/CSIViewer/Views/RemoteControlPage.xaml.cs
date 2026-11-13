@@ -114,7 +114,7 @@ public sealed partial class RemoteControlPage : Page
 
     private void State_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is not (nameof(AppState.IsSessionActive) or nameof(AppState.IsController))) return;
+        if (e.PropertyName is not (nameof(AppState.IsSessionActive) or nameof(AppState.IsController) or nameof(AppState.LastError))) return;
         void Refresh()
         {
             if (!_state.IsSessionActive || !_state.IsController)
@@ -182,7 +182,7 @@ public sealed partial class RemoteControlPage : Page
             ApplyFullScreen(false);
             UpdateSessionUi();
             StatusBar.Severity = InfoBarSeverity.Informational;
-            StatusBar.Title = "Sesión finalizada";
+            StatusBar.Title = global::CSIViewer.Core.Localization.Text("Sesión finalizada");
             StatusBar.Message = reason;
             StatusBar.IsOpen = true;
         });
@@ -328,6 +328,7 @@ public sealed partial class RemoteControlPage : Page
 
     private void UpdateSessionUi()
     {
+        RefreshFeatureControls();
         var active = _state.IsSessionActive;
         EmptyState.Visibility = active ? Visibility.Collapsed : Visibility.Visible;
         SessionView.Visibility = active ? Visibility.Visible : Visibility.Collapsed;
@@ -355,8 +356,8 @@ public sealed partial class RemoteControlPage : Page
         }
 
         SessionTitleText.Text = _state.IsController
-            ? $"Control de {_state.RemoteDeviceName}"
-            : $"Sesión remota de {_state.RemoteDeviceName}";
+            ? global::CSIViewer.Core.Localization.Format("Control de {0}",_state.RemoteDeviceName)
+            : global::CSIViewer.Core.Localization.Format("Sesión remota de {0}",_state.RemoteDeviceName);
         var transport = _state.Transport switch
         {
             TransportKind.LanDirect => "LAN directa",
@@ -370,7 +371,7 @@ public sealed partial class RemoteControlPage : Page
         MonitorCombo.IsEnabled = _state.IsController &&
                                  SessionPermissionPolicy.CanControl(_state.ActivePermissions);
         HostOverlay.Visibility = _state.IsController ? Visibility.Collapsed : Visibility.Visible;
-        HostOverlayTitle.Text = $"{_state.RemoteDeviceName} está controlando este equipo";
+        HostOverlayTitle.Text = global::CSIViewer.Core.Localization.Format("{0} está controlando este equipo",_state.RemoteDeviceName);
         HostOverlayDetails.Text = "Permisos: " + PermissionNames.Describe(_state.ActivePermissions);
         RemoteImage.Visibility = _state.IsController ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -384,8 +385,8 @@ public sealed partial class RemoteControlPage : Page
         if (target.Length != 9)
         {
             StatusBar.Severity = InfoBarSeverity.Error;
-            StatusBar.Title = "ID no válido";
-            StatusBar.Message = "Introduce los 9 dígitos del ID del equipo remoto.";
+            StatusBar.Title = global::CSIViewer.Core.Localization.Text("ID no válido");
+            StatusBar.Message = global::CSIViewer.Core.Localization.Text("Introduce los 9 dígitos del ID del equipo remoto.");
             StatusBar.IsOpen = true;
             return;
         }
@@ -395,24 +396,24 @@ public sealed partial class RemoteControlPage : Page
         if (ControlPermissionBox.IsChecked == true) permissions |= SessionPermissions.ControlInput;
         if (ChatPermissionBox.IsChecked == true) permissions |= SessionPermissions.Chat;
         if (FilePermissionBox.IsChecked == true) permissions |= SessionPermissions.SendFiles | SessionPermissions.ReceiveFiles;
+        if (AudioPermissionBox.IsChecked == true) permissions |= SessionPermissions.Audio;
+        if (ClipboardPermissionBox.IsChecked == true) permissions |= SessionPermissions.Clipboard;
 
-        var chatOnly = ChatPermissionBox.IsChecked == true &&
-                       ViewPermissionBox.IsChecked != true &&
-                       ControlPermissionBox.IsChecked != true;
+        var chatOnly = permissions == SessionPermissions.Chat;
 
         if (permissions == SessionPermissions.None)
         {
             StatusBar.Severity = InfoBarSeverity.Warning;
-            StatusBar.Title = "Selecciona un permiso";
-            StatusBar.Message = "Debes solicitar al menos ver la pantalla, controlar, chat o archivos.";
+            StatusBar.Title = global::CSIViewer.Core.Localization.Text("Selecciona un permiso");
+            StatusBar.Message = global::CSIViewer.Core.Localization.Text("Debes solicitar al menos ver la pantalla, controlar, chat o archivos.");
             StatusBar.IsOpen = true;
             return;
         }
 
         ConnectButton.IsEnabled = false;
         StatusBar.Severity = InfoBarSeverity.Informational;
-        StatusBar.Title = "Conectando…";
-        StatusBar.Message = $"Solicitando conexión con {target}.";
+        StatusBar.Title = global::CSIViewer.Core.Localization.Text("Conectando…");
+        StatusBar.Message = global::CSIViewer.Core.Localization.Format("Solicitando conexión con {0}.",target);
         StatusBar.IsOpen = true;
 
         try
@@ -425,21 +426,21 @@ public sealed partial class RemoteControlPage : Page
             if (!result.IsSuccess)
             {
                 StatusBar.Severity = InfoBarSeverity.Error;
-                StatusBar.Title = "No se pudo conectar";
+                StatusBar.Title = global::CSIViewer.Core.Localization.Text("No se pudo conectar");
                 StatusBar.Message = result.Error?.Message ?? "Error desconocido.";
             }
             else
             {
                 StatusBar.Severity = InfoBarSeverity.Success;
-                StatusBar.Title = "Conectado";
-                StatusBar.Message = "La sesión está activa.";
+                StatusBar.Title = global::CSIViewer.Core.Localization.Text("Conectado");
+                StatusBar.Message = global::CSIViewer.Core.Localization.Text("La sesión está activa.");
                 UpdateSessionUi();
             }
         }
         catch (Exception ex)
         {
             StatusBar.Severity = InfoBarSeverity.Error;
-            StatusBar.Title = "Error de conexión";
+            StatusBar.Title = global::CSIViewer.Core.Localization.Text("Error de conexión");
             StatusBar.Message = ex.Message;
         }
         finally
@@ -522,8 +523,8 @@ public sealed partial class RemoteControlPage : Page
                 SessionCard.ClearValue(Border.CornerRadiusProperty);
             }
             FullScreenButton.Content = enabled
-                ? "Salir de pantalla completa"
-                : "Pantalla completa";
+                ? global::CSIViewer.Core.Localization.Text("Salir de pantalla completa")
+                : global::CSIViewer.Core.Localization.Text("Pantalla completa");
             RemoteSurface.ReleasePointerCaptures();
             _lastMouseMoveTicks = 0;
             RemoteSurface.Focus(FocusState.Programmatic);

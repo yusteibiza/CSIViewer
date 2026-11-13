@@ -10,6 +10,18 @@ namespace CSIViewer.Views;
 
 public sealed partial class HostSettingsPage : Page
 {
+    private void Cards_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var narrow = e.NewSize.Width < 560;
+        var cards = new[] { AppearanceCard, ServerCard, QualityCard, UnattendedCard };
+        for (var i = 0; i < cards.Length; i++)
+        {
+            Grid.SetRow(cards[i], narrow ? i : i / 2);
+            Grid.SetColumn(cards[i], narrow ? 0 : i % 2);
+            Grid.SetColumnSpan(cards[i], narrow ? 2 : 1);
+        }
+    }
+
     private static readonly int[] FpsPresets = [12, 15, 24, 30, 50, 60, 90, 120];
 
     private readonly AppState _state;
@@ -103,7 +115,7 @@ public sealed partial class HostSettingsPage : Page
             return;
         }
 
-        ServerStatusText.Text = "Comprobando servidor…";
+        ServerStatusText.Text = global::CSIViewer.Core.Localization.Text("Comprobando servidor…");
         ServerStatusText.Text = await _diagnostics.TestServerAsync();
     }
 
@@ -113,8 +125,8 @@ public sealed partial class HostSettingsPage : Page
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
-            ShowStatus(InfoBarSeverity.Warning, "URL no válida",
-                "Escribe una dirección http:// o https:// completa, por ejemplo http://localhost:5080.");
+            ShowStatus(InfoBarSeverity.Warning, global::CSIViewer.Core.Localization.Text("URL no válida"),
+                global::CSIViewer.Core.Localization.Text("Escribe una dirección http:// o https:// completa, por ejemplo http://localhost:5080."));
             return false;
         }
 
@@ -133,14 +145,14 @@ public sealed partial class HostSettingsPage : Page
                 await _client.ConnectToServerAsync();
             }
 
-            ShowStatus(InfoBarSeverity.Success, "Servidor",
-                reconnect ? "Servidor guardado. Reconectando…" : "Servidor guardado.");
+            ShowStatus(InfoBarSeverity.Success, global::CSIViewer.Core.Localization.Text("Servidor"),
+                reconnect ? global::CSIViewer.Core.Localization.Text("Servidor guardado. Reconectando…") : global::CSIViewer.Core.Localization.Text("Servidor guardado."));
             return true;
         }
         catch (Exception ex)
         {
-            ShowStatus(InfoBarSeverity.Error, "Servidor",
-                "No se pudo guardar el servidor: " + ex.GetBaseException().Message);
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Servidor"),
+                global::CSIViewer.Core.Localization.Text("No se pudo guardar el servidor: ") + ex.GetBaseException().Message);
             return false;
         }
     }
@@ -160,15 +172,15 @@ public sealed partial class HostSettingsPage : Page
             await _settings.SaveAsync(settings);
             var applied = _client.IsHostCapturing;
             await _client.RestartHostCaptureAsync();
-            ShowStatus(InfoBarSeverity.Success, "Calidad de imagen",
+            ShowStatus(InfoBarSeverity.Success, global::CSIViewer.Core.Localization.Text("Calidad de imagen"),
                 applied
-                    ? "Calidad aplicada a la sesión actual."
-                    : "Calidad guardada. Se aplicará al iniciar la próxima sesión.");
+                    ? global::CSIViewer.Core.Localization.Text("Calidad aplicada a la sesión actual.")
+                    : global::CSIViewer.Core.Localization.Text("Calidad guardada. Se aplicará al iniciar la próxima sesión."));
         }
         catch (Exception ex)
         {
-            ShowStatus(InfoBarSeverity.Error, "Calidad de imagen",
-                "No se pudo guardar la calidad: " + ex.GetBaseException().Message);
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Calidad de imagen"),
+                global::CSIViewer.Core.Localization.Text("No se pudo guardar la calidad: ") + ex.GetBaseException().Message);
         }
     }
 
@@ -194,7 +206,7 @@ public sealed partial class HostSettingsPage : Page
             }
 
             ShowStatus(success ? InfoBarSeverity.Success : InfoBarSeverity.Error,
-                "Modo desatendido", result);
+                global::CSIViewer.Core.Localization.Text("Modo desatendido"), result);
         }
         finally
         {
@@ -217,7 +229,7 @@ public sealed partial class HostSettingsPage : Page
             ShowStatus(result.StartsWith("Operación completada", StringComparison.Ordinal)
                     ? InfoBarSeverity.Success
                     : InfoBarSeverity.Error,
-                "Modo desatendido", result);
+                global::CSIViewer.Core.Localization.Text("Modo desatendido"), result);
         }
         finally
         {
@@ -238,7 +250,7 @@ public sealed partial class HostSettingsPage : Page
     {
         try
         {
-            UnattendedStatusText.Text = "Comprobando.";
+            UnattendedStatusText.Text = global::CSIViewer.Core.Localization.Text("Comprobando.");
             var status = await _unattended.GetStatusAsync();
             UnattendedStatusText.Text = status;
             InstallUnattendedButton.IsEnabled = !_unattendedBusy && status == "No instalado";
@@ -246,9 +258,9 @@ public sealed partial class HostSettingsPage : Page
         }
         catch (Exception ex)
         {
-            UnattendedStatusText.Text = "No se pudo consultar";
-            ShowStatus(InfoBarSeverity.Warning, "Modo desatendido",
-                "No se pudo consultar el servicio: " + ex.GetBaseException().Message);
+            UnattendedStatusText.Text = global::CSIViewer.Core.Localization.Text("No se pudo consultar");
+            ShowStatus(InfoBarSeverity.Warning, global::CSIViewer.Core.Localization.Text("Modo desatendido"),
+                global::CSIViewer.Core.Localization.Text("No se pudo consultar el servicio: ") + ex.GetBaseException().Message);
         }
     }
 

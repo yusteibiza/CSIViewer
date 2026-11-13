@@ -49,7 +49,7 @@ public sealed class UpnpPortMapper : IDisposable
             {
                 return new UpnpMappingResult(
                     false,
-                    "No se encontró una dirección IPv4 local para el servidor.");
+                    global::CSIViewer.Core.Localization.Text("No se encontró una dirección IPv4 local para el servidor."));
             }
 
             object? nat = null;
@@ -61,13 +61,13 @@ public sealed class UpnpPortMapper : IDisposable
                 {
                     return new UpnpMappingResult(
                         false,
-                        "Windows no tiene disponible el cliente UPnP (HNetCfg.NATUPnP).");
+                        global::CSIViewer.Core.Localization.Text("Windows no tiene disponible el cliente UPnP (HNetCfg.NATUPnP)."));
                 }
 
                 nat = Activator.CreateInstance(natType);
                 if (nat is null)
                 {
-                    return new UpnpMappingResult(false, "No se pudo crear el cliente UPnP de Windows.");
+                    return new UpnpMappingResult(false, global::CSIViewer.Core.Localization.Text("No se pudo crear el cliente UPnP de Windows."));
                 }
 
                 dynamic natObject = nat;
@@ -76,7 +76,7 @@ public sealed class UpnpPortMapper : IDisposable
                 {
                     return new UpnpMappingResult(
                         false,
-                        "El router no expone una colección UPnP. Activa UPnP/NAT-PMP en el router.");
+                        global::CSIViewer.Core.Localization.Text("El router no expone una colección UPnP. Activa UPnP/NAT-PMP en el router."));
                 }
 
                 dynamic collection = mappings;
@@ -95,19 +95,19 @@ public sealed class UpnpPortMapper : IDisposable
                     internalPort,
                     localAddress,
                     true,
-                    "CSIViewer Servidor");
+                    global::CSIViewer.Core.Localization.Text("CSIViewer Servidor"));
                 _mapped = true;
                 _mappedExternalPort = externalPort;
                 _mappedProtocol = protocol;
                 return new UpnpMappingResult(
                     true,
-                    $"Puerto abierto en el router: {protocol} {externalPort} → {localAddress}:{internalPort}.");
+                    global::CSIViewer.Core.Localization.Format("Puerto abierto en el router: {0} {1} → {2}:{3}.",protocol,externalPort,localAddress,internalPort));
             }
             catch (Exception ex)
             {
                 return new UpnpMappingResult(
                     false,
-                    "No se pudo abrir el puerto con UPnP: " + ex.GetBaseException().Message);
+                    global::CSIViewer.Core.Localization.Text("No se pudo abrir el puerto con UPnP: ") + ex.GetBaseException().Message);
             }
             finally
             {
@@ -123,7 +123,7 @@ public sealed class UpnpPortMapper : IDisposable
         {
             if (!_mapped)
             {
-                return new UpnpMappingResult(true, "No había ningún puerto UPnP abierto.");
+                return new UpnpMappingResult(true, global::CSIViewer.Core.Localization.Text("No había ningún puerto UPnP abierto."));
             }
 
             object? nat = null;
@@ -133,20 +133,20 @@ public sealed class UpnpPortMapper : IDisposable
                 var natType = Type.GetTypeFromProgID("HNetCfg.NATUPnP");
                 if (natType is null)
                 {
-                    return new UpnpMappingResult(false, "El cliente UPnP de Windows no está disponible.");
+                    return new UpnpMappingResult(false, global::CSIViewer.Core.Localization.Text("El cliente UPnP de Windows no está disponible."));
                 }
 
                 nat = Activator.CreateInstance(natType);
                 if (nat is null)
                 {
-                    return new UpnpMappingResult(false, "No se pudo crear el cliente UPnP de Windows.");
+                    return new UpnpMappingResult(false, global::CSIViewer.Core.Localization.Text("No se pudo crear el cliente UPnP de Windows."));
                 }
 
                 dynamic natObject = nat;
                 mappings = natObject.StaticPortMappingCollection;
                 if (mappings is null)
                 {
-                    return new UpnpMappingResult(false, "El router no expone UPnP.");
+                    return new UpnpMappingResult(false, global::CSIViewer.Core.Localization.Text("El router no expone UPnP."));
                 }
 
                 dynamic collection = mappings;
@@ -160,7 +160,7 @@ public sealed class UpnpPortMapper : IDisposable
             {
                 return new UpnpMappingResult(
                     false,
-                    "No se pudo cerrar el puerto UPnP: " + ex.GetBaseException().Message);
+                    global::CSIViewer.Core.Localization.Text("No se pudo cerrar el puerto UPnP: ") + ex.GetBaseException().Message);
             }
             finally
             {

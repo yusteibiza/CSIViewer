@@ -101,7 +101,7 @@ public sealed partial class RemoteClient
         var targetSession = GetPrimarySession();
         if (targetSession is null)
         {
-            return Result<int>.Fail("no_session", "No hay una sesión activa.");
+            return Result<int>.Fail("no_session", global::CSIViewer.Core.Localization.Text("No hay una sesión activa."));
         }
 
         return await SendPathsToSessionAsync(paths, targetSession, null, cancellationToken).ConfigureAwait(false);
@@ -111,7 +111,7 @@ public sealed partial class RemoteClient
         string? destinationToken, CancellationToken cancellationToken)
     {
         if (targetSession.State != ConnectionState.Connected)
-            return Result<int>.Fail("no_session", "La sesión ha finalizado.");
+            return Result<int>.Fail("no_session", global::CSIViewer.Core.Localization.Text("La sesión ha finalizado."));
 
         if (!SessionPermissionPolicy.CanSendFiles(
                 targetSession.IsController,
@@ -119,7 +119,7 @@ public sealed partial class RemoteClient
         {
             return Result<int>.Fail(
                 "no_permission",
-                "El equipo remoto no ha concedido permiso para enviar archivos.");
+                global::CSIViewer.Core.Localization.Text("El equipo remoto no ha concedido permiso para enviar archivos."));
         }
 
         var files = new List<FileWork>();
@@ -142,7 +142,7 @@ public sealed partial class RemoteClient
 
             var root = Path.GetFullPath(path);
             var rootName = Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar));
-            if (string.IsNullOrEmpty(rootName)) return Result<int>.Fail("drive_root", "Selecciona una carpeta, no una unidad completa.");
+            if (string.IsNullOrEmpty(rootName)) return Result<int>.Fail("drive_root", global::CSIViewer.Core.Localization.Text("Selecciona una carpeta, no una unidad completa."));
             directories.Add(rootName);
 
             var options = new EnumerationOptions
@@ -156,7 +156,7 @@ public sealed partial class RemoteClient
                 var relativeDirectory = Path.GetRelativePath(root, directory);
                 if (relativeDirectory.Split(Path.DirectorySeparatorChar).Contains(".rdpart", StringComparer.OrdinalIgnoreCase)) continue;
                 directories.Add(Path.Combine(rootName, relativeDirectory));
-                if (directories.Count > 10000) return Result<int>.Fail("too_many", "Selecciona menos de 10.000 carpetas.");
+                if (directories.Count > 10000) return Result<int>.Fail("too_many", global::CSIViewer.Core.Localization.Text("Selecciona menos de 10.000 carpetas."));
             }
 
             foreach (var file in Directory.EnumerateFiles(root, "*", options))
@@ -165,13 +165,13 @@ public sealed partial class RemoteClient
                 if (childRelative.Split(Path.DirectorySeparatorChar).Contains(".rdpart", StringComparer.OrdinalIgnoreCase)) continue;
                 var relative = Path.Combine(rootName, childRelative);
                 files.Add(new FileWork(file, relative, new FileInfo(file).Length, index++, destinationToken));
-                if (files.Count > 10000) return Result<int>.Fail("too_many", "Selecciona menos de 10.000 archivos.");
+                if (files.Count > 10000) return Result<int>.Fail("too_many", global::CSIViewer.Core.Localization.Text("Selecciona menos de 10.000 archivos."));
             }
         }
 
         if (files.Count == 0 && directories.Count == 0)
         {
-            return Result<int>.Fail("empty", "No se seleccionaron archivos.");
+            return Result<int>.Fail("empty", global::CSIViewer.Core.Localization.Text("No se seleccionaron archivos."));
         }
 
         foreach (var directory in directories.Distinct(StringComparer.OrdinalIgnoreCase))
@@ -202,7 +202,7 @@ public sealed partial class RemoteClient
             catch (Exception ex)
             {
                 _logger.LogDebug(ex, "Could not announce directory {Directory}", directory);
-                if (destinationToken is not null) return Result<int>.Fail("directory_failed", "No se pudo crear la carpeta remota: " + ex.Message);
+                if (destinationToken is not null) return Result<int>.Fail("directory_failed", global::CSIViewer.Core.Localization.Text("No se pudo crear la carpeta remota: ") + ex.Message);
             }
         }
 
@@ -233,7 +233,7 @@ public sealed partial class RemoteClient
             .ConfigureAwait(false);
 
         return files.Count > completed
-            ? Result<int>.Fail("incomplete", $"Completados {completed} de {files.Count} archivos. Consulta el progreso para ver rechazos o errores.")
+            ? Result<int>.Fail("incomplete", global::CSIViewer.Core.Localization.Format("Completados {0} de {1} archivos. Consulta el progreso para ver rechazos o errores.",completed,files.Count))
             : Result<int>.Ok(completed);
     }
 
@@ -349,7 +349,7 @@ public sealed partial class RemoteClient
 
             if (accepted != outgoing.Accept.Task)
             {
-                FailTransferUnlessInterrupted(transferId, "El receptor no respondió.");
+                FailTransferUnlessInterrupted(transferId, global::CSIViewer.Core.Localization.Text("El receptor no respondió."));
                 _outgoingFiles.TryRemove(transferId, out _);
                 return false;
             }
@@ -359,7 +359,7 @@ public sealed partial class RemoteClient
             {
                 FailTransferUnlessInterrupted(
                     transferId,
-                    DescribeTransferError(result.Reason) ?? "El receptor rechazó el archivo.");
+                    DescribeTransferError(result.Reason) ?? global::CSIViewer.Core.Localization.Text("El receptor rechazó el archivo."));
                 _outgoingFiles.TryRemove(transferId, out _);
                 return false;
             }
@@ -368,7 +368,7 @@ public sealed partial class RemoteClient
             {
                 FailTransferUnlessInterrupted(
                     transferId,
-                    "El receptor devolvió un desplazamiento de reanudación no válido.");
+                    global::CSIViewer.Core.Localization.Text("El receptor devolvió un desplazamiento de reanudación no válido."));
                 _outgoingFiles.TryRemove(transferId, out _);
                 return false;
             }
@@ -397,7 +397,7 @@ public sealed partial class RemoteClient
             {
                 MarkTransferInterrupted(
                     transferId,
-                    "Conexión perdida. La transferencia se conserva para reanudar.");
+                    global::CSIViewer.Core.Localization.Text("Conexión perdida. La transferencia se conserva para reanudar."));
             }
 
             return false;
@@ -449,7 +449,7 @@ public sealed partial class RemoteClient
 
             if (outgoing.Session is { } activeSession && (activeSession.State != ConnectionState.Connected ||
                 !SessionPermissionPolicy.CanSendFiles(activeSession.IsController, activeSession.Permissions)))
-                throw new OperationCanceledException("La sesión ha finalizado o se retiró el permiso de archivos.");
+                throw new OperationCanceledException(global::CSIViewer.Core.Localization.Text("La sesión ha finalizado o se retiró el permiso de archivos."));
 
             var read = await stream.ReadAsync(
                     buffer.AsMemory(0, FileChunkSize),
@@ -495,7 +495,7 @@ public sealed partial class RemoteClient
 
         if (offset < outgoing.Size)
         {
-            throw new IOException("El archivo cambió o se acortó durante la transferencia.");
+            throw new IOException(global::CSIViewer.Core.Localization.Text("El archivo cambió o se acortó durante la transferencia."));
         }
 
         item.State = TransferState.Verifying;
@@ -614,7 +614,7 @@ public sealed partial class RemoteClient
             if (needsPrompt)
             {
                 var decision = await _consent.RequestFileReceiveAsync(
-                        session?.RemoteName ?? _remoteName ?? _remoteId ?? "Equipo remoto",
+                        session?.RemoteName ?? _remoteName ?? _remoteId ?? global::CSIViewer.Core.Localization.Text("Equipo remoto"),
                         offer.DestinationToken is null ? relative : baseFinalPath,
                         offer.Size,
                         destinationExists,
@@ -643,7 +643,7 @@ public sealed partial class RemoteClient
 
             if (session is not null && (session.State != ConnectionState.Connected ||
                 !SessionPermissionPolicy.CanReceiveFiles(session.IsController, session.Permissions)))
-                throw new IOException("La sesión ha finalizado o se retiró el permiso.");
+                throw new IOException(global::CSIViewer.Core.Localization.Text("La sesión ha finalizado o se retiró el permiso."));
             if (offer.DestinationToken is not null)
                 ValidateBrowserWritePath(ResolveFileDestination(session, offer.DestinationToken), baseFinalPath);
 
@@ -697,7 +697,7 @@ public sealed partial class RemoteClient
                 string.Equals(x.FileName, relative, StringComparison.OrdinalIgnoreCase));
             if (stale is not null)
             {
-                RemoveTransferItem(stale, "Reanudada con una nueva transferencia.");
+                RemoveTransferItem(stale, global::CSIViewer.Core.Localization.Text("Reanudada con una nueva transferencia."));
             }
 
             AddOrUpdateTransfer(new TransferItem
@@ -773,7 +773,7 @@ public sealed partial class RemoteClient
 
         if (session is not null && !SessionPermissionPolicy.CanReceiveFiles(session.IsController, session.Permissions))
         {
-            await AbortIncomingAsync(incoming, deletePartial: false, "Se retiró el permiso de recepción.").ConfigureAwait(false);
+            await AbortIncomingAsync(incoming, deletePartial: false, global::CSIViewer.Core.Localization.Text("Se retiró el permiso de recepción.")).ConfigureAwait(false);
             return;
         }
 
@@ -788,7 +788,7 @@ public sealed partial class RemoteClient
             await AbortIncomingAsync(
                     incoming,
                     deletePartial: true,
-                    "Se detectó un hueco en la secuencia de bloques.")
+                    global::CSIViewer.Core.Localization.Text("Se detectó un hueco en la secuencia de bloques."))
                 .ConfigureAwait(false);
             return;
         }
@@ -891,16 +891,16 @@ public sealed partial class RemoteClient
 
             if (_state.Settings.NotificationsEnabled)
             {
-                _notifications.Show("Archivo recibido", Path.GetFileName(result.FinalPath ?? ""));
+                _notifications.Show(global::CSIViewer.Core.Localization.Text("Archivo recibido"), Path.GetFileName(result.FinalPath ?? ""));
             }
 
             return;
         }
 
-        var error = DescribeTransferError(result.Error) ?? "No se pudo finalizar la recepción.";
+        var error = DescribeTransferError(result.Error) ?? global::CSIViewer.Core.Localization.Text("No se pudo finalizar la recepción.");
         if (string.Equals(result.Error, "integrity", StringComparison.Ordinal))
         {
-            error = "La verificación SHA-256 falló. El archivo se ha descartado.";
+            error = global::CSIViewer.Core.Localization.Text("La verificación SHA-256 falló. El archivo se ha descartado.");
         }
 
         FailTransfer(incoming.TransferId, error);
@@ -938,7 +938,7 @@ public sealed partial class RemoteClient
             item.State = result.Success ? TransferState.Completed : TransferState.Failed;
             item.Error = result.Success
                 ? null
-                : DescribeTransferError(result.Error) ?? "El receptor no pudo completar la transferencia.";
+                : DescribeTransferError(result.Error) ?? global::CSIViewer.Core.Localization.Text("El receptor no pudo completar la transferencia.");
             item.BytesPerSecond = 0;
             item.UpdatedUtc = DateTimeOffset.UtcNow;
             AddOrUpdateTransfer(item);
@@ -987,7 +987,7 @@ public sealed partial class RemoteClient
             SetTransferState(
                 cancel.TransferId,
                 TransferState.Cancelled,
-                DescribeTransferError(cancel.Reason) ?? "El emisor canceló la transferencia.");
+                DescribeTransferError(cancel.Reason) ?? global::CSIViewer.Core.Localization.Text("El emisor canceló la transferencia."));
             return;
         }
 
@@ -1003,7 +1003,7 @@ public sealed partial class RemoteClient
             SetTransferState(
                 cancel.TransferId,
                 TransferState.Cancelled,
-                DescribeTransferError(cancel.Reason) ?? "El receptor canceló la transferencia.");
+                DescribeTransferError(cancel.Reason) ?? global::CSIViewer.Core.Localization.Text("El receptor canceló la transferencia."));
         }
     }
 
@@ -1049,7 +1049,7 @@ public sealed partial class RemoteClient
         if (!SessionPermissionPolicy.CanReceiveFiles(localIsController, permissions))
         {
             if (session is not null && directory.RequestId is not null)
-                await SendFileControlAsync(session, "file.directory.result", new FileDirectoryResponse(directory.RequestId, "No hay permiso para crear carpetas.")).ConfigureAwait(false);
+                await SendFileControlAsync(session, "file.directory.result", new FileDirectoryResponse(directory.RequestId, global::CSIViewer.Core.Localization.Text("No hay permiso para crear carpetas."))).ConfigureAwait(false);
             return;
         }
 
@@ -1067,7 +1067,7 @@ public sealed partial class RemoteClient
         {
             _logger.LogDebug(ex, "Could not create received directory {Directory}", directory.RelativePath);
             if (session is not null && directory.RequestId is not null)
-                await SendFileControlAsync(session, "file.directory.result", new FileDirectoryResponse(directory.RequestId, "No se pudo crear la carpeta de destino.")).ConfigureAwait(false);
+                await SendFileControlAsync(session, "file.directory.result", new FileDirectoryResponse(directory.RequestId, global::CSIViewer.Core.Localization.Text("No se pudo crear la carpeta de destino."))).ConfigureAwait(false);
         }
     }
 
@@ -1536,31 +1536,31 @@ public sealed partial class RemoteClient
     private static string? DescribeTransferError(string? code) => code switch
     {
         null or "" => null,
-        "invalid_request" => "La oferta de archivo no es válida.",
-        "invalid_size" => "El tamaño del archivo no es válido.",
-        "invalid_path" => "La ruta del archivo no es segura.",
-        "no_permission" => "No hay permiso para transferir archivos.",
-        "conflict_skipped" => "El archivo ya existe y la política es omitir.",
-        "overwrite_required" => "Es necesario confirmar la sobrescritura.",
-        "rejected" => "El receptor rechazó el archivo.",
-        "busy" => "El archivo ya se está recibiendo en otra transferencia.",
-        "no_space" => "No hay espacio suficiente en la carpeta de descargas.",
-        "access_denied" => "Windows denegó el acceso a la carpeta de descargas.",
-        "receiver_error" => "El receptor no pudo preparar el archivo.",
-        "io_error" => "Error de entrada/salida al escribir el archivo.",
-        "integrity" => "La verificación SHA-256 falló.",
-        "user" => "Transferencia cancelada por el usuario.",
+        "invalid_request" => global::CSIViewer.Core.Localization.Text("La oferta de archivo no es válida."),
+        "invalid_size" => global::CSIViewer.Core.Localization.Text("El tamaño del archivo no es válido."),
+        "invalid_path" => global::CSIViewer.Core.Localization.Text("La ruta del archivo no es segura."),
+        "no_permission" => global::CSIViewer.Core.Localization.Text("No hay permiso para transferir archivos."),
+        "conflict_skipped" => global::CSIViewer.Core.Localization.Text("El archivo ya existe y la política es omitir."),
+        "overwrite_required" => global::CSIViewer.Core.Localization.Text("Es necesario confirmar la sobrescritura."),
+        "rejected" => global::CSIViewer.Core.Localization.Text("El receptor rechazó el archivo."),
+        "busy" => global::CSIViewer.Core.Localization.Text("El archivo ya se está recibiendo en otra transferencia."),
+        "no_space" => global::CSIViewer.Core.Localization.Text("No hay espacio suficiente en la carpeta de descargas."),
+        "access_denied" => global::CSIViewer.Core.Localization.Text("Windows denegó el acceso a la carpeta de descargas."),
+        "receiver_error" => global::CSIViewer.Core.Localization.Text("El receptor no pudo preparar el archivo."),
+        "io_error" => global::CSIViewer.Core.Localization.Text("Error de entrada/salida al escribir el archivo."),
+        "integrity" => global::CSIViewer.Core.Localization.Text("La verificación SHA-256 falló."),
+        "user" => global::CSIViewer.Core.Localization.Text("Transferencia cancelada por el usuario."),
         _ => code
     };
 
     private static string DescribeTransferError(Exception exception) => exception switch
     {
-        UnauthorizedAccessException => "Windows denegó el acceso a la carpeta de descargas.",
-        PathTooLongException => "La ruta del archivo es demasiado larga.",
+        UnauthorizedAccessException => global::CSIViewer.Core.Localization.Text("Windows denegó el acceso a la carpeta de descargas."),
+        PathTooLongException => global::CSIViewer.Core.Localization.Text("La ruta del archivo es demasiado larga."),
         IOException io when io.Message.Contains("space", StringComparison.OrdinalIgnoreCase) ||
                            io.Message.Contains("espacio", StringComparison.OrdinalIgnoreCase) =>
-            "No hay espacio suficiente en la carpeta de descargas.",
-        IOException => "Error de entrada/salida al transferir el archivo.",
-        _ => "La transferencia falló: " + exception.Message
+            global::CSIViewer.Core.Localization.Text("No hay espacio suficiente en la carpeta de descargas."),
+        IOException => global::CSIViewer.Core.Localization.Text("Error de entrada/salida al transferir el archivo."),
+        _ => global::CSIViewer.Core.Localization.Text("La transferencia falló: ") + exception.Message
     };
 }

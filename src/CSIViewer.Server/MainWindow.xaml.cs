@@ -110,6 +110,8 @@ public sealed partial class MainWindow : Window
 
         _suppressThemeChange = true;
         AccentColorCombo.ItemsSource = CSIViewer.Core.AccentPalette.Choices;
+        LanguageCombo.ItemsSource = CSIViewer.Core.Localization.Languages;
+        LanguageCombo.SelectedItem = CSIViewer.Core.Localization.Languages.First(x => x.Code == _settings.Language);
         AccentColorCombo.SelectedItem = CSIViewer.Core.AccentPalette.Choices.First(x => x.Value == _settings.AccentColor);
         ThemeCombo.SelectedIndex = _settings.Theme switch
         {
@@ -127,9 +129,9 @@ public sealed partial class MainWindow : Window
         {
             ShowStatus(
                 InfoBarSeverity.Informational,
-                "Servidor en ejecución como servicio",
-                "El servicio de Windows ya está ejecutando el servidor. Esta ventana solo sirve para " +
-                "administrarlo; no se iniciará un segundo servidor.");
+                global::CSIViewer.Core.Localization.Text("Servidor en ejecución como servicio"),
+                global::CSIViewer.Core.Localization.Text("El servicio de Windows ya está ejecutando el servidor. Esta ventana solo sirve para ") +
+                global::CSIViewer.Core.Localization.Text("administrarlo; no se iniciará un segundo servidor."));
         }
         else if (_settings.AutoStartWithUi)
         {
@@ -137,10 +139,10 @@ public sealed partial class MainWindow : Window
             {
                 ShowStatus(
                     InfoBarSeverity.Warning,
-                    "Servidor ya en ejecución",
-                    "Se ha detectado otra instancia del servidor (consola o servicio). " +
-                    "Esta ventana no iniciará un segundo servidor; puedes revisar la configuración " +
-                    "o cerrar la otra instancia antes de pulsar «Iniciar servidor».");
+                    global::CSIViewer.Core.Localization.Text("Servidor ya en ejecución"),
+                    global::CSIViewer.Core.Localization.Text("Se ha detectado otra instancia del servidor (consola o servicio). ") +
+                    global::CSIViewer.Core.Localization.Text("Esta ventana no iniciará un segundo servidor; puedes revisar la configuración ") +
+                    global::CSIViewer.Core.Localization.Text("o cerrar la otra instancia antes de pulsar «Iniciar servidor»."));
             }
             else
             {
@@ -346,6 +348,7 @@ public sealed partial class MainWindow : Window
             _ => ElementTheme.Default
         };
         CSIViewer.Presentation.AccentAppearance.Apply(_settings.AccentColor, RootGrid);
+        CSIViewer.Presentation.Translate.Apply(RootGrid, _settings.Language);
         UpdateTitleBarColors();
     }
 
@@ -405,9 +408,17 @@ public sealed partial class MainWindow : Window
             // Appearance never rewrites startup registration or applies pending
             // port/network/service edits from the rest of the window.
             ServerSettingsStore.Save(_settings);
-            SaveHint.Text = $"Apariencia guardada a las {DateTime.Now:HH:mm}";
+            SaveHint.Text = global::CSIViewer.Core.Localization.Format("Apariencia guardada a las {0:HH:mm}",DateTime.Now);
         }
-        catch (Exception ex) { ShowStatus(InfoBarSeverity.Warning, "Apariencia", "No se pudo guardar: " + ex.Message); }
+        catch (Exception ex) { ShowStatus(InfoBarSeverity.Warning, global::CSIViewer.Core.Localization.Text("Apariencia"), global::CSIViewer.Core.Localization.Text("No se pudo guardar: ") + ex.Message); }
+    }
+
+    private void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressThemeChange || !_loaded || LanguageCombo.SelectedItem is not CSIViewer.Core.LanguageChoice choice) return;
+        _settings.Language = choice.Code;
+        CSIViewer.Presentation.Translate.Apply(RootGrid, choice.Code);
+        SaveAppearance();
     }
 
     private async void StartServer_Click(object sender, RoutedEventArgs e)
@@ -426,15 +437,15 @@ public sealed partial class MainWindow : Window
         {
             ShowStatus(
                 InfoBarSeverity.Warning,
-                "Servicio en ejecución",
-                "El servidor ya está ejecutándose como servicio de Windows. Para el servicio o " +
-                "elimínalo antes de iniciar el servidor desde esta ventana.");
+                global::CSIViewer.Core.Localization.Text("Servicio en ejecución"),
+                global::CSIViewer.Core.Localization.Text("El servidor ya está ejecutándose como servicio de Windows. Para el servicio o ") +
+                global::CSIViewer.Core.Localization.Text("elimínalo antes de iniciar el servidor desde esta ventana."));
             return;
         }
 
         if (!ReadSettingsFromUi(out var validationError))
         {
-            ShowStatus(InfoBarSeverity.Error, "Configuración no válida", validationError);
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Configuración no válida"), validationError);
             return;
         }
 
@@ -449,23 +460,23 @@ public sealed partial class MainWindow : Window
             if (_host.UpnpFailed)
             {
                 ShowStatus(InfoBarSeverity.Warning,
-                    "Servidor iniciado; UPnP no disponible",
-                    $"Escuchando en {_host.ActiveUrl}. {upnpMessage}");
+                    global::CSIViewer.Core.Localization.Text("Servidor iniciado; UPnP no disponible"),
+                    global::CSIViewer.Core.Localization.Format("Escuchando en {0}. {1}",_host.ActiveUrl,upnpMessage));
             }
             else if (_host.UpnpMessages.Count > 0)
             {
-                ShowStatus(InfoBarSeverity.Success, "Servidor iniciado",
-                    $"Escuchando en {_host.ActiveUrl}. {upnpMessage}");
+                ShowStatus(InfoBarSeverity.Success, global::CSIViewer.Core.Localization.Text("Servidor iniciado"),
+                    global::CSIViewer.Core.Localization.Format("Escuchando en {0}. {1}",_host.ActiveUrl,upnpMessage));
             }
             else
             {
-                ShowStatus(InfoBarSeverity.Success, "Servidor iniciado",
-                    $"Escuchando en {_host.ActiveUrl}.");
+                ShowStatus(InfoBarSeverity.Success, global::CSIViewer.Core.Localization.Text("Servidor iniciado"),
+                    global::CSIViewer.Core.Localization.Format("Escuchando en {0}.",_host.ActiveUrl));
             }
         }
         catch (Exception ex)
         {
-            ShowStatus(InfoBarSeverity.Error, "No se pudo iniciar el servidor",
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("No se pudo iniciar el servidor"),
                 ex.GetBaseException().Message);
         }
         finally
@@ -489,12 +500,12 @@ public sealed partial class MainWindow : Window
         try
         {
             await _host.StopAsync();
-            ShowStatus(InfoBarSeverity.Informational, "Servidor detenido",
-                "Las conexiones existentes se han cerrado.");
+            ShowStatus(InfoBarSeverity.Informational, global::CSIViewer.Core.Localization.Text("Servidor detenido"),
+                global::CSIViewer.Core.Localization.Text("Las conexiones existentes se han cerrado."));
         }
         catch (Exception ex)
         {
-            ShowStatus(InfoBarSeverity.Error, "No se pudo detener el servidor",
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("No se pudo detener el servidor"),
                 ex.GetBaseException().Message);
         }
         finally
@@ -512,7 +523,7 @@ public sealed partial class MainWindow : Window
         ServiceStoppedDot.Visibility = status.Running ? Visibility.Collapsed : Visibility.Visible;
         ServiceStatusText.Text = status.Installed
             ? $"Servicio instalado: {status.Description.ToLowerInvariant()}"
-            : "Servicio no instalado. El servidor solo se ejecuta desde esta ventana.";
+            : global::CSIViewer.Core.Localization.Text("Servicio no instalado. El servidor solo se ejecuta desde esta ventana.");
         CreateServiceButton.IsEnabled = !_serviceBusy && !status.Installed;
         DeleteServiceButton.IsEnabled = !_serviceBusy && status.Installed;
         StartServiceButton.IsEnabled = !_serviceBusy && status.Installed && !status.Running;
@@ -546,16 +557,16 @@ public sealed partial class MainWindow : Window
 
         if (!ReadSettingsFromUi(out var validationError))
         {
-            ShowStatus(InfoBarSeverity.Error, "Configuración no válida", validationError);
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Configuración no válida"), validationError);
             return;
         }
 
         if (_host.IsRunning)
         {
             var stop = await ConfirmAsync(
-                "Instalar el servicio",
-                "El servidor que está ejecutando esta ventana se detendrá para que el servicio " +
-                "pueda usar el mismo puerto. ¿Quieres continuar?");
+                global::CSIViewer.Core.Localization.Text("Instalar el servicio"),
+                global::CSIViewer.Core.Localization.Text("El servidor que está ejecutando esta ventana se detendrá para que el servicio ") +
+                global::CSIViewer.Core.Localization.Text("pueda usar el mismo puerto. ¿Quieres continuar?"));
             if (!stop)
             {
                 return;
@@ -569,12 +580,12 @@ public sealed partial class MainWindow : Window
         {
             ShowStatus(
                 InfoBarSeverity.Informational,
-                "Instalando el servicio",
-                "Acepta el aviso de Windows para conceder permisos de administrador.");
+                global::CSIViewer.Core.Localization.Text("Instalando el servicio"),
+                global::CSIViewer.Core.Localization.Text("Acepta el aviso de Windows para conceder permisos de administrador."));
             var result = await _serviceManager.InstallAsync(_settings);
             ShowStatus(
                 result.Success ? InfoBarSeverity.Success : InfoBarSeverity.Error,
-                result.Success ? "Servicio instalado y en ejecución" : "No se pudo instalar el servicio",
+                result.Success ? global::CSIViewer.Core.Localization.Text("Servicio instalado y en ejecución") : global::CSIViewer.Core.Localization.Text("No se pudo instalar el servicio"),
                 result.Message);
 
             if (result.Success)
@@ -605,9 +616,9 @@ public sealed partial class MainWindow : Window
         }
 
         var confirm = await ConfirmAsync(
-            "Quitar el servicio",
-            "Se detendrá y eliminará el servicio de Windows. El servidor seguirá disponible " +
-            "desde esta ventana. ¿Quieres continuar?");
+            global::CSIViewer.Core.Localization.Text("Quitar el servicio"),
+            global::CSIViewer.Core.Localization.Text("Se detendrá y eliminará el servicio de Windows. El servidor seguirá disponible ") +
+            global::CSIViewer.Core.Localization.Text("desde esta ventana. ¿Quieres continuar?"));
         if (!confirm)
         {
             return;
@@ -619,7 +630,7 @@ public sealed partial class MainWindow : Window
             var result = await _serviceManager.UninstallAsync();
             ShowStatus(
                 result.Success ? InfoBarSeverity.Success : InfoBarSeverity.Error,
-                result.Success ? "Servicio eliminado" : "No se pudo quitar el servicio",
+                result.Success ? "Servicio eliminado" : global::CSIViewer.Core.Localization.Text("No se pudo quitar el servicio"),
                 result.Message);
             await RefreshServiceStatusAsync();
         }
@@ -639,9 +650,9 @@ public sealed partial class MainWindow : Window
         if (_host.IsRunning)
         {
             var stopLocal = await ConfirmAsync(
-                "Iniciar el servicio",
-                "El servidor que está ejecutando esta ventana se detendrá para que el servicio " +
-                "pueda usar el mismo puerto. ¿Quieres continuar?");
+                global::CSIViewer.Core.Localization.Text("Iniciar el servicio"),
+                global::CSIViewer.Core.Localization.Text("El servidor que está ejecutando esta ventana se detendrá para que el servicio ") +
+                global::CSIViewer.Core.Localization.Text("pueda usar el mismo puerto. ¿Quieres continuar?"));
             if (!stopLocal)
             {
                 return;
@@ -656,7 +667,7 @@ public sealed partial class MainWindow : Window
             var result = await _serviceManager.StartAsync();
             ShowStatus(
                 result.Success ? InfoBarSeverity.Success : InfoBarSeverity.Error,
-                result.Success ? "Servicio iniciado" : "No se pudo iniciar el servicio",
+                result.Success ? "Servicio iniciado" : global::CSIViewer.Core.Localization.Text("No se pudo iniciar el servicio"),
                 result.Message);
             await RefreshServiceStatusAsync();
         }
@@ -674,9 +685,9 @@ public sealed partial class MainWindow : Window
         }
 
         var confirm = await ConfirmAsync(
-            "Parar el servicio",
-            "Se detendrá el servicio de Windows y se cerrarán las conexiones que esté atendiendo. " +
-            "El servidor seguirá disponible desde esta ventana. ¿Quieres continuar?");
+            global::CSIViewer.Core.Localization.Text("Parar el servicio"),
+            global::CSIViewer.Core.Localization.Text("Se detendrá el servicio de Windows y se cerrarán las conexiones que esté atendiendo. ") +
+            global::CSIViewer.Core.Localization.Text("El servidor seguirá disponible desde esta ventana. ¿Quieres continuar?"));
         if (!confirm)
         {
             return;
@@ -688,7 +699,7 @@ public sealed partial class MainWindow : Window
             var result = await _serviceManager.StopAsync();
             ShowStatus(
                 result.Success ? InfoBarSeverity.Success : InfoBarSeverity.Error,
-                result.Success ? "Servicio detenido" : "No se pudo parar el servicio",
+                result.Success ? "Servicio detenido" : global::CSIViewer.Core.Localization.Text("No se pudo parar el servicio"),
                 result.Message);
             await RefreshServiceStatusAsync();
         }
@@ -707,7 +718,7 @@ public sealed partial class MainWindow : Window
             Title = title,
             Content = message,
             PrimaryButtonText = "Continuar",
-            CloseButtonText = "Cancelar",
+            CloseButtonText = global::CSIViewer.Core.Localization.Text("Cancelar"),
             DefaultButton = ContentDialogButton.Close
         };
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
@@ -719,12 +730,12 @@ public sealed partial class MainWindow : Window
         {
             RequestedTheme = RootGrid.ActualTheme,
             XamlRoot = RootGrid.XamlRoot,
-            Title = "Borrar historial de sesiones",
-            Content = "Se eliminarán permanentemente los registros de sesiones guardados en la base de datos " +
-                      "del servidor. Los equipos registrados, el código de inscripción y las sesiones activas " +
-                      "no se modifican. ¿Quieres continuar?",
-            PrimaryButtonText = "Borrar historial",
-            CloseButtonText = "Cancelar",
+            Title = global::CSIViewer.Core.Localization.Text("Borrar historial de sesiones"),
+            Content = global::CSIViewer.Core.Localization.Text("Se eliminarán permanentemente los registros de sesiones guardados en la base de datos ") +
+                      global::CSIViewer.Core.Localization.Text("del servidor. Los equipos registrados, el código de inscripción y las sesiones activas ") +
+                      global::CSIViewer.Core.Localization.Text("no se modifican. ¿Quieres continuar?"),
+            PrimaryButtonText = global::CSIViewer.Core.Localization.Text("Borrar historial"),
+            CloseButtonText = global::CSIViewer.Core.Localization.Text("Cancelar"),
             DefaultButton = ContentDialogButton.Close
         };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary)
@@ -739,15 +750,15 @@ public sealed partial class MainWindow : Window
                 InfoBarSeverity.Success,
                 "Historial borrado",
                 removed == 0
-                    ? "No había sesiones guardadas en la base de datos del servidor."
-                    : $"Se han eliminado {removed} registros de sesiones.");
+                    ? global::CSIViewer.Core.Localization.Text("No había sesiones guardadas en la base de datos del servidor.")
+                    : global::CSIViewer.Core.Localization.Format("Se han eliminado {0} registros de sesiones.",removed));
         }
         catch (Exception ex)
         {
             ShowStatus(
                 InfoBarSeverity.Error,
-                "No se pudo borrar el historial",
-                "Cierra el servidor y vuelve a intentarlo. " + ex.GetBaseException().Message);
+                global::CSIViewer.Core.Localization.Text("No se pudo borrar el historial"),
+                global::CSIViewer.Core.Localization.Text("Cierra el servidor y vuelve a intentarlo. ") + ex.GetBaseException().Message);
         }
     }
 
@@ -755,14 +766,14 @@ public sealed partial class MainWindow : Window
     {
         if (!ReadSettingsFromUi(out var validationError))
         {
-            ShowStatus(InfoBarSeverity.Error, "Configuración no válida", validationError);
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Configuración no válida"), validationError);
             return;
         }
 
         if (SaveSettings(silent: false))
         {
-            ShowStatus(InfoBarSeverity.Success, "Configuración guardada",
-                "El modo consola usará estos mismos valores.");
+            ShowStatus(InfoBarSeverity.Success, global::CSIViewer.Core.Localization.Text("Configuración guardada"),
+                global::CSIViewer.Core.Localization.Text("El modo consola usará estos mismos valores."));
         }
     }
 
@@ -772,13 +783,13 @@ public sealed partial class MainWindow : Window
         {
             if (!ServerStartup.SetEnabled(_settings.StartWithWindows))
             {
-                ShowStatus(InfoBarSeverity.Error, "No se pudo cambiar el inicio con Windows",
-                    "Windows no permitió registrar la entrada de inicio automático.");
+                ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("No se pudo cambiar el inicio con Windows"),
+                    global::CSIViewer.Core.Localization.Text("Windows no permitió registrar la entrada de inicio automático."));
                 return false;
             }
 
             ServerSettingsStore.Save(_settings);
-            SaveHint.Text = $"Guardado a las {DateTime.Now:HH:mm}";
+            SaveHint.Text = global::CSIViewer.Core.Localization.Format("Guardado a las {0:HH:mm}",DateTime.Now);
             if (silent)
             {
                 StatusBar.IsOpen = false;
@@ -788,7 +799,7 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            ShowStatus(InfoBarSeverity.Error, "No se pudo guardar la configuración",
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("No se pudo guardar la configuración"),
                 ex.GetBaseException().Message);
             return false;
         }
@@ -866,11 +877,11 @@ public sealed partial class MainWindow : Window
 
     private static string DescribeLogLevel(AppLogLevel level) => level switch
     {
-        AppLogLevel.Debug => "Depuración (máximo detalle)",
-        AppLogLevel.Warning => "Advertencia",
-        AppLogLevel.Error => "Error",
-        AppLogLevel.Critical => "Crítico",
-        _ => "Información"
+        AppLogLevel.Debug => global::CSIViewer.Core.Localization.Text("Depuración (máximo detalle)"),
+        AppLogLevel.Warning => global::CSIViewer.Core.Localization.Text("Advertencia"),
+        AppLogLevel.Error => global::CSIViewer.Core.Localization.Text("Error"),
+        AppLogLevel.Critical => global::CSIViewer.Core.Localization.Text("Crítico"),
+        _ => global::CSIViewer.Core.Localization.Text("Información")
     };
 
     private void OpenLogs_Click(object sender, RoutedEventArgs e)
@@ -888,7 +899,7 @@ public sealed partial class MainWindow : Window
         {
             ShowStatus(
                 InfoBarSeverity.Error,
-                "No se pudo abrir la carpeta de logs",
+                global::CSIViewer.Core.Localization.Text("No se pudo abrir la carpeta de logs"),
                 ex.GetBaseException().Message);
         }
     }
@@ -906,7 +917,7 @@ public sealed partial class MainWindow : Window
             var sourceLogs = Path.Combine(ServerSettingsStore.DataDirectory, "logs");
             if (Directory.Exists(sourceLogs))
             {
-                foreach (var file in Directory.EnumerateFiles(sourceLogs, "csiviewer-servidor-*.log*"))
+                foreach (var file in Directory.EnumerateFiles(sourceLogs, global::CSIViewer.Core.Localization.Text("csiviewer-servidor-*.log*")))
                 {
                     File.Copy(file, Path.Combine(logs, Path.GetFileName(file)), overwrite: true);
                 }
@@ -932,7 +943,7 @@ public sealed partial class MainWindow : Window
             ZipFile.CreateFromDirectory(root, zip, CompressionLevel.Optimal, includeBaseDirectory: false);
             ShowStatus(
                 InfoBarSeverity.Success,
-                "Diagnóstico exportado",
+                global::CSIViewer.Core.Localization.Text("Diagnóstico exportado"),
                 zip);
             Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{zip}\"")
             {
@@ -943,7 +954,7 @@ public sealed partial class MainWindow : Window
         {
             ShowStatus(
                 InfoBarSeverity.Error,
-                "No se pudo exportar el diagnóstico",
+                global::CSIViewer.Core.Localization.Text("No se pudo exportar el diagnóstico"),
                 ex.GetBaseException().Message);
         }
         finally
@@ -968,20 +979,20 @@ public sealed partial class MainWindow : Window
     {
         if (double.IsNaN(PortBox.Value))
         {
-            error = "Escribe un puerto válido.";
+            error = global::CSIViewer.Core.Localization.Text("Escribe un puerto válido.");
             return false;
         }
 
         var databasePath = DatabasePathBox.Text.Trim();
         if (databasePath.Length == 0)
         {
-            error = "Indica una ruta para la base de datos.";
+            error = global::CSIViewer.Core.Localization.Text("Indica una ruta para la base de datos.");
             return false;
         }
 
         if (!Path.IsPathRooted(databasePath))
         {
-            error = "La ruta de la base de datos debe ser absoluta.";
+            error = global::CSIViewer.Core.Localization.Text("La ruta de la base de datos debe ser absoluta.");
             return false;
         }
 
@@ -1019,26 +1030,26 @@ public sealed partial class MainWindow : Window
 
         if (serviceRunning && !localRunning)
         {
-            StatusTitle.Text = "Servicio en ejecución";
-            StatusDetail.Text = "El servidor se está ejecutando como servicio de Windows. " +
-                                "Usa «Parar servicio» en la tarjeta Servicio de Windows para detenerlo.";
+            StatusTitle.Text = global::CSIViewer.Core.Localization.Text("Servicio en ejecución");
+            StatusDetail.Text = global::CSIViewer.Core.Localization.Text("El servidor se está ejecutando como servicio de Windows. ") +
+                                global::CSIViewer.Core.Localization.Text("Usa «Parar servicio» en la tarjeta Servicio de Windows para detenerlo.");
             StatusUrl.Text = _settings.ListenOnAllInterfaces
                 ? BuildAddressText()
-                : $"Dirección configurada: {_settings.ListenUrl}";
+                : global::CSIViewer.Core.Localization.Format("Dirección configurada: {0}",_settings.ListenUrl);
         }
         else if (localRunning)
         {
-            StatusTitle.Text = "Servidor en ejecución";
+            StatusTitle.Text = global::CSIViewer.Core.Localization.Text("Servidor en ejecución");
             StatusDetail.Text = _settings.ListenOnAllInterfaces
-                ? "Aceptando conexiones desde la red local o Internet. Direcciones disponibles:"
-                : "Aceptando conexiones solo desde este equipo.";
+                ? global::CSIViewer.Core.Localization.Text("Aceptando conexiones desde la red local o Internet. Direcciones disponibles:")
+                : global::CSIViewer.Core.Localization.Text("Aceptando conexiones solo desde este equipo.");
             StatusUrl.Text = BuildAddressText();
         }
         else
         {
-            StatusTitle.Text = "Servidor detenido";
-            StatusDetail.Text = "Pulsa «Iniciar servidor» para aceptar conexiones.";
-            StatusUrl.Text = $"Dirección configurada: {_settings.ListenUrl}";
+            StatusTitle.Text = global::CSIViewer.Core.Localization.Text("Servidor detenido");
+            StatusDetail.Text = global::CSIViewer.Core.Localization.Text("Pulsa «Iniciar servidor» para aceptar conexiones.");
+            StatusUrl.Text = global::CSIViewer.Core.Localization.Format("Dirección configurada: {0}",_settings.ListenUrl);
         }
 
         BusyRing.IsActive = _busy;
@@ -1074,7 +1085,7 @@ public sealed partial class MainWindow : Window
             addresses.Add(_settings.ListenUrl);
         }
 
-        return "Dirección: " + string.Join("  ·  ", addresses.Distinct());
+        return global::CSIViewer.Core.Localization.Text("Dirección: ") + string.Join("  ·  ", addresses.Distinct());
     }
 
     private void ShowStatus(InfoBarSeverity severity, string title, string message)
@@ -1105,7 +1116,7 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            ShowStatus(InfoBarSeverity.Error, "No se pudo crear el certificado",
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("No se pudo crear el certificado"),
                 ex.GetBaseException().Message);
         }
         finally
@@ -1119,7 +1130,7 @@ public sealed partial class MainWindow : Window
     {
         using var rsa = RSA.Create(2048);
         var request = new CertificateRequest(
-            "CN=CSIViewer Servidor",
+            global::CSIViewer.Core.Localization.Text("CN=CSIViewer Servidor"),
             rsa,
             HashAlgorithmName.SHA256,
             RSASignaturePadding.Pkcs1);
@@ -1178,7 +1189,7 @@ public sealed partial class MainWindow : Window
             {
                 SuggestedFileName = "server.db"
             };
-            picker.FileTypeChoices.Add("Base de datos SQLite", new List<string> { ".db" });
+            picker.FileTypeChoices.Add(global::CSIViewer.Core.Localization.Text("Base de datos SQLite"), new List<string> { ".db" });
             InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
             var file = await picker.PickSaveFileAsync();
             if (file is not null)
@@ -1188,7 +1199,7 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            ShowStatus(InfoBarSeverity.Error, "No se pudo elegir la base de datos",
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("No se pudo elegir la base de datos"),
                 ex.GetBaseException().Message);
         }
     }

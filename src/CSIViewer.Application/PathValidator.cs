@@ -8,7 +8,7 @@ public static class PathValidator
 {
     private static readonly HashSet<string> ReservedNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        "CON", "PRN", "AUX", "NUL",
+        global::CSIViewer.Core.Localization.Text("CON"), "PRN", "AUX", "NUL",
         "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
         "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
     };
@@ -17,12 +17,12 @@ public static class PathValidator
     {
         if (string.IsNullOrWhiteSpace(root))
         {
-            throw new ArgumentException("La carpeta de destino no es válida.", nameof(root));
+            throw new ArgumentException(global::CSIViewer.Core.Localization.Text("La carpeta de destino no es válida."), nameof(root));
         }
 
         if (string.IsNullOrWhiteSpace(relativePath))
         {
-            throw new InvalidOperationException("La ruta del archivo está vacía.");
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("La ruta del archivo está vacía."));
         }
 
         var normalized = relativePath
@@ -34,13 +34,13 @@ public static class PathValidator
             normalized.Contains('\0') ||
             Path.IsPathRooted(normalized))
         {
-            throw new InvalidOperationException("Ruta de archivo no permitida.");
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("Ruta de archivo no permitida."));
         }
 
         var parts = normalized.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 0)
         {
-            throw new InvalidOperationException("Ruta de archivo no permitida.");
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("Ruta de archivo no permitida."));
         }
 
         foreach (var part in parts)
@@ -53,7 +53,7 @@ public static class PathValidator
                 part.EndsWith('.') ||
                 ReservedNames.Contains(baseName))
             {
-                throw new InvalidOperationException("Ruta de archivo no permitida.");
+                throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("Ruta de archivo no permitida."));
             }
         }
 
@@ -68,7 +68,7 @@ public static class PathValidator
     {
         if (string.IsNullOrWhiteSpace(root) || string.IsNullOrWhiteSpace(fullPath))
         {
-            throw new InvalidOperationException("Ruta de archivo no permitida.");
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("Ruta de archivo no permitida."));
         }
 
         var fullRoot = Path.GetFullPath(root);
@@ -80,7 +80,7 @@ public static class PathValidator
         if (!candidate.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(candidate, fullRoot, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("La ruta sale de la carpeta de descargas.");
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("La ruta sale de la carpeta de descargas."));
         }
 
         return candidate;

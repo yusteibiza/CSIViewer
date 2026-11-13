@@ -2,7 +2,7 @@ namespace CSIViewer.Protocol;
 
 public sealed record FileBrowserEntry(string Name, string FullPath, bool IsDirectory, long Size, DateTimeOffset? ModifiedUtc)
 {
-    public string KindText => IsDirectory ? "Carpeta" : "Archivo";
+    public string KindText => IsDirectory ? global::CSIViewer.Core.Localization.Text("Carpeta") : global::CSIViewer.Core.Localization.Text("Archivo");
     public string SizeText => IsDirectory ? "" : Size >= 1048576 ? $"{Size / 1048576.0:0.0} MB" : Size >= 1024 ? $"{Size / 1024.0:0.0} KB" : $"{Size} B";
 }
 

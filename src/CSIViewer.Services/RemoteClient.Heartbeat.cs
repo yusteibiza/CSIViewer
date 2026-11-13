@@ -83,7 +83,7 @@ public sealed partial class RemoteClient
                     "Signaling heartbeat timeout: no data for {Elapsed}",
                     _signalingHealth.TimeSinceLastActivity(now));
                 await ForceSignalingReconnectAsync(
-                        "El servidor dejó de responder (heartbeat).")
+                        global::CSIViewer.Core.Localization.Text("El servidor dejó de responder (heartbeat)."))
                     .ConfigureAwait(false);
                 return;
             }
@@ -118,7 +118,7 @@ public sealed partial class RemoteClient
 
                 await EndRemoteSessionAsync(
                         session,
-                        "El equipo remoto dejó de responder (heartbeat).",
+                        global::CSIViewer.Core.Localization.Text("El equipo remoto dejó de responder (heartbeat)."),
                         sendToPeer: _state.IsServerOnline,
                         finalState)
                     .ConfigureAwait(false);
@@ -126,8 +126,8 @@ public sealed partial class RemoteClient
                 if (_state.Settings.NotificationsEnabled)
                 {
                     _notifications.Show(
-                        "Sesión finalizada",
-                        "El equipo remoto dejó de responder.");
+                        global::CSIViewer.Core.Localization.Text("Sesión finalizada"),
+                        global::CSIViewer.Core.Localization.Text("El equipo remoto dejó de responder."));
                 }
 
                 continue;

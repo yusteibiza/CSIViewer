@@ -24,7 +24,7 @@ public sealed class ServerServiceManager
         var result = await RunAsync("sc.exe", $"query {ServiceName}", cancellationToken).ConfigureAwait(false);
         if (result.ExitCode != 0 || result.Output.Contains("1060", StringComparison.Ordinal))
         {
-            return new ServerServiceStatus(false, false, "No instalado");
+            return new ServerServiceStatus(false, false, global::CSIViewer.Core.Localization.Text("No instalado"));
         }
 
         var stateLine = result.Output
@@ -35,17 +35,17 @@ public sealed class ServerServiceManager
         var match = stateLine is null ? null : Regex.Match(stateLine, @":\s*(\d+)");
         if (match is null || !match.Success || !int.TryParse(match.Groups[1].Value, out var state))
         {
-            return new ServerServiceStatus(true, false, "Instalado");
+            return new ServerServiceStatus(true, false, global::CSIViewer.Core.Localization.Text("Instalado"));
         }
 
         return state switch
         {
-            4 => new ServerServiceStatus(true, true, "En ejecución"),
-            1 => new ServerServiceStatus(true, false, "Detenido"),
-            2 => new ServerServiceStatus(true, false, "Iniciando"),
+            4 => new ServerServiceStatus(true, true, global::CSIViewer.Core.Localization.Text("En ejecución")),
+            1 => new ServerServiceStatus(true, false, global::CSIViewer.Core.Localization.Text("Detenido")),
+            2 => new ServerServiceStatus(true, false, global::CSIViewer.Core.Localization.Text("Iniciando")),
             3 => new ServerServiceStatus(true, false, "Deteniendo"),
             7 => new ServerServiceStatus(true, false, "Pausado"),
-            _ => new ServerServiceStatus(true, false, "Instalado")
+            _ => new ServerServiceStatus(true, false, global::CSIViewer.Core.Localization.Text("Instalado"))
         };
     }
 
@@ -95,7 +95,7 @@ public sealed class ServerServiceManager
         {
             return new ServiceOperationResult(
                 false,
-                "No se encontró CSIViewerServidor.exe. Reinstala CSIViewer Servidor.");
+                global::CSIViewer.Core.Localization.Text("No se encontró CSIViewerServidor.exe. Reinstala CSIViewer Servidor."));
         }
 
         var serviceArguments = new StringBuilder();
@@ -254,37 +254,37 @@ public sealed class ServerServiceManager
             {
                 return new ServiceOperationResult(
                     false,
-                    "No se pudo iniciar PowerShell con permisos de administrador.");
+                    global::CSIViewer.Core.Localization.Text("No se pudo iniciar PowerShell con permisos de administrador."));
             }
 
             await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
             var detail = ReadResultFile(resultFile);
             if (process.ExitCode == 0)
             {
-                return new ServiceOperationResult(true, "Operación completada.");
+                return new ServiceOperationResult(true, global::CSIViewer.Core.Localization.Text("Operación completada."));
             }
 
             return new ServiceOperationResult(
                 false,
                 string.IsNullOrWhiteSpace(detail)
-                    ? $"La operación terminó con código {process.ExitCode}. Revisa los permisos de administrador."
+                    ? global::CSIViewer.Core.Localization.Format("La operación terminó con código {0}. Revisa los permisos de administrador.",process.ExitCode)
                     : detail);
         }
         catch (OperationCanceledException)
         {
-            return new ServiceOperationResult(false, "Operación cancelada.");
+            return new ServiceOperationResult(false, global::CSIViewer.Core.Localization.Text("Operación cancelada."));
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorCancelled)
         {
             return new ServiceOperationResult(
                 false,
-                "Permiso de administrador cancelado; el servicio no se ha modificado.");
+                global::CSIViewer.Core.Localization.Text("Permiso de administrador cancelado; el servicio no se ha modificado."));
         }
         catch (Exception ex)
         {
             return new ServiceOperationResult(
                 false,
-                "No se pudo completar la operación: " + ex.GetBaseException().Message);
+                global::CSIViewer.Core.Localization.Text("No se pudo completar la operación: ") + ex.GetBaseException().Message);
         }
         finally
         {

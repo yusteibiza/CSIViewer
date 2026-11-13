@@ -1,169 +1,130 @@
-<Page
-    x:Class="CSIViewer.Host.Views.HelpPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="{ThemeResource PageBackgroundBrush}">
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled"
-                  HorizontalContentAlignment="Stretch" VerticalScrollBarVisibility="Auto">
+﻿<?xml version="1.0" encoding="utf-8"?><Page x:Class="CSIViewer.Host.Views.HelpPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="{ThemeResource PageBackgroundBrush}" xmlns:loc="using:CSIViewer.Presentation">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled" HorizontalContentAlignment="Stretch" VerticalScrollBarVisibility="Auto">
         <Grid Padding="{StaticResource PagePadding}" HorizontalAlignment="Stretch">
             <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Stretch">
                 <StackPanel Spacing="4">
-                    <TextBlock Text="Ayuda de CSIViewer Host" Style="{StaticResource PageTitleStyle}" />
-                    <TextBlock Text="Qué hace el host, cómo se usa y qué significa cada opción, explicado para cualquier persona."
-                               Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                    <TextBlock Text="Ayuda de CSIViewer Host" Style="{StaticResource PageTitleStyle}" loc:Translate.Text="Ayuda de CSIViewer Host" />
+                    <TextBlock Text="Qué hace el host, cómo se usa y qué significa cada opción, explicado para cualquier persona." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" loc:Translate.Text="Qué hace el host, cómo se usa y qué significa cada opción, explicado para cualquier persona." />
                 </StackPanel>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="¿Qué es CSIViewer Host?" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="CSIViewer Host es el programa que se instala en el equipo que va a recibir ayuda. Muestra un ID de 9 cifras y una contraseña temporal; con esos dos datos, otra persona puede conectarse para ver la pantalla, controlar el ratón y el teclado, hablar por chat o intercambiar archivos." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="El host es independiente del visor CSIViewer: puedes instalar solo el host en los equipos que quieras asistir. La conexión está cifrada de extremo a extremo y siempre necesita la aceptación de la persona que está delante del equipo, salvo que se configure el modo desatendido." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="El host puede arrancar con Windows mediante una tarea programada, sin necesidad de abrir la ventana. La ventana solo se muestra cuando hay una sesión de usuario iniciada; la pantalla de inicio de sesión y el escritorio seguro de Windows no se pueden capturar." />
+                        <TextBlock Text="Audio y portapapeles" Style="{StaticResource SectionTitleStyle}" AutomationProperties.AutomationId="AudioClipboardHelp" loc:Translate.Text="Audio y portapapeles" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" loc:Translate.Text="Antes de conectar, solicita Audio del sistema o Portapapeles de texto. El equipo remoto debe conceder esos permisos. Durante la sesión, activa Audio o Portapapeles en la barra de control; desmárcalos para detenerlos. Se desactivan al finalizar la sesión." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" loc:Translate.Text="Audio transmite la salida del equipo remoto al visor, no el micrófono. Portapapeles comparte solo texto nuevo en ambos sentidos, hasta 1 MiB, sin reenviar el contenido que ya había al activarlo. No envía imágenes ni archivos. No copies información sensible mientras esté activado. Requiere las versiones actualizadas de visor, host y servidor." />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Primeros pasos" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="1. Instala y abre CSIViewer Host. En Configuración escribe la URL del servidor (por ejemplo, http://yusteibiza.ddns.net:5180) y pulsa Guardar y Probar. Espera a que el estado se ponga «En línea»." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="2. Comprueba que «Permitir control de este equipo» está activado y que aparece un ID de 9 cifras y una contraseña." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="3. Comparte el ID y la contraseña solo con la persona de confianza que te va a ayudar." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="4. Cuando llegue la solicitud, revisa quién se conecta y acepta. Puedes elegir qué permisos concedes: ver la pantalla, controlar, chat y archivos." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="5. Mientras te controlan verás un aviso en la pantalla. Puedes finalizar la sesión en cualquier momento con el botón «Finalizar sesión»." />
+                        <TextBlock Text="¿Qué es CSIViewer Host?" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="¿Qué es CSIViewer Host?" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="CSIViewer Host es el programa que se instala en el equipo que va a recibir ayuda. Muestra un ID de 9 cifras y una contraseña temporal; con esos dos datos, otra persona puede conectarse para ver la pantalla, controlar el ratón y el teclado, hablar por chat o intercambiar archivos." loc:Translate.Text="CSIViewer Host es el programa que se instala en el equipo que va a recibir ayuda. Muestra un ID de 9 cifras y una contraseña temporal; con esos dos datos, otra persona puede conectarse para ver la pantalla, controlar el ratón y el teclado, hablar por chat o intercambiar archivos." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="El host es independiente del visor CSIViewer: puedes instalar solo el host en los equipos que quieras asistir. La conexión está cifrada de extremo a extremo y siempre necesita la aceptación de la persona que está delante del equipo, salvo que se configure el modo desatendido." loc:Translate.Text="El host es independiente del visor CSIViewer: puedes instalar solo el host en los equipos que quieras asistir. La conexión está cifrada de extremo a extremo y siempre necesita la aceptación de la persona que está delante del equipo, salvo que se configure el modo desatendido." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="El host puede arrancar con Windows mediante una tarea programada, sin necesidad de abrir la ventana. La ventana solo se muestra cuando hay una sesión de usuario iniciada; la pantalla de inicio de sesión y el escritorio seguro de Windows no se pueden capturar." loc:Translate.Text="El host puede arrancar con Windows mediante una tarea programada, sin necesidad de abrir la ventana. La ventana solo se muestra cuando hay una sesión de usuario iniciada; la pantalla de inicio de sesión y el escritorio seguro de Windows no se pueden capturar." />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Pantalla principal" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• TU ID: número que identifica a este equipo. Puedes copiarlo con el botón de al lado." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• CONTRASEÑA: clave que debe escribir quien quiera conectarse. Puedes mostrarla, copiarla o generar una nueva; al generarla, la anterior deja de funcionar y las sesiones abiertas se mantienen." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• Permitir control de este equipo: si está desactivado, nadie puede conectarse aunque tenga el ID y la contraseña." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• Cambiar contraseña: sustituye la contraseña temporal por una que elijas tú." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• Punto de estado: verde significa «En línea» (conectado al servidor); gris significa desconectado o reconectando. Si está gris, revisa la URL y que el servidor esté en marcha." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• Chat: durante una sesión puedes abrir el chat para hablar con quien te ayuda, incluso si no concede el control del ratón." />
+                        <TextBlock Text="Primeros pasos" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Primeros pasos" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="1. Instala y abre CSIViewer Host. En Configuración escribe la URL del servidor (por ejemplo, http://yusteibiza.ddns.net:5180) y pulsa Guardar y Probar. Espera a que el estado se ponga «En línea»." loc:Translate.Text="1. Instala y abre CSIViewer Host. En Configuración escribe la URL del servidor (por ejemplo, http://yusteibiza.ddns.net:5180) y pulsa Guardar y Probar. Espera a que el estado se ponga «En línea»." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="2. Comprueba que «Permitir control de este equipo» está activado y que aparece un ID de 9 cifras y una contraseña." loc:Translate.Text="2. Comprueba que «Permitir control de este equipo» está activado y que aparece un ID de 9 cifras y una contraseña." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="3. Comparte el ID y la contraseña solo con la persona de confianza que te va a ayudar." loc:Translate.Text="3. Comparte el ID y la contraseña solo con la persona de confianza que te va a ayudar." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="4. Cuando llegue la solicitud, revisa quién se conecta y acepta. Puedes elegir qué permisos concedes: ver la pantalla, controlar, chat y archivos." loc:Translate.Text="4. Cuando llegue la solicitud, revisa quién se conecta y acepta. Puedes elegir qué permisos concedes: ver la pantalla, controlar, chat y archivos." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="5. Mientras te controlan verás un aviso en la pantalla. Puedes finalizar la sesión en cualquier momento con el botón «Finalizar sesión»." loc:Translate.Text="5. Mientras te controlan verás un aviso en la pantalla. Puedes finalizar la sesión en cualquier momento con el botón «Finalizar sesión»." />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Sesión activa y permisos" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Cuando alguien solicita conectarse, el host muestra quién es y qué permisos pide. Puedes aceptar todos, aceptar solo algunos o rechazar. Los permisos son: ver la pantalla, controlar el ratón y el teclado, usar el chat, enviar archivos y recibir archivos." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Solo una persona puede controlar el equipo en cada momento. Si no quieres que controlen, pero sí que vean o escriban, concede solo «Ver pantalla» o «Chat»." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Mientras hay una sesión, la ventana del host muestra un aviso y el botón «Finalizar sesión». Al finalizar se cierran la pantalla, el chat y las transferencias, y se sueltan las teclas y botones que hubieran quedado pulsados." />
+                        <TextBlock Text="Pantalla principal" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Pantalla principal" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• TU ID: número que identifica a este equipo. Puedes copiarlo con el botón de al lado." loc:Translate.Text="• TU ID: número que identifica a este equipo. Puedes copiarlo con el botón de al lado." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• CONTRASEÑA: clave que debe escribir quien quiera conectarse. Puedes mostrarla, copiarla o generar una nueva; al generarla, la anterior deja de funcionar y las sesiones abiertas se mantienen." loc:Translate.Text="• CONTRASEÑA: clave que debe escribir quien quiera conectarse. Puedes mostrarla, copiarla o generar una nueva; al generarla, la anterior deja de funcionar y las sesiones abiertas se mantienen." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• Permitir control de este equipo: si está desactivado, nadie puede conectarse aunque tenga el ID y la contraseña." loc:Translate.Text="• Permitir control de este equipo: si está desactivado, nadie puede conectarse aunque tenga el ID y la contraseña." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• Cambiar contraseña: sustituye la contraseña temporal por una que elijas tú." loc:Translate.Text="• Cambiar contraseña: sustituye la contraseña temporal por una que elijas tú." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• Punto de estado: verde significa «En línea» (conectado al servidor); gris significa desconectado o reconectando. Si está gris, revisa la URL y que el servidor esté en marcha." loc:Translate.Text="• Punto de estado: verde significa «En línea» (conectado al servidor); gris significa desconectado o reconectando. Si está gris, revisa la URL y que el servidor esté en marcha." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• Chat: durante una sesión puedes abrir el chat para hablar con quien te ayuda, incluso si no concede el control del ratón." loc:Translate.Text="• Chat: durante una sesión puedes abrir el chat para hablar con quien te ayuda, incluso si no concede el control del ratón." />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Configuración del host, opción por opción" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Text="Apariencia" FontWeight="SemiBold" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Tema: sistema (sigue a Windows), claro u oscuro. Color de énfasis: Windows o uno de los siete colores disponibles; se aplica y se guarda al elegirlo." />
-                        <TextBlock Text="Servidor" FontWeight="SemiBold" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="URL del servidor: dirección del servidor al que se conecta el host (http:// o https://). Guardar aplica los cambios; Probar comprueba que el servidor responde. Permitir HTTP remoto (sin HTTPS): permite servidores http://; úsalo solo en una red de confianza o para pruebas." />
-                        <TextBlock Text="Calidad de imagen" FontWeight="SemiBold" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Calidad: nitidez de la imagen (más calidad usa más ancho de banda). FPS: fluidez; 50, 60, 90 y 120 FPS requieren un monitor, CPU, GPU y red suficientes. Ancho: resolución a la que se envía la pantalla. H.264: comprime mejor que JPEG; si falla se usa JPEG. Captura moderna: usa Windows.Graphics.Capture con el cursor; si falla se usa GDI de respaldo." />
-                        <TextBlock Text="Modo desatendido" FontWeight="SemiBold" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="El host arranca con Windows mediante una tarea programada llamada CSIViewerHost, que se ejecuta como SYSTEM al iniciar el equipo. La ventana solo aparece cuando hay un usuario con la sesión iniciada. No instala un servicio de Windows: UAC solo se pide al activar o desactivar el inicio automático." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Estado: «No instalado» significa que la tarea no existe; «Listo» significa que la tarea está creada y esperando; «En ejecución» significa que el agente está activo. Activar inicio crea la tarea; Desactivar la elimina; Actualizar estado vuelve a comprobarlo." />
-                        <TextBlock Text="Solicitudes de conexión" FontWeight="SemiBold" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Preguntar siempre: muestra la solicitud y espera tu respuesta. Aceptar automáticamente: acepta la conexión sin mostrar la solicitud, pero sigue exigiendo la contraseña correcta. Rechazar automáticamente: rechaza todas las solicitudes; nadie puede conectarse." />
-                        <TextBlock Text="Carpeta de descargas" FontWeight="SemiBold" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Destino de los envíos clásicos sin carpeta seleccionada. Escribe la ruta o pulsa Examinar y luego Guardar carpeta. En el administrador de archivos se usa la carpeta abierta del panel de destino." />
+                        <TextBlock Text="Sesión activa y permisos" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Sesión activa y permisos" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Cuando alguien solicita conectarse, el host muestra quién es y qué permisos pide. Puedes aceptar todos, aceptar solo algunos o rechazar. Los permisos son: ver la pantalla, controlar el ratón y el teclado, usar el chat, enviar archivos y recibir archivos." loc:Translate.Text="Cuando alguien solicita conectarse, el host muestra quién es y qué permisos pide. Puedes aceptar todos, aceptar solo algunos o rechazar. Los permisos son: ver la pantalla, controlar el ratón y el teclado, usar el chat, enviar archivos y recibir archivos." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Solo una persona puede controlar el equipo en cada momento. Si no quieres que controlen, pero sí que vean o escriban, concede solo «Ver pantalla» o «Chat»." loc:Translate.Text="Solo una persona puede controlar el equipo en cada momento. Si no quieres que controlen, pero sí que vean o escriban, concede solo «Ver pantalla» o «Chat»." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Mientras hay una sesión, la ventana del host muestra un aviso y el botón «Finalizar sesión». Al finalizar se cierran la pantalla, el chat y las transferencias, y se sueltan las teclas y botones que hubieran quedado pulsados." loc:Translate.Text="Mientras hay una sesión, la ventana del host muestra un aviso y el botón «Finalizar sesión». Al finalizar se cierran la pantalla, el chat y las transferencias, y se sueltan las teclas y botones que hubieran quedado pulsados." />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Modo desatendido: cuándo usarlo" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Úsalo en equipos que deben estar disponibles sin que nadie los abra, por ejemplo un ordenador de oficina o un servidor de casa. La tarea arranca el agente al encender Windows; cuando un usuario inicia sesión, el agente abre la ventana del host en esa sesión." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Importante: el host no puede capturar la pantalla de inicio de sesión, la pantalla de UAC ni el escritorio seguro. Hasta que un usuario inicia sesión y la ventana está disponible, la captura no mostrará el escritorio." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Para activarlo o desactivarlo necesitas aceptar el aviso de administrador (UAC). Después, al reiniciar el equipo no se vuelve a pedir: la tarea se ejecuta como SYSTEM." />
+                        <TextBlock Text="Configuración del host, opción por opción" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Configuración del host, opción por opción" />
+                        <TextBlock Text="Apariencia" FontWeight="SemiBold" loc:Translate.Text="Apariencia" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Tema: sistema (sigue a Windows), claro u oscuro. Color de énfasis: Windows o uno de los siete colores disponibles; se aplica y se guarda al elegirlo." loc:Translate.Text="Tema: sistema (sigue a Windows), claro u oscuro. Color de énfasis: Windows o uno de los siete colores disponibles; se aplica y se guarda al elegirlo." />
+                        <TextBlock Text="Servidor" FontWeight="SemiBold" loc:Translate.Text="Servidor" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="URL del servidor: dirección del servidor al que se conecta el host (http:// o https://). Guardar aplica los cambios; Probar comprueba que el servidor responde. Permitir HTTP remoto (sin HTTPS): permite servidores http://; úsalo solo en una red de confianza o para pruebas." loc:Translate.Text="URL del servidor: dirección del servidor al que se conecta el host (http:// o https://). Guardar aplica los cambios; Probar comprueba que el servidor responde. Permitir HTTP remoto (sin HTTPS): permite servidores http://; úsalo solo en una red de confianza o para pruebas." />
+                        <TextBlock Text="Calidad de imagen" FontWeight="SemiBold" loc:Translate.Text="Calidad de imagen" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Calidad: nitidez de la imagen (más calidad usa más ancho de banda). FPS: fluidez; 50, 60, 90 y 120 FPS requieren un monitor, CPU, GPU y red suficientes. Ancho: resolución a la que se envía la pantalla. H.264: comprime mejor que JPEG; si falla se usa JPEG. Captura moderna: usa Windows.Graphics.Capture con el cursor; si falla se usa GDI de respaldo." loc:Translate.Text="Calidad: nitidez de la imagen (más calidad usa más ancho de banda). FPS: fluidez; 50, 60, 90 y 120 FPS requieren un monitor, CPU, GPU y red suficientes. Ancho: resolución a la que se envía la pantalla. H.264: comprime mejor que JPEG; si falla se usa JPEG. Captura moderna: usa Windows.Graphics.Capture con el cursor; si falla se usa GDI de respaldo." />
+                        <TextBlock Text="Modo desatendido" FontWeight="SemiBold" loc:Translate.Text="Modo desatendido" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="El host arranca con Windows mediante una tarea programada llamada CSIViewerHost, que se ejecuta como SYSTEM al iniciar el equipo. La ventana solo aparece cuando hay un usuario con la sesión iniciada. No instala un servicio de Windows: UAC solo se pide al activar o desactivar el inicio automático." loc:Translate.Text="El host arranca con Windows mediante una tarea programada llamada CSIViewerHost, que se ejecuta como SYSTEM al iniciar el equipo. La ventana solo aparece cuando hay un usuario con la sesión iniciada. No instala un servicio de Windows: UAC solo se pide al activar o desactivar el inicio automático." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Estado: «No instalado» significa que la tarea no existe; «Listo» significa que la tarea está creada y esperando; «En ejecución» significa que el agente está activo. Activar inicio crea la tarea; Desactivar la elimina; Actualizar estado vuelve a comprobarlo." loc:Translate.Text="Estado: «No instalado» significa que la tarea no existe; «Listo» significa que la tarea está creada y esperando; «En ejecución» significa que el agente está activo. Activar inicio crea la tarea; Desactivar la elimina; Actualizar estado vuelve a comprobarlo." />
+                        <TextBlock Text="Solicitudes de conexión" FontWeight="SemiBold" loc:Translate.Text="Solicitudes de conexión" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Preguntar siempre: muestra la solicitud y espera tu respuesta. Aceptar automáticamente: acepta la conexión sin mostrar la solicitud, pero sigue exigiendo la contraseña correcta. Rechazar automáticamente: rechaza todas las solicitudes; nadie puede conectarse." loc:Translate.Text="Preguntar siempre: muestra la solicitud y espera tu respuesta. Aceptar automáticamente: acepta la conexión sin mostrar la solicitud, pero sigue exigiendo la contraseña correcta. Rechazar automáticamente: rechaza todas las solicitudes; nadie puede conectarse." />
+                        <TextBlock Text="Carpeta de descargas" FontWeight="SemiBold" loc:Translate.Text="Carpeta de descargas" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Destino de los envíos clásicos sin carpeta seleccionada. Escribe la ruta o pulsa Examinar y luego Guardar carpeta. En el administrador de archivos se usa la carpeta abierta del panel de destino." loc:Translate.Text="Destino de los envíos clásicos sin carpeta seleccionada. Escribe la ruta o pulsa Examinar y luego Guardar carpeta. En el administrador de archivos se usa la carpeta abierta del panel de destino." />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Transferencia de archivos: administrador local y remoto" Style="{StaticResource SectionTitleStyle}" AutomationProperties.AutomationId="FileTransferHelp" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Con visor y host 1.0.1 o posterior y permiso de archivos, la página Transferencia de archivos muestra «Este equipo» a la izquierda y «Equipo remoto» a la derecha. Si el visor inicia la transferencia, usa esos paneles para elegir las carpetas de ambos equipos; el host conserva su autorización de recepción." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Abre origen y destino con Unidades, Subir, Ir o la ruta editable. Doble clic abre carpetas, nunca ejecuta archivos. Selecciona varios con Ctrl/Mayús. «Enviar →» copia del panel local al remoto y «← Recibir» del remoto al local. El destino es la carpeta abierta, no necesariamente Descargas; la vista de unidades no es un destino." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="«Opciones y progreso de transferencias» contiene el progreso, los selectores y Pausar/Reanudar/Cancelar. Los paneles se actualizan al terminar y también tienen Actualizar y paginación. Se respetan los permisos, la confirmación del receptor, la política de conflictos y la verificación SHA-256. No se admiten rutas de red ni enlaces; no se elevan permisos para carpetas protegidas." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Tras desconectar debes seleccionar otra vez archivos y carpeta para autorizar el destino de la nueva sesión; los parciales compatibles pueden reanudarse. No se borran, renombran ni ejecutan archivos desde el administrador. La carpeta Descargas configurada sigue siendo el destino de los envíos clásicos sin carpeta seleccionada." />
+                        <TextBlock Text="Modo desatendido: cuándo usarlo" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Modo desatendido: cuándo usarlo" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Úsalo en equipos que deben estar disponibles sin que nadie los abra, por ejemplo un ordenador de oficina o un servidor de casa. La tarea arranca el agente al encender Windows; cuando un usuario inicia sesión, el agente abre la ventana del host en esa sesión." loc:Translate.Text="Úsalo en equipos que deben estar disponibles sin que nadie los abra, por ejemplo un ordenador de oficina o un servidor de casa. La tarea arranca el agente al encender Windows; cuando un usuario inicia sesión, el agente abre la ventana del host en esa sesión." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Importante: el host no puede capturar la pantalla de inicio de sesión, la pantalla de UAC ni el escritorio seguro. Hasta que un usuario inicia sesión y la ventana está disponible, la captura no mostrará el escritorio." loc:Translate.Text="Importante: el host no puede capturar la pantalla de inicio de sesión, la pantalla de UAC ni el escritorio seguro. Hasta que un usuario inicia sesión y la ventana está disponible, la captura no mostrará el escritorio." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Para activarlo o desactivarlo necesitas aceptar el aviso de administrador (UAC). Después, al reiniciar el equipo no se vuelve a pedir: la tarea se ejecuta como SYSTEM." loc:Translate.Text="Para activarlo o desactivarlo necesitas aceptar el aviso de administrador (UAC). Después, al reiniciar el equipo no se vuelve a pedir: la tarea se ejecuta como SYSTEM." />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Color de énfasis" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Junto al botón del tema y en Configuración > Apariencia puedes elegir Color de Windows, azul, verde, turquesa, violeta, rosa, naranja o rojo. Se aplica al momento y se guarda para este host, independientemente del visor y el servidor. No cambia los colores de estado/aviso/error ni el chat. En alto contraste se respetan los colores de Windows." />
+                        <TextBlock Text="Transferencia de archivos: administrador local y remoto" Style="{StaticResource SectionTitleStyle}" AutomationProperties.AutomationId="FileTransferHelp" loc:Translate.Text="Transferencia de archivos: administrador local y remoto" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Con visor y host 1.0.1 o posterior y permiso de archivos, la página Transferencia de archivos muestra «Este equipo» a la izquierda y «Equipo remoto» a la derecha. Si el visor inicia la transferencia, usa esos paneles para elegir las carpetas de ambos equipos; el host conserva su autorización de recepción." loc:Translate.Text="Con visor y host 1.0.1 o posterior y permiso de archivos, la página Transferencia de archivos muestra «Este equipo» a la izquierda y «Equipo remoto» a la derecha. Si el visor inicia la transferencia, usa esos paneles para elegir las carpetas de ambos equipos; el host conserva su autorización de recepción." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Abre origen y destino con Unidades, Subir, Ir o la ruta editable. Doble clic abre carpetas, nunca ejecuta archivos. Selecciona varios con Ctrl/Mayús. «Enviar →» copia del panel local al remoto y «← Recibir» del remoto al local. El destino es la carpeta abierta, no necesariamente Descargas; la vista de unidades no es un destino." loc:Translate.Text="Abre origen y destino con Unidades, Subir, Ir o la ruta editable. Doble clic abre carpetas, nunca ejecuta archivos. Selecciona varios con Ctrl/Mayús. «Enviar →» copia del panel local al remoto y «← Recibir» del remoto al local. El destino es la carpeta abierta, no necesariamente Descargas; la vista de unidades no es un destino." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="«Opciones y progreso de transferencias» contiene el progreso, los selectores y Pausar/Reanudar/Cancelar. Los paneles se actualizan al terminar y también tienen Actualizar y paginación. Se respetan los permisos, la confirmación del receptor, la política de conflictos y la verificación SHA-256. No se admiten rutas de red ni enlaces; no se elevan permisos para carpetas protegidas." loc:Translate.Text="«Opciones y progreso de transferencias» contiene el progreso, los selectores y Pausar/Reanudar/Cancelar. Los paneles se actualizan al terminar y también tienen Actualizar y paginación. Se respetan los permisos, la confirmación del receptor, la política de conflictos y la verificación SHA-256. No se admiten rutas de red ni enlaces; no se elevan permisos para carpetas protegidas." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Tras desconectar debes seleccionar otra vez archivos y carpeta para autorizar el destino de la nueva sesión; los parciales compatibles pueden reanudarse. No se borran, renombran ni ejecutan archivos desde el administrador. La carpeta Descargas configurada sigue siendo el destino de los envíos clásicos sin carpeta seleccionada." loc:Translate.Text="Tras desconectar debes seleccionar otra vez archivos y carpeta para autorizar el destino de la nueva sesión; los parciales compatibles pueden reanudarse. No se borran, renombran ni ejecutan archivos desde el administrador. La carpeta Descargas configurada sigue siendo el destino de los envíos clásicos sin carpeta seleccionada." />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Seguridad y privacidad" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="La contraseña se comprueba en este equipo; el servidor no la recibe ni puede descifrar la sesión. La conexión está cifrada de extremo a extremo. Nadie puede conectarse sin la contraseña y, con la política «Preguntar siempre», sin tu aceptación." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="Puedes rechazar una solicitud, finalizar una sesión en curso o desactivar «Permitir control de este equipo». El host no se oculta: muestra siempre un aviso cuando alguien está conectado." />
+                        <TextBlock Text="Color de énfasis" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Color de énfasis" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Junto al botón del tema y en Configuración &gt; Apariencia puedes elegir Color de Windows, azul, verde, turquesa, violeta, rosa, naranja o rojo. Se aplica al momento y se guarda para este host, independientemente del visor y el servidor. No cambia los colores de estado/aviso/error ni el chat. En alto contraste se respetan los colores de Windows." loc:Translate.Text="Junto al botón del tema y en Configuración &gt; Apariencia puedes elegir Color de Windows, azul, verde, turquesa, violeta, rosa, naranja o rojo. Se aplica al momento y se guarda para este host, independientemente del visor y el servidor. No cambia los colores de estado/aviso/error ni el chat. En alto contraste se respetan los colores de Windows." />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Problemas frecuentes" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• El estado está gris o «Reconectando»: revisa la URL del servidor, que el servidor esté encendido y que el puerto TCP esté permitido en el firewall o router." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• Al activar el inicio aparece un error de permisos: acepta el aviso de UAC. Si lo cancelas, no se cambia nada. Comprueba que el agente CSIViewer.Host.Agent.exe existe en la carpeta de instalación." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• La tarea está «Listo» pero el host no aparece: inicia sesión en Windows; el agente necesita una sesión de usuario para abrir la ventana. Revisa también que el equipo haya arrancado completamente." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• La contraseña no funciona: distingue mayúsculas y minúsculas y puede haber caducado. Genera una nueva y vuelve a compartirla." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• No se ve la pantalla: la persona que te ayuda necesita el permiso «Ver pantalla». Si el equipo está bloqueado, en UAC o en la pantalla de inicio de sesión, no se puede capturar." />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="• El ratón no responde: falta el permiso «Controlar» o hay otra persona controlando el equipo." />
+                        <TextBlock Text="Seguridad y privacidad" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Seguridad y privacidad" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="La contraseña se comprueba en este equipo; el servidor no la recibe ni puede descifrar la sesión. La conexión está cifrada de extremo a extremo. Nadie puede conectarse sin la contraseña y, con la política «Preguntar siempre», sin tu aceptación." loc:Translate.Text="La contraseña se comprueba en este equipo; el servidor no la recibe ni puede descifrar la sesión. La conexión está cifrada de extremo a extremo. Nadie puede conectarse sin la contraseña y, con la política «Preguntar siempre», sin tu aceptación." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Puedes rechazar una solicitud, finalizar una sesión en curso o desactivar «Permitir control de este equipo». El host no se oculta: muestra siempre un aviso cuando alguien está conectado." loc:Translate.Text="Puedes rechazar una solicitud, finalizar una sesión en curso o desactivar «Permitir control de este equipo». El host no se oculta: muestra siempre un aviso cuando alguien está conectado." />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Glosario" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
-                                   Text="ID: número de 9 cifras que identifica al equipo. Host: este programa, el equipo que recibe la ayuda. Visor: programa desde el que se mira o controla. Servidor: intermediario que conecta ambos equipos. Relay: ruta indirecta a través del servidor. Contraseña temporal: clave que autoriza una conexión. Permiso: autorización concreta (ver, controlar, chat, archivos). DPAPI: protección de datos de Windows. UAC: aviso de permisos de administrador. Tarea programada: entrada de Windows que inicia el host al arrancar. SYSTEM: cuenta de Windows con permisos elevados que ejecuta la tarea. WGC: Windows.Graphics.Capture, la captura moderna de pantalla." />
+                        <TextBlock Text="Problemas frecuentes" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Problemas frecuentes" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• El estado está gris o «Reconectando»: revisa la URL del servidor, que el servidor esté encendido y que el puerto TCP esté permitido en el firewall o router." loc:Translate.Text="• El estado está gris o «Reconectando»: revisa la URL del servidor, que el servidor esté encendido y que el puerto TCP esté permitido en el firewall o router." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• Al activar el inicio aparece un error de permisos: acepta el aviso de UAC. Si lo cancelas, no se cambia nada. Comprueba que el agente CSIViewer.Host.Agent.exe existe en la carpeta de instalación." loc:Translate.Text="• Al activar el inicio aparece un error de permisos: acepta el aviso de UAC. Si lo cancelas, no se cambia nada. Comprueba que el agente CSIViewer.Host.Agent.exe existe en la carpeta de instalación." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• La tarea está «Listo» pero el host no aparece: inicia sesión en Windows; el agente necesita una sesión de usuario para abrir la ventana. Revisa también que el equipo haya arrancado completamente." loc:Translate.Text="• La tarea está «Listo» pero el host no aparece: inicia sesión en Windows; el agente necesita una sesión de usuario para abrir la ventana. Revisa también que el equipo haya arrancado completamente." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• La contraseña no funciona: distingue mayúsculas y minúsculas y puede haber caducado. Genera una nueva y vuelve a compartirla." loc:Translate.Text="• La contraseña no funciona: distingue mayúsculas y minúsculas y puede haber caducado. Genera una nueva y vuelve a compartirla." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• No se ve la pantalla: la persona que te ayuda necesita el permiso «Ver pantalla». Si el equipo está bloqueado, en UAC o en la pantalla de inicio de sesión, no se puede capturar." loc:Translate.Text="• No se ve la pantalla: la persona que te ayuda necesita el permiso «Ver pantalla». Si el equipo está bloqueado, en UAC o en la pantalla de inicio de sesión, no se puede capturar." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="• El ratón no responde: falta el permiso «Controlar» o hay otra persona controlando el equipo." loc:Translate.Text="• El ratón no responde: falta el permiso «Controlar» o hay otra persona controlando el equipo." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Glosario" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Glosario" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="ID: número de 9 cifras que identifica al equipo. Host: este programa, el equipo que recibe la ayuda. Visor: programa desde el que se mira o controla. Servidor: intermediario que conecta ambos equipos. Relay: ruta indirecta a través del servidor. Contraseña temporal: clave que autoriza una conexión. Permiso: autorización concreta (ver, controlar, chat, archivos). DPAPI: protección de datos de Windows. UAC: aviso de permisos de administrador. Tarea programada: entrada de Windows que inicia el host al arrancar. SYSTEM: cuenta de Windows con permisos elevados que ejecuta la tarea. WGC: Windows.Graphics.Capture, la captura moderna de pantalla." loc:Translate.Text="ID: número de 9 cifras que identifica al equipo. Host: este programa, el equipo que recibe la ayuda. Visor: programa desde el que se mira o controla. Servidor: intermediario que conecta ambos equipos. Relay: ruta indirecta a través del servidor. Contraseña temporal: clave que autoriza una conexión. Permiso: autorización concreta (ver, controlar, chat, archivos). DPAPI: protección de datos de Windows. UAC: aviso de permisos de administrador. Tarea programada: entrada de Windows que inicia el host al arrancar. SYSTEM: cuenta de Windows con permisos elevados que ejecuta la tarea. WGC: Windows.Graphics.Capture, la captura moderna de pantalla." />
                     </StackPanel>
                 </Border>
             </StackPanel>

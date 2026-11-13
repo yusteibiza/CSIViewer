@@ -2,12 +2,55 @@
 
 Documento de transferencia de contexto para que otro modelo de IA continúe el proyecto sin repetir errores ni romper lo que funciona.
 
+> **AUDIO/PORTAPAPELES Y GRIS — revisión más reciente:** implementados audio
+> del sistema remoto (WASAPI loopback, sin micrófono) y portapapeles de texto
+> bidireccional. Permisos nuevos 32/64, peticiones desmarcadas por defecto y
+> activación en barra de sesión; cifrado existente, límite de texto 1 MiB,
+> marca antieco, sin historial/roaming Windows, UI coalescida y colas de audio
+> acotadas. Desconexión libera recursos. Actualizar también el servidor por
+> la validación de permisos del protocolo. Ver informe 24.
+> Debug/Release: 236/236 tests, 15/15 comprobaciones de sesión reales y 10/10 UI visor.
+> Matriz final idiomas Debug 53/53: host 18, servidor 17 y visor 18 tras repetir
+> con espera de disponibilidad UI (primer intento visor falla porque no aparece
+> a tiempo AccentColorButton; ambas evidencias conservadas).
+> Tres instaladores 1.0.1 regenerados 22:36–22:38, hashes en
+> `artifacts/diagnostics/audio-clipboard-installers.json`. Visor publicado pasa
+> también 10/10 UI. Incluyen idiomas, gris neutro, indicadores, audio y portapapeles.
+> Menú lateral Light fijado a #F3F3F3 en visor/host, color comprobado en captura.
+> Prueba audible entre dos PCs pendiente; loopback nativo y transporte/reproducción
+> de silencio cifrado comprobados por separado para evitar realimentación local.
+> NO se han actualizado instalaciones, cerrado el visor del usuario ni cambiado
+> su servidor. La incidencia de reconexión era URL de visor 5080 frente a servidor
+> configurado 5180; el usuario pidió no cambiar nada y no se modificó esa lógica.
+> El usuario está ejecutando un Debug anterior: validación Debug nueva va a
+> `artifacts/feature-validation` para no sobrescribir sus ejecutables abiertos.
+
+> **IDIOMAS/INDICADORES — revisión posterior:** corregidos el tema seleccionado
+> que quedaba en español, ServerHintText, ID mal traducido y navegación de pruebas
+> tras reiniciar en catalán. Matrices Debug: visor 18/18, host 18/18, servidor 17/17
+> (cambio/persistencia es/en/fr/ca, límites horizontales de botones y reinicio).
+> HostSettingsPage ahora apila tarjetas por debajo de 560 DIP en visor y host;
+> captura francesa de host a 640 px revisada, sin los recortes anteriores.
+> La causa adicional del círculo negro era SetBrush mutando pinceles compartidos
+> de aliases Fluent: ahora crea instancias propias y personaliza explícitamente
+> los fondos de controles comunes, sin tocar sus pinceles de glifo nativos.
+> Capturas host: círculo blanco Light, negro Dark. Regresión énfasis/ayuda Debug:
+> 33/33 entre las tres aplicaciones. Compilaciones sin avisos/errores;
+> 221/221 tests Debug/Release y matriz idiomas Release 53/53 superados.
+> Último retoque contextual francés posterior a las capturas: Release recompilado
+> y 221/221 tests repetidos; no implica revisión visual exhaustiva.
+> Nuevos instaladores NO generados. Audio/portapapeles aún NO implementados.
+> Informe de alcance y pendientes: `docs/23-idiomas-indicadores-1.0.1.md`.
+
 > **AYUDA/ÉNFASIS — 13/11, 19:55:** ayuda interna actualizada y selector Windows
 > + siete colores en visor/host/servidor, persistente junto al tema y en Apariencia.
 > 205/205 tests Debug/Release, 33/33 comprobaciones UI en cada configuración,
 > archivos 7/7 y fullscreen 15/15 Release. Informe 22 con paquetes/hashes.
 > **Nueva petición activa:** multiidioma es/en/fr/ca, selector junto al tema y color
 > en cada configuración y revisión de desbordamientos; aún no finalizada.
+> Petición posterior en cola: audio del sistema remoto al visor (no micrófono por
+> defecto) y portapapeles de texto bidireccional con permiso y activación explícita.
+> No afirmar que audio/portapapeles estén implementados hasta verificarlos.
 
 > **ÚLTIMA REVISIÓN — 13/11, 19:29:** corregida pérdida real de contraseñas de
 > dispositivos al conectar/recibir sesión. PersistKnownDeviceAsync llamaba Upsert

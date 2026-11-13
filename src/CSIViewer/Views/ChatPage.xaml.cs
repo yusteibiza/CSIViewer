@@ -24,9 +24,9 @@ public sealed class ChatRow
     private string StateText => Message.DeliveryState switch
     {
         ChatDeliveryState.Sending => "Enviando",
-        ChatDeliveryState.Sent => "Enviado",
-        ChatDeliveryState.Received => "Recibido",
-        ChatDeliveryState.Failed => "Fallido",
+        ChatDeliveryState.Sent => global::CSIViewer.Core.Localization.Text("Enviado"),
+        ChatDeliveryState.Received => global::CSIViewer.Core.Localization.Text("Recibido"),
+        ChatDeliveryState.Failed => global::CSIViewer.Core.Localization.Text("Fallido"),
         _ => ""
     };
 }
@@ -131,7 +131,7 @@ public sealed partial class ChatPage : Page
         else
         {
             ChatStatusBar.Severity = InfoBarSeverity.Warning;
-            ChatStatusBar.Message = "Inicia una sesión con permiso de chat para enviar mensajes.";
+            ChatStatusBar.Message = global::CSIViewer.Core.Localization.Text("Inicia una sesión con permiso de chat para enviar mensajes.");
             ChatStatusBar.IsOpen = true;
             MessageBox.IsEnabled = false;
         }
@@ -172,7 +172,7 @@ public sealed partial class ChatPage : Page
         if (message is null)
         {
             ChatStatusBar.Severity = InfoBarSeverity.Warning;
-            ChatStatusBar.Message = "No se pudo enviar el mensaje. Comprueba que la sesión tenga permiso de chat.";
+            ChatStatusBar.Message = global::CSIViewer.Core.Localization.Text("No se pudo enviar el mensaje. Comprueba que la sesión tenga permiso de chat.");
             ChatStatusBar.IsOpen = true;
         }
         else

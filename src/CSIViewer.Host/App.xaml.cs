@@ -223,8 +223,8 @@ public partial class App : XamlApplication
             logger.LogError(ex, "Application initialization failed");
             state.Post(() =>
             {
-                state.LastError = "No se pudo inicializar CSIViewer Host. Revisa la configuración del servidor.";
-                state.ServerStatus = "Error de inicialización";
+                state.LastError = global::CSIViewer.Core.Localization.Text("No se pudo inicializar CSIViewer Host. Revisa la configuración del servidor.");
+                state.ServerStatus = global::CSIViewer.Core.Localization.Text("Error de inicialización");
             });
         }
     }

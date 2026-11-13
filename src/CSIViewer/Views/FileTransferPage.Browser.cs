@@ -33,7 +33,7 @@ public sealed partial class FileTransferPage
         {
             if (!_isLoaded || result.SessionId != _browserSessionId) return;
             _pullCompletionRevision++;
-            BrowserMessage(result.Error ?? "Recepción completada y verificada.",
+            BrowserMessage(result.Error ?? global::CSIViewer.Core.Localization.Text("Recepción completada y verificada."),
                 result.Error is null ? InfoBarSeverity.Success : InfoBarSeverity.Error);
             Interlocked.Exchange(ref _browserRefreshPending, 1);
             RefreshBrowserAfterTransfers();
@@ -78,7 +78,7 @@ public sealed partial class FileTransferPage
             RemoteFilesList.ItemsSource = null;
             _remoteBusy = false;
         }
-        RemoteBrowserTitle.Text = "Equipo remoto · " + (_state.RemoteDeviceName ?? "Sin conexión");
+        RemoteBrowserTitle.Text = global::CSIViewer.Core.Localization.Text("Equipo remoto · ") + (_state.RemoteDeviceName ?? global::CSIViewer.Core.Localization.Text("Sin conexión"));
         RefreshBrowserButtons();
         if (_isLoaded && id is not null && RemoteFilesList.ItemsSource is null && !_remoteBusy &&
             SessionPermissionPolicy.CanTransferFiles(_state.ActivePermissions)) _ = NavigateRemoteAsync("");
@@ -209,7 +209,7 @@ public sealed partial class FileTransferPage
         {
             await _client.RequestRemoteFilesAsync(sessionId, paths, _localDirectory);
             if (_isLoaded && sessionId == _browserSessionId && completionRevision == _pullCompletionRevision)
-                BrowserMessage("Recepción solicitada. Consulta el progreso inferior.", InfoBarSeverity.Informational);
+                BrowserMessage(global::CSIViewer.Core.Localization.Text("Recepción solicitada. Consulta el progreso inferior."), InfoBarSeverity.Informational);
         }
         catch (Exception ex) { if (_isLoaded && sessionId == _browserSessionId) BrowserMessage(ex.Message); }
         finally { _sendingSelection = false; RefreshBrowserButtons(); }

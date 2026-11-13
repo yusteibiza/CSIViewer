@@ -1,10 +1,5 @@
-<Page
-    x:Class="CSIViewer.Views.RemoteControlPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="{ThemeResource PageBackgroundBrush}">
-    <Grid x:Name="RootGrid" Padding="{StaticResource PagePadding}" HorizontalAlignment="Stretch"
-          RowSpacing="14">
+﻿<?xml version="1.0" encoding="utf-8"?><Page x:Class="CSIViewer.Views.RemoteControlPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="{ThemeResource PageBackgroundBrush}" xmlns:loc="using:CSIViewer.Presentation">
+    <Grid x:Name="RootGrid" Padding="{StaticResource PagePadding}" HorizontalAlignment="Stretch" RowSpacing="14">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -12,11 +7,9 @@
             </Grid.RowDefinitions>
 
             <StackPanel x:Name="PageHeaderPanel" Grid.Row="0" Spacing="4">
-                <TextBlock Text="Control remoto" Style="{StaticResource PageTitleStyle}" />
-                <TextBlock Text="Introduce el ID y la contraseña temporal del equipo remoto."
-                           Style="{StaticResource MutedTextStyle}" />
-                <InfoBar x:Name="StatusBar" IsOpen="False" Severity="Informational"
-                         IsClosable="True" Margin="0,6,0,0" />
+                <TextBlock Text="Control remoto" Style="{StaticResource PageTitleStyle}" loc:Translate.Text="Control remoto" />
+                <TextBlock Text="Introduce el ID y la contraseña temporal del equipo remoto." Style="{StaticResource MutedTextStyle}" loc:Translate.Text="Introduce el ID y la contraseña temporal del equipo remoto." />
+                <InfoBar x:Name="StatusBar" IsOpen="False" Severity="Informational" IsClosable="True" Margin="0,6,0,0" />
             </StackPanel>
 
             <Border x:Name="ConnectionCard" Grid.Row="1" Style="{StaticResource CardStyle}">
@@ -32,25 +25,23 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0" Grid.Column="0">
-                        <TextBlock Text="ID DEL EQUIPO" Style="{StaticResource FieldLabelStyle}" />
-                        <TextBox x:Name="TargetIdBox" PlaceholderText="123 456 789" MaxLength="11"
-                                 FontFamily="Consolas" AutomationProperties.AutomationId="TargetIdBox" />
+                        <TextBlock Text="ID DEL EQUIPO" Style="{StaticResource FieldLabelStyle}" loc:Translate.Text="ID DEL EQUIPO" />
+                        <TextBox x:Name="TargetIdBox" PlaceholderText="123 456 789" MaxLength="11" FontFamily="Consolas" AutomationProperties.AutomationId="TargetIdBox" />
                     </StackPanel>
                     <StackPanel Grid.Row="0" Grid.Column="1">
-                        <TextBlock Text="CONTRASEÑA TEMPORAL" Style="{StaticResource FieldLabelStyle}" />
-                        <PasswordBox x:Name="PasswordBox" PlaceholderText="XXXX-XXXX-XXXX"
-                                     AutomationProperties.AutomationId="PasswordBox" />
+                        <TextBlock Text="CONTRASEÑA TEMPORAL" Style="{StaticResource FieldLabelStyle}" loc:Translate.Text="CONTRASEÑA TEMPORAL" />
+                        <PasswordBox x:Name="PasswordBox" PlaceholderText="XXXX-XXXX-XXXX" AutomationProperties.AutomationId="PasswordBox" loc:Translate.PlaceholderText="XXXX-XXXX-XXXX" />
                     </StackPanel>
-                    <Button x:Name="ConnectButton" Grid.Row="0" Grid.Column="2" Content="Conectar"
-                            VerticalAlignment="Bottom" Style="{StaticResource PrimaryButtonStyle}"
-                            Click="Connect_Click" AutomationProperties.AutomationId="ConnectButton" />
+                    <Button x:Name="ConnectButton" Grid.Row="0" Grid.Column="2" Content="Conectar" VerticalAlignment="Bottom" Style="{StaticResource PrimaryButtonStyle}" Click="Connect_Click" AutomationProperties.AutomationId="ConnectButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Conectar" />
 
-                    <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="18">
-                        <CheckBox x:Name="ViewPermissionBox" Content="Ver pantalla" IsChecked="True" />
-                        <CheckBox x:Name="ControlPermissionBox" Content="Controlar ratón y teclado" IsChecked="True" />
-                        <CheckBox x:Name="ChatPermissionBox" Content="Chat" IsChecked="True" />
-                        <CheckBox x:Name="FilePermissionBox" Content="Archivos" IsChecked="True" />
-                    </StackPanel>
+                    <loc:WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Spacing="18">
+                        <CheckBox x:Name="ViewPermissionBox" Content="Ver pantalla" IsChecked="True" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Ver pantalla" />
+                        <CheckBox x:Name="ControlPermissionBox" Content="Controlar ratón y teclado" IsChecked="True" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Controlar ratón y teclado" />
+                        <CheckBox x:Name="ChatPermissionBox" Content="Chat" IsChecked="True" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Chat" />
+                        <CheckBox x:Name="FilePermissionBox" Content="Archivos" IsChecked="True" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Archivos" />
+                        <CheckBox x:Name="AudioPermissionBox" Content="Audio del sistema" AutomationProperties.AutomationId="AudioPermissionBox" loc:Translate.Content="Audio del sistema" />
+                        <CheckBox x:Name="ClipboardPermissionBox" Content="Portapapeles de texto" AutomationProperties.AutomationId="ClipboardPermissionBox" loc:Translate.Content="Portapapeles de texto" />
+                    </loc:WrapPanel>
                 </Grid>
             </Border>
 
@@ -58,10 +49,9 @@
                 <Grid>
                     <Grid x:Name="EmptyState" Background="{ThemeResource CardBackgroundBrush}">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-                            <FontIcon Glyph="&#xE7F4;" FontSize="36" Foreground="{ThemeResource MutedTextBrush}" />
-                            <TextBlock Text="No hay ninguna sesión activa" FontSize="16" FontWeight="SemiBold" />
-                            <TextBlock Text="Cuando se conecte un equipo, la pantalla remota aparecerá aquí."
-                                       Style="{StaticResource MutedTextStyle}" HorizontalAlignment="Center" />
+                            <FontIcon Glyph="" FontSize="36" Foreground="{ThemeResource MutedTextBrush}" />
+                            <TextBlock Text="No hay ninguna sesión activa" FontSize="16" FontWeight="SemiBold" loc:Translate.Text="No hay ninguna sesión activa" />
+                            <TextBlock Text="Cuando se conecte un equipo, la pantalla remota aparecerá aquí." Style="{StaticResource MutedTextStyle}" HorizontalAlignment="Center" loc:Translate.Text="Cuando se conecte un equipo, la pantalla remota aparecerá aquí." />
                         </StackPanel>
                     </Grid>
 
@@ -70,15 +60,13 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <Grid x:Name="SessionToolbar" Background="{ThemeResource CardBackgroundBrush}" Padding="12,8"
-                              RowSpacing="6" Canvas.ZIndex="20" VerticalAlignment="Top"
-                              PointerEntered="SessionToolbar_PointerEntered"
-                              PointerExited="SessionToolbar_PointerExited">
+                        <Grid x:Name="SessionToolbar" Background="{ThemeResource CardBackgroundBrush}" Padding="12,8" RowSpacing="6" Canvas.ZIndex="20" VerticalAlignment="Top" PointerEntered="SessionToolbar_PointerEntered" PointerExited="SessionToolbar_PointerExited">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
@@ -89,90 +77,48 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <Ellipse Width="8" Height="8" Fill="{ThemeResource OnlineBrush}" VerticalAlignment="Center" />
-                                <TextBlock x:Name="SessionTitleText" Grid.Column="1" FontWeight="SemiBold"
-                                           MaxWidth="300" TextTrimming="CharacterEllipsis"
-                                            AutomationProperties.AutomationId="SessionTitleText" />
-                                <TextBlock x:Name="SessionDetailsText" Grid.Column="2" Style="{StaticResource MutedTextStyle}"
-                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
-                                            VerticalAlignment="Center" />
+                                <TextBlock x:Name="SessionTitleText" Grid.Column="1" FontWeight="SemiBold" MaxWidth="300" TextTrimming="CharacterEllipsis" AutomationProperties.AutomationId="SessionTitleText" />
+                                <TextBlock x:Name="SessionDetailsText" Grid.Column="2" Style="{StaticResource MutedTextStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                             </Grid>
-                            <StackPanel x:Name="FullscreenWindowButtons" Grid.Column="1" Orientation="Horizontal"
-                                        Spacing="4" Margin="12,0,0,0" Visibility="Collapsed">
-                                <Button Click="MinimizeWindow_Click" Padding="10,6"
-                                        ToolTipService.ToolTip="Minimizar ventana local"
-                                        AutomationProperties.Name="Minimizar ventana local"
-                                        AutomationProperties.AutomationId="RemoteMinimizeWindowButton">
-                                    <FontIcon Glyph="&#xE921;" FontSize="12" />
+                            <loc:WrapPanel x:Name="FullscreenWindowButtons" Grid.Column="1" Spacing="4" Margin="12,0,0,0" Visibility="Collapsed">
+                                <Button Click="MinimizeWindow_Click" Padding="10,6" ToolTipService.ToolTip="Minimizar ventana local" AutomationProperties.Name="Minimizar ventana local" AutomationProperties.AutomationId="RemoteMinimizeWindowButton" loc:Translate.ToolTip="Minimizar ventana local" loc:Translate.AutomationName="Minimizar ventana local">
+                                    <FontIcon Glyph="" FontSize="12" />
                                 </Button>
-                                <Button Click="MaximizeWindow_Click" Padding="10,6"
-                                        ToolTipService.ToolTip="Salir de pantalla completa y maximizar ventana local"
-                                        AutomationProperties.Name="Maximizar ventana local"
-                                        AutomationProperties.AutomationId="RemoteMaximizeWindowButton">
-                                    <FontIcon Glyph="&#xE922;" FontSize="12" />
+                                <Button Click="MaximizeWindow_Click" Padding="10,6" ToolTipService.ToolTip="Salir de pantalla completa y maximizar ventana local" AutomationProperties.Name="Maximizar ventana local" AutomationProperties.AutomationId="RemoteMaximizeWindowButton" loc:Translate.ToolTip="Salir de pantalla completa y maximizar ventana local" loc:Translate.AutomationName="Maximizar ventana local">
+                                    <FontIcon Glyph="" FontSize="12" />
                                 </Button>
-                                <Button Click="RestoreWindow_Click" Padding="10,6"
-                                        ToolTipService.ToolTip="Restaurar ventana local para moverla o redimensionarla"
-                                        AutomationProperties.Name="Restaurar ventana local"
-                                        AutomationProperties.AutomationId="RemoteRestoreWindowButton">
-                                    <FontIcon Glyph="&#xE923;" FontSize="12" />
+                                <Button Click="RestoreWindow_Click" Padding="10,6" ToolTipService.ToolTip="Restaurar ventana local para moverla o redimensionarla" AutomationProperties.Name="Restaurar ventana local" AutomationProperties.AutomationId="RemoteRestoreWindowButton" loc:Translate.ToolTip="Restaurar ventana local para moverla o redimensionarla" loc:Translate.AutomationName="Restaurar ventana local">
+                                    <FontIcon Glyph="" FontSize="12" />
                                 </Button>
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="6">
-                                <ComboBox x:Name="MonitorCombo" Width="210" PlaceholderText="Monitor"
-                                          SelectionChanged="MonitorCombo_SelectionChanged"
-                                          Visibility="Collapsed" />
-                                <Button Content="Chat" Click="Chat_Click" Style="{StaticResource SecondaryButtonStyle}" />
-                                <Button Content="Archivos" Click="Files_Click" Style="{StaticResource SecondaryButtonStyle}" />
-                                <Button x:Name="FullScreenButton" Content="Pantalla completa"
-                                        Click="FullScreen_Click"
-                                         Style="{StaticResource SecondaryButtonStyle}" />
-                                <ToggleButton x:Name="PinToolbarButton" Visibility="Collapsed"
-                                              Checked="PinToolbar_Changed" Unchecked="PinToolbar_Changed"
-                                              ToolTipService.ToolTip="Fijar barra: activado permanece visible; desactivado se oculta automáticamente"
-                                              AutomationProperties.Name="Fijar barra de control"
-                                              AutomationProperties.AutomationId="PinToolbarButton">
-                                    <FontIcon Glyph="&#xE718;" FontSize="16" />
+                            </loc:WrapPanel>
+                            <loc:WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Spacing="6">
+                                <ComboBox x:Name="MonitorCombo" Width="210" PlaceholderText="Monitor" SelectionChanged="MonitorCombo_SelectionChanged" Visibility="Collapsed" loc:Translate.PlaceholderText="Monitor" />
+                                <Button Content="Chat" Click="Chat_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Chat" />
+                                <Button Content="Archivos" Click="Files_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Archivos" />
+                                <CheckBox x:Name="SessionAudioBox" Content="Audio" Click="SessionFeatures_Click" AutomationProperties.AutomationId="SessionAudioBox" loc:Translate.Content="Audio" />
+                                <CheckBox x:Name="SessionClipboardBox" Content="Portapapeles" Click="SessionFeatures_Click" AutomationProperties.AutomationId="SessionClipboardBox" loc:Translate.Content="Portapapeles" />
+                                <Button x:Name="FullScreenButton" Content="Pantalla completa" Click="FullScreen_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Pantalla completa" />
+                                <ToggleButton x:Name="PinToolbarButton" Visibility="Collapsed" Checked="PinToolbar_Changed" Unchecked="PinToolbar_Changed" ToolTipService.ToolTip="Fijar barra: activado permanece visible; desactivado se oculta automáticamente" AutomationProperties.Name="Fijar barra de control" AutomationProperties.AutomationId="PinToolbarButton" loc:Translate.ToolTip="Fijar barra: activado permanece visible; desactivado se oculta automáticamente" loc:Translate.AutomationName="Fijar barra de control">
+                                    <FontIcon Glyph="" FontSize="16" />
                                 </ToggleButton>
-                                <Button Content="Finalizar" Click="EndSession_Click"
-                                        Style="{StaticResource DangerButtonStyle}" />
-                            </StackPanel>
-                            <TextBlock x:Name="StatsText" Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Right"
-                                       VerticalAlignment="Center" FontFamily="Consolas" FontSize="11"
-                                       MaxWidth="620" TextTrimming="CharacterEllipsis"
-                                       Foreground="{ThemeResource MutedTextBrush}"
-                                       AutomationProperties.AutomationId="RemoteStatsText" />
+                                <Button Content="Finalizar" Click="EndSession_Click" Style="{StaticResource DangerButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Finalizar" />
+                            </loc:WrapPanel>
+                            <TextBlock x:Name="StatsText" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas" FontSize="11" MaxWidth="620" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource MutedTextBrush}" AutomationProperties.AutomationId="RemoteStatsText" />
                         </Grid>
                         <Grid x:Name="RemoteViewport" Grid.Row="1" Background="Black">
-                            <Border x:Name="RemoteSurface" IsTabStop="True" Background="Black"
-                                    AutomationProperties.AutomationId="RemoteSurface"
-                                    PointerEntered="RemoteSurface_PointerEntered"
-                                    PointerMoved="RemoteSurface_PointerMoved"
-                                    PointerPressed="RemoteSurface_PointerPressed"
-                                    PointerReleased="RemoteSurface_PointerReleased"
-                                    PointerWheelChanged="RemoteSurface_PointerWheelChanged"
-                                    PointerCaptureLost="RemoteSurface_PointerCaptureLost"
-                                    LostFocus="RemoteSurface_LostFocus"
-                                    KeyDown="RemoteSurface_KeyDown"
-                                    KeyUp="RemoteSurface_KeyUp">
-                                <Image x:Name="RemoteImage" Stretch="Uniform" HorizontalAlignment="Stretch"
-                                       VerticalAlignment="Stretch" />
+                            <Border x:Name="RemoteSurface" IsTabStop="True" Background="Black" AutomationProperties.AutomationId="RemoteSurface" PointerEntered="RemoteSurface_PointerEntered" PointerMoved="RemoteSurface_PointerMoved" PointerPressed="RemoteSurface_PointerPressed" PointerReleased="RemoteSurface_PointerReleased" PointerWheelChanged="RemoteSurface_PointerWheelChanged" PointerCaptureLost="RemoteSurface_PointerCaptureLost" LostFocus="RemoteSurface_LostFocus" KeyDown="RemoteSurface_KeyDown" KeyUp="RemoteSurface_KeyUp">
+                                <Image x:Name="RemoteImage" Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
                             </Border>
                             <Border x:Name="HostOverlay" Background="#CC202020" Visibility="Collapsed">
                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-                                    <FontIcon Glyph="&#xE7F4;" FontSize="36" Foreground="White" />
-                                    <TextBlock x:Name="HostOverlayTitle" Text="Este equipo está siendo controlado"
-                                               Foreground="White" FontSize="18" FontWeight="SemiBold"
-                                               HorizontalAlignment="Center" TextWrapping="Wrap" />
-                                    <TextBlock x:Name="HostOverlayDetails" Foreground="#C8C8C8"
-                                               HorizontalAlignment="Center" TextWrapping="Wrap" />
-                                    <Button Content="Finalizar sesión" Click="EndSession_Click" Margin="0,8,0,0" />
+                                    <FontIcon Glyph="" FontSize="36" Foreground="White" />
+                                    <TextBlock x:Name="HostOverlayTitle" Text="Este equipo está siendo controlado" Foreground="White" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" TextWrapping="Wrap" loc:Translate.Text="Este equipo está siendo controlado" />
+                                    <TextBlock x:Name="HostOverlayDetails" Foreground="#C8C8C8" HorizontalAlignment="Center" TextWrapping="Wrap" />
+                                    <Button Content="Finalizar sesión" Click="EndSession_Click" Margin="0,8,0,0" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Finalizar sesión" />
                                 </StackPanel>
                             </Border>
                         </Grid>
-                        <Border x:Name="ToolbarRevealStrip" Grid.RowSpan="2" Height="6"
-                                VerticalAlignment="Top" Background="Transparent" Canvas.ZIndex="21"
-                                Visibility="Collapsed" PointerEntered="ToolbarReveal_PointerEntered"
-                                AutomationProperties.Name="Mostrar barra de control" />
+                        <Border x:Name="ToolbarRevealStrip" Grid.RowSpan="2" Height="6" VerticalAlignment="Top" Background="Transparent" Canvas.ZIndex="21" Visibility="Collapsed" PointerEntered="ToolbarReveal_PointerEntered" AutomationProperties.Name="Mostrar barra de control" loc:Translate.AutomationName="Mostrar barra de control" />
                     </Grid>
                 </Grid>
             </Border>

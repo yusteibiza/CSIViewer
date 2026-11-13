@@ -1,20 +1,14 @@
-<Page
-    x:Class="CSIViewer.Views.HostSettingsPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="{ThemeResource PageBackgroundBrush}">
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled"
-                  HorizontalContentAlignment="Stretch" VerticalScrollBarVisibility="Auto">
+﻿<?xml version="1.0" encoding="utf-8"?><Page x:Class="CSIViewer.Views.HostSettingsPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="{ThemeResource PageBackgroundBrush}" xmlns:loc="using:CSIViewer.Presentation">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled" HorizontalContentAlignment="Stretch" VerticalScrollBarVisibility="Auto">
         <StackPanel Padding="20,10" MaxWidth="740" Spacing="8" HorizontalAlignment="Center">
             <StackPanel Spacing="1">
-                <TextBlock Text="Configuración del host" Style="{StaticResource PageTitleStyle}" FontSize="22" />
-                <TextBlock Text="Tema, servidor, calidad de imagen y modo desatendido."
-                           Style="{StaticResource MutedTextStyle}" FontSize="12" />
+                <TextBlock Text="Configuración del host" Style="{StaticResource PageTitleStyle}" FontSize="22" loc:Translate.Text="Configuración del host" />
+                <TextBlock Text="Tema, servidor, calidad de imagen y modo desatendido." Style="{StaticResource MutedTextStyle}" FontSize="12" loc:Translate.Text="Tema, servidor, calidad de imagen y modo desatendido." />
             </StackPanel>
 
             <InfoBar x:Name="StatusBar" IsOpen="False" IsClosable="True" />
 
-            <Grid ColumnSpacing="10" RowSpacing="10">
+            <Grid ColumnSpacing="10" RowSpacing="10" SizeChanged="Cards_SizeChanged">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -22,27 +16,26 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardStyle}" Padding="12">
+                <Border x:Name="AppearanceCard" Grid.Row="0" Grid.Column="0" Style="{StaticResource CardStyle}" Padding="12">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Apariencia" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Text="Apariencia" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Apariencia" />
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="170" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Tema" VerticalAlignment="Center" />
-                            <ComboBox x:Name="ThemeCombo" Grid.Column="1" HorizontalAlignment="Stretch"
-                                      SelectionChanged="ThemeCombo_SelectionChanged"
-                                      AutomationProperties.AutomationId="HostThemeCombo">
-                                <ComboBoxItem Content="Tema del sistema" Tag="System" />
-                                <ComboBoxItem Content="Tema claro" Tag="Light" />
-                                <ComboBoxItem Content="Tema oscuro" Tag="Dark" />
+                            <TextBlock Text="Tema" VerticalAlignment="Center" loc:Translate.Text="Tema" />
+                            <ComboBox x:Name="ThemeCombo" Grid.Column="1" HorizontalAlignment="Stretch" SelectionChanged="ThemeCombo_SelectionChanged" AutomationProperties.AutomationId="HostThemeCombo">
+                                <ComboBoxItem Content="Tema del sistema" Tag="System" loc:Translate.Content="Tema del sistema" />
+                                <ComboBoxItem Content="Tema claro" Tag="Light" loc:Translate.Content="Tema claro" />
+                                <ComboBoxItem Content="Tema oscuro" Tag="Dark" loc:Translate.Content="Tema oscuro" />
                             </ComboBox>
                         </Grid>
-                        <ComboBox x:Name="AccentColorCombo" Header="Color de énfasis" HorizontalAlignment="Stretch"
-                                  SelectionChanged="AccentColorCombo_SelectionChanged" AutomationProperties.AutomationId="HostAccentColorCombo">
+                        <ComboBox x:Name="AccentColorCombo" Header="Color de énfasis" HorizontalAlignment="Stretch" SelectionChanged="AccentColorCombo_SelectionChanged" AutomationProperties.AutomationId="HostAccentColorCombo" HeaderTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Header="Color de énfasis">
                             <ComboBox.ItemTemplate><DataTemplate>
                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                     <Ellipse Width="14" Height="14" Fill="{Binding PreviewColor}" VerticalAlignment="Center" />
@@ -50,40 +43,31 @@
                                 </StackPanel>
                             </DataTemplate></ComboBox.ItemTemplate>
                         </ComboBox>
+                        <ComboBox x:Name="LanguageCombo" Header="Idioma" HorizontalAlignment="Stretch" DisplayMemberPath="NativeName" SelectionChanged="LanguageCombo_SelectionChanged" AutomationProperties.AutomationId="HostLanguageCombo" HeaderTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Header="Idioma" />
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardStyle}" Padding="12">
+                <Border x:Name="ServerCard" Grid.Row="0" Grid.Column="1" Style="{StaticResource CardStyle}" Padding="12">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Servidor" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBox x:Name="ServerUrlBox"
-                                 PlaceholderText="URL del servidor (http://localhost:5080)"
-                                 AutomationProperties.AutomationId="HostServerUrlBox" />
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button Content="Guardar" Click="SaveServer_Click"
-                                    Style="{StaticResource PrimaryButtonStyle}"
-                                    AutomationProperties.AutomationId="HostSaveServerButton" />
-                            <Button Content="Probar" Click="TestServer_Click"
-                                    Style="{StaticResource SecondaryButtonStyle}"
-                                    AutomationProperties.AutomationId="HostTestServerButton" />
-                        </StackPanel>
-                        <TextBlock x:Name="ServerStatusText" Text="" Style="{StaticResource MutedTextStyle}"
-                                   FontSize="12" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="Servidor" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Servidor" />
+                        <TextBox x:Name="ServerUrlBox" PlaceholderText="URL del servidor (http://localhost:5080)" AutomationProperties.AutomationId="HostServerUrlBox" loc:Translate.PlaceholderText="URL del servidor (http://localhost:5080)" />
+                        <loc:WrapPanel Spacing="8">
+                            <Button Content="Guardar" Click="SaveServer_Click" Style="{StaticResource PrimaryButtonStyle}" AutomationProperties.AutomationId="HostSaveServerButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar" />
+                            <Button Content="Probar" Click="TestServer_Click" Style="{StaticResource SecondaryButtonStyle}" AutomationProperties.AutomationId="HostTestServerButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Probar" />
+                        </loc:WrapPanel>
+                        <TextBlock x:Name="ServerStatusText" Text="" Style="{StaticResource MutedTextStyle}" FontSize="12" TextTrimming="CharacterEllipsis" loc:Translate.Text="" />
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardStyle}" Padding="12">
+                <Border x:Name="QualityCard" Grid.Row="1" Grid.Column="0" Style="{StaticResource CardStyle}" Padding="12">
                     <StackPanel Spacing="8">
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Calidad de imagen" Style="{StaticResource SectionTitleStyle}"
-                                       VerticalAlignment="Center" />
-                            <Button Grid.Column="1" Content="Guardar" Click="SaveQuality_Click"
-                                    Style="{StaticResource PrimaryButtonStyle}"
-                                    AutomationProperties.AutomationId="HostSaveQualityButton" />
+                            <TextBlock Text="Calidad de imagen" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center" loc:Translate.Text="Calidad de imagen" />
+                            <Button Grid.Column="1" Content="Guardar" Click="SaveQuality_Click" Style="{StaticResource PrimaryButtonStyle}" AutomationProperties.AutomationId="HostSaveQualityButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar" />
                         </Grid>
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
@@ -91,9 +75,8 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="42" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Calidad" VerticalAlignment="Center" />
-                            <Slider x:Name="QualitySlider" Grid.Column="1" Minimum="20" Maximum="95"
-                                    StepFrequency="1" AutomationProperties.AutomationId="HostQualitySlider" />
+                            <TextBlock Text="Calidad" VerticalAlignment="Center" loc:Translate.Text="Calidad" />
+                            <Slider x:Name="QualitySlider" Grid.Column="1" Minimum="20" Maximum="95" StepFrequency="1" AutomationProperties.AutomationId="HostQualitySlider" />
                             <TextBlock x:Name="QualityValueText" Grid.Column="2" VerticalAlignment="Center" />
                         </Grid>
                         <Grid ColumnSpacing="8">
@@ -102,11 +85,9 @@
                                 <ColumnDefinition Width="100" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="FPS" VerticalAlignment="Center" />
-                            <ComboBox x:Name="FpsCombo" Grid.Column="1" HorizontalAlignment="Stretch"
-                                      AutomationProperties.AutomationId="HostFpsCombo" />
-                            <TextBlock Grid.Column="2" Text="objetivo" VerticalAlignment="Center"
-                                       Style="{StaticResource MutedTextStyle}" FontSize="12" />
+                            <TextBlock Text="FPS" VerticalAlignment="Center" loc:Translate.Text="FPS" />
+                            <ComboBox x:Name="FpsCombo" Grid.Column="1" HorizontalAlignment="Stretch" AutomationProperties.AutomationId="HostFpsCombo" />
+                            <TextBlock Grid.Column="2" Text="objetivo" VerticalAlignment="Center" Style="{StaticResource MutedTextStyle}" FontSize="12" loc:Translate.Text="objetivo" />
                         </Grid>
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
@@ -114,9 +95,8 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="52" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Ancho" VerticalAlignment="Center" />
-                            <Slider x:Name="MaxWidthSlider" Grid.Column="1" Minimum="640" Maximum="2560"
-                                    StepFrequency="80" AutomationProperties.AutomationId="HostMaxWidthSlider" />
+                            <TextBlock Text="Ancho" VerticalAlignment="Center" loc:Translate.Text="Ancho" />
+                            <Slider x:Name="MaxWidthSlider" Grid.Column="1" Minimum="640" Maximum="2560" StepFrequency="80" AutomationProperties.AutomationId="HostMaxWidthSlider" />
                             <TextBlock x:Name="MaxWidthValueText" Grid.Column="2" VerticalAlignment="Center" />
                         </Grid>
                         <Grid ColumnSpacing="8">
@@ -124,26 +104,19 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <ToggleSwitch x:Name="H264Switch" Header="H.264" OffContent="JPEG"
-                                          AutomationProperties.AutomationId="HostH264Switch" />
-                            <ToggleSwitch x:Name="ModernCaptureSwitch" Grid.Column="1"
-                                          Header="Captura moderna" OffContent="GDI"
-                                          AutomationProperties.AutomationId="HostModernCaptureSwitch" />
+                            <ToggleSwitch x:Name="H264Switch" Header="H.264" OffContent="JPEG" AutomationProperties.AutomationId="HostH264Switch" HeaderTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Header="H.264" OnContent="Activado" loc:Translate.OffContent="JPEG" loc:Translate.OnContent="Activado" />
+                            <ToggleSwitch x:Name="ModernCaptureSwitch" Grid.Column="1" Header="Captura moderna" OffContent="GDI" AutomationProperties.AutomationId="HostModernCaptureSwitch" HeaderTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Header="Captura moderna" OnContent="Activado" loc:Translate.OffContent="GDI" loc:Translate.OnContent="Activado" />
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardStyle}" Padding="12">
+                <Border x:Name="UnattendedCard" Grid.Row="1" Grid.Column="1" Style="{StaticResource CardStyle}" Padding="12">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Modo desatendido" Style="{StaticResource SectionTitleStyle}" />
-                        <TextBlock Text="Arranca con Windows y recibe conexiones sin abrir la aplicación. Requiere UAC."
-                                   Style="{StaticResource MutedTextStyle}" FontSize="12" />
+                        <TextBlock Text="Modo desatendido" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Modo desatendido" />
+                        <TextBlock Text="Arranca con Windows y recibe conexiones sin abrir la aplicación. Requiere UAC." Style="{StaticResource MutedTextStyle}" FontSize="12" loc:Translate.Text="Arranca con Windows y recibe conexiones sin abrir la aplicación. Requiere UAC." />
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <ProgressRing x:Name="UnattendedBusyRing" Width="18" Height="18" IsActive="False"
-                                          Visibility="Collapsed" />
-                            <TextBlock x:Name="UnattendedStatusText" Text="Comprobando."
-                                       FontWeight="SemiBold" VerticalAlignment="Center"
-                                       AutomationProperties.AutomationId="HostUnattendedStatus" />
+                            <ProgressRing x:Name="UnattendedBusyRing" Width="18" Height="18" IsActive="False" Visibility="Collapsed" />
+                            <TextBlock x:Name="UnattendedStatusText" Text="Comprobando." FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.AutomationId="HostUnattendedStatus" loc:Translate.Text="Comprobando." />
                         </StackPanel>
                         <Grid ColumnSpacing="8" RowSpacing="8">
                             <Grid.ColumnDefinitions>
@@ -154,18 +127,9 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <Button x:Name="InstallUnattendedButton" Content="Instalar"
-                                    Click="InstallUnattended_Click"
-                                    Style="{StaticResource PrimaryButtonStyle}"
-                                    AutomationProperties.AutomationId="HostInstallUnattendedButton" />
-                            <Button x:Name="UninstallUnattendedButton" Content="Desinstalar"
-                                    Grid.Column="1" Click="UninstallUnattended_Click"
-                                    Style="{StaticResource SecondaryButtonStyle}"
-                                    AutomationProperties.AutomationId="HostUninstallUnattendedButton" />
-                            <Button Content="Actualizar estado" Grid.Row="1" Grid.ColumnSpan="2"
-                                    Click="RefreshUnattended_Click"
-                                    Style="{StaticResource SecondaryButtonStyle}"
-                                    AutomationProperties.AutomationId="HostRefreshUnattendedButton" />
+                            <Button x:Name="InstallUnattendedButton" Content="Instalar" Click="InstallUnattended_Click" Style="{StaticResource PrimaryButtonStyle}" AutomationProperties.AutomationId="HostInstallUnattendedButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Instalar" />
+                            <Button x:Name="UninstallUnattendedButton" Content="Desinstalar" Grid.Column="1" Click="UninstallUnattended_Click" Style="{StaticResource SecondaryButtonStyle}" AutomationProperties.AutomationId="HostUninstallUnattendedButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Desinstalar" />
+                            <Button Content="Actualizar estado" Grid.Row="1" Grid.ColumnSpan="2" Click="RefreshUnattended_Click" Style="{StaticResource SecondaryButtonStyle}" AutomationProperties.AutomationId="HostRefreshUnattendedButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Actualizar estado" />
                         </Grid>
                     </StackPanel>
                 </Border>

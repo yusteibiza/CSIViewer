@@ -14,14 +14,15 @@ public sealed class ServerRuntimeSettings
 {
     public int Port { get; set; } = 5080;
     public bool ListenOnAllInterfaces { get; set; }
-    public string EnrollmentCode { get; set; } = "DEV-1234";
+    public string EnrollmentCode { get; set; } = global::CSIViewer.Core.Localization.Text("DEV-1234");
     public string ProtectedEnrollmentCode { get; set; } = "";
-    public string ServerName { get; set; } = "CSIViewer Servidor";
+    public string ServerName { get; set; } = global::CSIViewer.Core.Localization.Text("CSIViewer Servidor");
     public string DatabasePath { get; set; } = GetDefaultDatabasePath();
     public bool AutoStartWithUi { get; set; }
     public bool StartWithWindows { get; set; }
     public ServerTheme Theme { get; set; } = ServerTheme.System;
     public CSIViewer.Core.AccentColor AccentColor { get; set; } = CSIViewer.Core.AccentColor.System;
+    public string Language { get; set; } = "es";
     public bool EnableUpnp { get; set; }
     public int UpnpExternalPort { get; set; }
     public bool UseHttps { get; set; }
@@ -66,8 +67,8 @@ public sealed class ServerRuntimeSettings
 
     [JsonIgnore]
     public string AccessModeText => ListenOnAllInterfaces
-        ? "Todas las interfaces de red (LAN/Internet)"
-        : "Solo este equipo (localhost)";
+        ? global::CSIViewer.Core.Localization.Text("Todas las interfaces de red (LAN/Internet)")
+        : global::CSIViewer.Core.Localization.Text("Solo este equipo (localhost)");
 
     [JsonIgnore]
     public int EffectiveUpnpExternalPort => UpnpExternalPort <= 0 ? Port : UpnpExternalPort;
@@ -77,6 +78,7 @@ public sealed class ServerRuntimeSettings
     public void Normalize()
     {
         AccentColor = CSIViewer.Core.AccentPalette.Normalize(AccentColor);
+        Language = CSIViewer.Core.Localization.Normalize(Language);
         Port = Math.Clamp(Port, 1024, 65535);
         UpnpExternalPort = UpnpExternalPort <= 0 ? 0 : Math.Clamp(UpnpExternalPort, 1024, 65535);
         StunPort = Math.Clamp(StunPort, 1024, 65535);
@@ -89,7 +91,7 @@ public sealed class ServerRuntimeSettings
         CertificateThumbprint = (CertificateThumbprint ?? "")
             .Replace(" ", "", StringComparison.Ordinal)
             .ToUpperInvariant();
-        ServerName = string.IsNullOrWhiteSpace(ServerName) ? "CSIViewer Servidor" : ServerName.Trim();
+        ServerName = string.IsNullOrWhiteSpace(ServerName) ? global::CSIViewer.Core.Localization.Text("CSIViewer Servidor") : ServerName.Trim();
         DatabasePath = string.IsNullOrWhiteSpace(DatabasePath) ? GetDefaultDatabasePath() : DatabasePath.Trim();
         if (!Enum.IsDefined(Theme))
         {

@@ -13,6 +13,10 @@
     <ProjectReference Include="..\CSIViewer.Infrastructure\CSIViewer.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="../../licenses/NAudio.txt" Link="licenses/NAudio.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NAudio.Wasapi" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging" />

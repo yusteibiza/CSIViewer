@@ -9,7 +9,9 @@ public enum SessionFrameKind : byte
     Video = 2,
     FileChunk = 3,
     Chat = 4,
-    Input = 5
+    Input = 5,
+    Audio = 6,
+    Clipboard = 7
 }
 
 public static class SessionFrame

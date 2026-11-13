@@ -100,7 +100,7 @@ public sealed class ConnectionStateMachine
                 return true;
             }
 
-            error = $"Transición de conexión no permitida: {_state} → {next}.";
+            error = global::CSIViewer.Core.Localization.Format("Transición de conexión no permitida: {0} → {1}.",_state,next);
             return false;
         }
     }

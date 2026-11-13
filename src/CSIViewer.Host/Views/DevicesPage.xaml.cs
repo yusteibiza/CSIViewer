@@ -27,17 +27,17 @@ public sealed class DeviceRow
         {
             if (Device.IsOnline)
             {
-                return "En línea";
+                return global::CSIViewer.Core.Localization.Text("En línea");
             }
 
             if (string.IsNullOrWhiteSpace(Device.PublicKey))
             {
-                return "Añadido manualmente";
+                return global::CSIViewer.Core.Localization.Text("Añadido manualmente");
             }
 
             if (Device.LastSeenUtc == default)
             {
-                return "Sin conexiones";
+                return global::CSIViewer.Core.Localization.Text("Sin conexiones");
             }
 
             var elapsed = DateTimeOffset.UtcNow - Device.LastSeenUtc;
@@ -47,12 +47,12 @@ public sealed class DeviceRow
             }
 
             return elapsed.TotalMinutes < 1
-                ? "Visto hace un momento"
+                ? global::CSIViewer.Core.Localization.Text("Visto hace un momento")
                 : elapsed.TotalHours < 1
                     ? $"Visto hace {elapsed.TotalMinutes:0} min"
                     : elapsed.TotalDays < 1
                         ? $"Visto hace {elapsed.TotalHours:0} h"
-                        : $"Visto el {Device.LastSeenUtc.ToLocalTime():dd/MM/yyyy HH:mm}";
+                        : global::CSIViewer.Core.Localization.Format("Visto el {0:dd/MM/yyyy HH:mm}",Device.LastSeenUtc.ToLocalTime());
         }
     }
 
@@ -129,12 +129,12 @@ public sealed partial class DevicesPage : Page
         var current = ListFilterBox.SelectedItem as DeviceListFilterOption;
         var options = new List<DeviceListFilterOption>
         {
-            new(DeviceListFilterKind.All, null, "Todas las listas")
+            new(DeviceListFilterKind.All, null, global::CSIViewer.Core.Localization.Text("Todas las listas"))
         };
         options.AddRange(_state.DeviceLists
             .OrderBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase)
             .Select(x => new DeviceListFilterOption(DeviceListFilterKind.List, x.Id, x.Name)));
-        options.Add(new DeviceListFilterOption(DeviceListFilterKind.Unfiled, null, "Sin lista"));
+        options.Add(new DeviceListFilterOption(DeviceListFilterKind.Unfiled, null, global::CSIViewer.Core.Localization.Text("Sin lista")));
 
         _suppressFilterChange = true;
         ListFilterBox.ItemsSource = options;
@@ -229,7 +229,7 @@ public sealed partial class DevicesPage : Page
         var aliasBox = new TextBox
         {
             Text = existing?.Alias ?? "",
-            PlaceholderText = "Nombre para reconocerlo, por ejemplo PC de María",
+            PlaceholderText = global::CSIViewer.Core.Localization.Text("Nombre para reconocerlo, por ejemplo PC de María"),
             MaxLength = 80
         };
         AutomationProperties.SetAutomationId(aliasBox, "DeviceAliasInput");
@@ -237,14 +237,14 @@ public sealed partial class DevicesPage : Page
         var descriptionBox = new TextBox
         {
             Text = existing?.Description ?? "",
-            PlaceholderText = "Descripción opcional",
+            PlaceholderText = global::CSIViewer.Core.Localization.Text("Descripción opcional"),
             MaxLength = 300,
             AcceptsReturn = true,
             Height = 70
         };
         AutomationProperties.SetAutomationId(descriptionBox, "DeviceDescriptionInput");
 
-        var listChoices = new List<DeviceListChoice> { new(null, "Sin lista") };
+        var listChoices = new List<DeviceListChoice> { new(null, global::CSIViewer.Core.Localization.Text("Sin lista")) };
         listChoices.AddRange(_state.DeviceLists
             .OrderBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase)
             .Select(x => new DeviceListChoice(x.Id, x.Name)));
@@ -259,7 +259,7 @@ public sealed partial class DevicesPage : Page
 
         var favoriteBox = new CheckBox
         {
-            Content = "Favorito",
+            Content = global::CSIViewer.Core.Localization.Text("Favorito"),
             IsChecked = existing?.IsFavorite == true
         };
         AutomationProperties.SetAutomationId(favoriteBox, "DeviceFavoriteBox");
@@ -273,17 +273,17 @@ public sealed partial class DevicesPage : Page
         };
 
         var content = new StackPanel { Spacing = 6 };
-        content.Children.Add(new TextBlock { Text = "ID del dispositivo (9 dígitos)" });
+        content.Children.Add(new TextBlock { Text = global::CSIViewer.Core.Localization.Text("ID del dispositivo (9 dígitos)") });
         content.Children.Add(idBox);
-        content.Children.Add(new TextBlock { Text = "Nombre" });
+        content.Children.Add(new TextBlock { Text = global::CSIViewer.Core.Localization.Text("Nombre") });
         content.Children.Add(aliasBox);
-        content.Children.Add(new TextBlock { Text = "Descripción" });
+        content.Children.Add(new TextBlock { Text = global::CSIViewer.Core.Localization.Text("Descripción") });
         content.Children.Add(descriptionBox);
         content.Children.Add(new TextBlock { Text = "Lista" });
         content.Children.Add(listBox);
         content.Children.Add(new TextBlock
         {
-            Text = "Puedes crear, renombrar o eliminar listas desde el botón «Listas» de la página.",
+            Text = global::CSIViewer.Core.Localization.Text("Puedes crear, renombrar o eliminar listas desde el botón «Listas» de la página."),
             Style = GetStyle("MutedTextStyle"),
             FontSize = 11,
             TextWrapping = TextWrapping.Wrap
@@ -301,9 +301,9 @@ public sealed partial class DevicesPage : Page
         {
             RequestedTheme = ThemeService.Current,
             XamlRoot = MainWindow.Instance?.Content?.XamlRoot,
-            Title = isNew ? "Nuevo dispositivo" : $"Editar dispositivo {existing!.DeviceId}",
-            PrimaryButtonText = "Guardar",
-            CloseButtonText = "Cancelar",
+            Title = isNew ? global::CSIViewer.Core.Localization.Text("Nuevo dispositivo") : $"Editar dispositivo {existing!.DeviceId}",
+            PrimaryButtonText = global::CSIViewer.Core.Localization.Text("Guardar"),
+            CloseButtonText = global::CSIViewer.Core.Localization.Text("Cancelar"),
             DefaultButton = ContentDialogButton.Primary,
             Content = content
         };
@@ -313,14 +313,14 @@ public sealed partial class DevicesPage : Page
             var deviceId = new string(idBox.Text.Where(char.IsAsciiDigit).ToArray());
             if (deviceId.Length != 9)
             {
-                ShowError("El ID debe contener exactamente 9 dígitos.");
+                ShowError(global::CSIViewer.Core.Localization.Text("El ID debe contener exactamente 9 dígitos."));
                 args.Cancel = true;
                 return;
             }
 
             if (isNew && _state.KnownDevices.Any(x => x.DeviceId == deviceId))
             {
-                ShowError("Ya existe un dispositivo con ese ID. Edítalo desde la lista.");
+                ShowError(global::CSIViewer.Core.Localization.Text("Ya existe un dispositivo con ese ID. Edítalo desde la lista."));
                 args.Cancel = true;
             }
         };
@@ -372,7 +372,7 @@ public sealed partial class DevicesPage : Page
         }
         catch (Exception ex)
         {
-            await ShowMessageAsync("No se pudo guardar el dispositivo", ex.Message);
+            await ShowMessageAsync(global::CSIViewer.Core.Localization.Text("No se pudo guardar el dispositivo"), ex.Message);
         }
     }
 
@@ -388,9 +388,9 @@ public sealed partial class DevicesPage : Page
             RequestedTheme = ThemeService.Current,
             XamlRoot = MainWindow.Instance?.Content?.XamlRoot,
             Title = "Eliminar dispositivo",
-            Content = $"¿Quieres quitar «{row.Alias}» ({row.DeviceId}) de tus dispositivos guardados?\n\nNo se desinstala nada en el equipo remoto.",
-            PrimaryButtonText = "Eliminar",
-            CloseButtonText = "Cancelar",
+            Content = global::CSIViewer.Core.Localization.Format("¿Quieres quitar «{0}» ({1}) de tus dispositivos guardados?\n\nNo se desinstala nada en el equipo remoto.",row.Alias,row.DeviceId),
+            PrimaryButtonText = global::CSIViewer.Core.Localization.Text("Eliminar"),
+            CloseButtonText = global::CSIViewer.Core.Localization.Text("Cancelar"),
             DefaultButton = ContentDialogButton.Close
         };
 
@@ -407,7 +407,7 @@ public sealed partial class DevicesPage : Page
         }
         catch (Exception ex)
         {
-            await ShowMessageAsync("No se pudo eliminar el dispositivo", ex.Message);
+            await ShowMessageAsync(global::CSIViewer.Core.Localization.Text("No se pudo eliminar el dispositivo"), ex.Message);
         }
     }
 
@@ -425,7 +425,7 @@ public sealed partial class DevicesPage : Page
 
         var newNameBox = new TextBox
         {
-            PlaceholderText = "Nueva lista, por ejemplo Clientes",
+            PlaceholderText = global::CSIViewer.Core.Localization.Text("Nueva lista, por ejemplo Clientes"),
             MaxLength = 40
         };
         AutomationProperties.SetAutomationId(newNameBox, "NewListNameBox");
@@ -455,7 +455,7 @@ public sealed partial class DevicesPage : Page
         var content = new StackPanel { Spacing = 8 };
         content.Children.Add(new TextBlock
         {
-            Text = "Organiza tus equipos en listas. Los dispositivos de una lista se pueden filtrar y siguen guardados aunque elimines la lista.",
+            Text = global::CSIViewer.Core.Localization.Text("Organiza tus equipos en listas. Los dispositivos de una lista se pueden filtrar y siguen guardados aunque elimines la lista."),
             Style = GetStyle("MutedTextStyle"),
             TextWrapping = TextWrapping.Wrap
         });
@@ -483,13 +483,13 @@ public sealed partial class DevicesPage : Page
         {
             if (name.Length == 0)
             {
-                error = "Escribe un nombre para la lista.";
+                error = global::CSIViewer.Core.Localization.Text("Escribe un nombre para la lista.");
                 return false;
             }
 
             if (name.Length > 40)
             {
-                error = "El nombre no puede superar los 40 caracteres.";
+                error = global::CSIViewer.Core.Localization.Text("El nombre no puede superar los 40 caracteres.");
                 return false;
             }
 
@@ -497,7 +497,7 @@ public sealed partial class DevicesPage : Page
                     x.Id != exceptId &&
                     string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase)))
             {
-                error = "Ya existe una lista con ese nombre.";
+                error = global::CSIViewer.Core.Localization.Text("Ya existe una lista con ese nombre.");
                 return false;
             }
 
@@ -512,7 +512,7 @@ public sealed partial class DevicesPage : Page
             {
                 listsPanel.Children.Add(new TextBlock
                 {
-                    Text = "Todavía no hay listas. Crea una arriba, por ejemplo «Clientes» o «Casa».",
+                    Text = global::CSIViewer.Core.Localization.Text("Todavía no hay listas. Crea una arriba, por ejemplo «Clientes» o «Casa»."),
                     Style = GetStyle("MutedTextStyle"),
                     TextWrapping = TextWrapping.Wrap
                 });
@@ -532,12 +532,12 @@ public sealed partial class DevicesPage : Page
                 };
                 var renameButton = new Button
                 {
-                    Content = "Guardar nombre",
+                    Content = global::CSIViewer.Core.Localization.Text("Guardar nombre"),
                     Style = GetStyle("SecondaryButtonStyle")
                 };
                 var deleteButton = new Button
                 {
-                    Content = pendingDeleteId == list.Id ? "Confirmar" : "Eliminar",
+                    Content = pendingDeleteId == list.Id ? "Confirmar" : global::CSIViewer.Core.Localization.Text("Eliminar"),
                     Style = GetStyle("DangerButtonStyle")
                 };
 
@@ -572,7 +572,7 @@ public sealed partial class DevicesPage : Page
                     {
                         pendingDeleteId = list.Id;
                         ShowError(count > 0
-                            ? $"La lista «{list.Name}» tiene {count} dispositivo(s). Si la eliminas, quedarán como «Sin lista»."
+                            ? global::CSIViewer.Core.Localization.Format("La lista «{0}» tiene {1} dispositivo(s). Si la eliminas, quedarán como «Sin lista».",list.Name,count)
                             : null);
                         Rebuild();
                         return;
@@ -663,8 +663,8 @@ public sealed partial class DevicesPage : Page
         {
             RequestedTheme = ThemeService.Current,
             XamlRoot = MainWindow.Instance?.Content?.XamlRoot,
-            Title = "Listas de dispositivos",
-            CloseButtonText = "Cerrar",
+            Title = global::CSIViewer.Core.Localization.Text("Listas de dispositivos"),
+            CloseButtonText = global::CSIViewer.Core.Localization.Text("Cerrar"),
             DefaultButton = ContentDialogButton.Close,
             Content = content
         };

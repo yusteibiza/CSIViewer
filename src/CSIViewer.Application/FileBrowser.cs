@@ -12,21 +12,21 @@ public static class FileBrowser
         if (string.IsNullOrWhiteSpace(path) || path.Length > 4096 || path.Any(char.IsControl) ||
             !Path.IsPathFullyQualified(path) || path.StartsWith('\\') ||
             path.IndexOf(':', 2) >= 0 || path.Split('\\', '/').Any(x => x is "." or ".." || x.EndsWith('.') || x.EndsWith(' ')))
-            throw new IOException("Ruta local no permitida. No se admiten rutas de red ni enlaces.");
+            throw new IOException(global::CSIViewer.Core.Localization.Text("Ruta local no permitida. No se admiten rutas de red ni enlaces."));
         var full = Path.GetFullPath(path);
         var drive = new DriveInfo(Path.GetPathRoot(full)!);
-        if (drive.DriveType == DriveType.Network) throw new IOException("Las unidades de red no están disponibles.");
+        if (drive.DriveType == DriveType.Network) throw new IOException(global::CSIViewer.Core.Localization.Text("Las unidades de red no están disponibles."));
         for (var current = full; !string.IsNullOrEmpty(current); current = Path.GetDirectoryName(current))
         {
             if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
-                throw new IOException("No se permite seguir enlaces o puntos de reanálisis.");
+                throw new IOException(global::CSIViewer.Core.Localization.Text("No se permite seguir enlaces o puntos de reanálisis."));
         }
         return full;
     }
 
     public static FileBrowseResponse Browse(string path, int offset = 0)
     {
-        if (offset is < 0 or > 1000000) throw new IOException("Página no válida.");
+        if (offset is < 0 or > 1000000) throw new IOException(global::CSIViewer.Core.Localization.Text("Página no válida."));
         if (string.IsNullOrEmpty(path))
         {
             var roots = DriveInfo.GetDrives().Where(x => x.DriveType != DriveType.Network && x.IsReady)

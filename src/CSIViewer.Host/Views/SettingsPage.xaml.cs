@@ -64,7 +64,8 @@ public sealed partial class SettingsPage : Page
             AppTheme.Dark => 2,
             _ => 0
         };
-        LanguageCombo.SelectedIndex = 0;
+        LanguageCombo.ItemsSource = Localization.Languages;
+        LanguageCombo.SelectedItem = Localization.Languages.First(x => x.Code == Localization.Normalize(settings.Language));
         DeviceNameBox.Text = settings.DeviceName;
         ServerUrlBox.Text = settings.ServerUrl;
         EnrollmentCodeBox.Text = settings.EnrollmentCode;
@@ -149,9 +150,18 @@ public sealed partial class SettingsPage : Page
         catch (Exception)
         {
             SettingsStatusBar.Severity = InfoBarSeverity.Warning;
-            SettingsStatusBar.Message = "El color se ha aplicado, pero no se pudo guardar.";
+            SettingsStatusBar.Message = global::CSIViewer.Core.Localization.Text("El color se ha aplicado, pero no se pudo guardar.");
             SettingsStatusBar.IsOpen = true;
         }
+    }
+
+    private async void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || LanguageCombo.SelectedItem is not LanguageChoice choice) return;
+        _state.Settings.Language = choice.Code;
+        if (MainWindow.Instance?.Content is FrameworkElement root) CSIViewer.Presentation.Translate.Apply(root, choice.Code);
+        try { await _settings.SaveAsync(_state.Settings); }
+        catch (Exception) { SettingsStatusBar.Message = Localization.Text("No se pudo guardar el idioma."); SettingsStatusBar.IsOpen = true; }
     }
 
     private async void BrowseDownloadFolder_Click(object sender, RoutedEventArgs e)
@@ -249,7 +259,7 @@ public sealed partial class SettingsPage : Page
             {
                 _state.DeviceName = settings.DeviceName;
                 _state.Settings = settings;
-                _state.StatusMessage = "Configuración guardada.";
+                _state.StatusMessage = global::CSIViewer.Core.Localization.Text("Configuración guardada.");
             });
 
             if (reconnect)
@@ -262,14 +272,14 @@ public sealed partial class SettingsPage : Page
                 ? InfoBarSeverity.Success
                 : InfoBarSeverity.Warning;
             SettingsStatusBar.Message = startupRegistered
-                ? "Configuración guardada."
-                : "Configuración guardada, pero Windows no permitió cambiar el inicio automático.";
+                ? global::CSIViewer.Core.Localization.Text("Configuración guardada.")
+                : global::CSIViewer.Core.Localization.Text("Configuración guardada, pero Windows no permitió cambiar el inicio automático.");
             SettingsStatusBar.IsOpen = true;
         }
         catch (Exception ex)
         {
             SettingsStatusBar.Severity = InfoBarSeverity.Error;
-            SettingsStatusBar.Message = "No se pudo guardar la configuración: " + ex.Message;
+            SettingsStatusBar.Message = global::CSIViewer.Core.Localization.Text("No se pudo guardar la configuración: ") + ex.Message;
             SettingsStatusBar.IsOpen = true;
         }
     }
@@ -300,7 +310,7 @@ public sealed partial class SettingsPage : Page
             SettingsStatusBar.Severity = result.StartsWith("Operación completada", StringComparison.Ordinal)
                 ? InfoBarSeverity.Success
                 : InfoBarSeverity.Error;
-            SettingsStatusBar.Title = "Modo desatendido";
+            SettingsStatusBar.Title = global::CSIViewer.Core.Localization.Text("Modo desatendido");
             SettingsStatusBar.Message = result;
             SettingsStatusBar.IsOpen = true;
         }
@@ -325,7 +335,7 @@ public sealed partial class SettingsPage : Page
             SettingsStatusBar.Severity = result.StartsWith("Operación completada", StringComparison.Ordinal)
                 ? InfoBarSeverity.Success
                 : InfoBarSeverity.Error;
-            SettingsStatusBar.Title = "Modo desatendido";
+            SettingsStatusBar.Title = global::CSIViewer.Core.Localization.Text("Modo desatendido");
             SettingsStatusBar.Message = result;
             SettingsStatusBar.IsOpen = true;
         }
@@ -348,7 +358,7 @@ public sealed partial class SettingsPage : Page
     {
         try
         {
-            UnattendedStatusText.Text = "Comprobando…";
+            UnattendedStatusText.Text = global::CSIViewer.Core.Localization.Text("Comprobando…");
             var status = await _unattended.GetStatusAsync();
             UnattendedStatusText.Text = status;
             InstallUnattendedButton.IsEnabled = !_unattendedBusy && status == "No instalado";
@@ -356,9 +366,9 @@ public sealed partial class SettingsPage : Page
         }
         catch (Exception ex)
         {
-            UnattendedStatusText.Text = "No se pudo consultar";
+            UnattendedStatusText.Text = global::CSIViewer.Core.Localization.Text("No se pudo consultar");
             SettingsStatusBar.Severity = InfoBarSeverity.Warning;
-            SettingsStatusBar.Message = "No se pudo consultar el servicio: " + ex.GetBaseException().Message;
+            SettingsStatusBar.Message = global::CSIViewer.Core.Localization.Text("No se pudo consultar el servicio: ") + ex.GetBaseException().Message;
             SettingsStatusBar.IsOpen = true;
         }
     }
@@ -374,7 +384,7 @@ public sealed partial class SettingsPage : Page
 
     private async void TestServer_Click(object sender, RoutedEventArgs e)
     {
-        DiagnosticsText.Text = "Comprobando servidor…";
+        DiagnosticsText.Text = global::CSIViewer.Core.Localization.Text("Comprobando servidor…");
         DiagnosticsText.Text = await _diagnostics.TestServerAsync();
     }
 
@@ -388,14 +398,14 @@ public sealed partial class SettingsPage : Page
     {
         try
         {
-            await _client.RevokeAllSessionsAsync("Acceso revocado por el usuario.");
+            await _client.RevokeAllSessionsAsync(global::CSIViewer.Core.Localization.Text("Acceso revocado por el usuario."));
             SettingsStatusBar.Severity = InfoBarSeverity.Success;
-            SettingsStatusBar.Message = "Todas las sesiones cerradas y contraseña temporal regenerada.";
+            SettingsStatusBar.Message = global::CSIViewer.Core.Localization.Text("Todas las sesiones cerradas y contraseña temporal regenerada.");
         }
         catch (Exception ex)
         {
             SettingsStatusBar.Severity = InfoBarSeverity.Error;
-            SettingsStatusBar.Message = "No se pudo revocar el acceso: " + ex.GetBaseException().Message;
+            SettingsStatusBar.Message = global::CSIViewer.Core.Localization.Text("No se pudo revocar el acceso: ") + ex.GetBaseException().Message;
         }
 
         SettingsStatusBar.IsOpen = true;
@@ -453,20 +463,20 @@ public sealed partial class SettingsPage : Page
 
     private static string DescribeLogLevel(AppLogLevel level) => level switch
     {
-        AppLogLevel.Debug => "Depuración (máximo detalle)",
-        AppLogLevel.Warning => "Advertencia",
-        AppLogLevel.Error => "Error",
-        AppLogLevel.Critical => "Crítico",
-        _ => "Información"
+        AppLogLevel.Debug => global::CSIViewer.Core.Localization.Text("Depuración (máximo detalle)"),
+        AppLogLevel.Warning => global::CSIViewer.Core.Localization.Text("Advertencia"),
+        AppLogLevel.Error => global::CSIViewer.Core.Localization.Text("Error"),
+        AppLogLevel.Critical => global::CSIViewer.Core.Localization.Text("Crítico"),
+        _ => global::CSIViewer.Core.Localization.Text("Información")
     };
 
     private async void ExportDiagnostics_Click(object sender, RoutedEventArgs e)
     {
-        DiagnosticsText.Text = "Creando paquete de diagnóstico…";
+        DiagnosticsText.Text = global::CSIViewer.Core.Localization.Text("Creando paquete de diagnóstico…");
         try
         {
             var path = await _diagnostics.ExportAsync();
-            DiagnosticsText.Text = "Diagnóstico exportado:\n" + path;
+            DiagnosticsText.Text = global::CSIViewer.Core.Localization.Text("Diagnóstico exportado:\n") + path;
             Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"")
             {
                 UseShellExecute = true
@@ -474,7 +484,7 @@ public sealed partial class SettingsPage : Page
         }
         catch (Exception ex)
         {
-            DiagnosticsText.Text = "No se pudo exportar el diagnóstico: " + ex.GetBaseException().Message;
+            DiagnosticsText.Text = global::CSIViewer.Core.Localization.Text("No se pudo exportar el diagnóstico: ") + ex.GetBaseException().Message;
         }
     }
 
@@ -489,7 +499,7 @@ public sealed partial class SettingsPage : Page
         catch
         {
             SettingsStatusBar.Severity = InfoBarSeverity.Error;
-            SettingsStatusBar.Message = "No se pudo abrir la carpeta de logs.";
+            SettingsStatusBar.Message = global::CSIViewer.Core.Localization.Text("No se pudo abrir la carpeta de logs.");
             SettingsStatusBar.IsOpen = true;
         }
     }

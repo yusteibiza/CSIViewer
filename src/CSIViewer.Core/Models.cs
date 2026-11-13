@@ -9,7 +9,9 @@ public enum SessionPermissions
     Chat = 4,
     SendFiles = 8,
     ReceiveFiles = 16,
-    All = ViewScreen | ControlInput | Chat | SendFiles | ReceiveFiles
+    Audio = 32,
+    Clipboard = 64,
+    All = ViewScreen | ControlInput | Chat | SendFiles | ReceiveFiles | Audio | Clipboard
 }
 
 public enum ConnectionState
@@ -140,7 +142,7 @@ public sealed class TransferItem
     public DateTimeOffset UpdatedUtc { get; set; } = DateTimeOffset.UtcNow;
     public double Progress => TotalBytes <= 0 ? 0 : Math.Clamp((double)TransferredBytes / TotalBytes, 0, 1);
     public string SpeedText => BytesPerSecond <= 0 ? "" : $"{BytesPerSecond / 1024 / 1024:0.0} MB/s";
-    public string DirectionText => Direction == TransferDirection.Send ? "Envío" : "Recepción";
+    public string DirectionText => Direction == TransferDirection.Send ? global::CSIViewer.Core.Localization.Text("Envío") : global::CSIViewer.Core.Localization.Text("Recepción");
     public bool IsActive => State is TransferState.Queued or TransferState.Preparing
         or TransferState.Transferring or TransferState.Paused or TransferState.Verifying;
     public bool CanPause => State == TransferState.Transferring;
@@ -149,15 +151,15 @@ public sealed class TransferItem
     public bool CanRemove => !IsActive;
     public string StateText => State switch
     {
-        TransferState.Queued => "En cola",
-        TransferState.Preparing => "Preparando",
-        TransferState.Transferring => "Transfiriendo",
-        TransferState.Paused => "Pausada",
-        TransferState.Verifying => "Verificando SHA-256",
-        TransferState.Completed => "Completada",
-        TransferState.Cancelled => "Cancelada",
-        TransferState.Failed => "Error",
-        TransferState.Interrupted => "Interrumpida",
+        TransferState.Queued => global::CSIViewer.Core.Localization.Text("En cola"),
+        TransferState.Preparing => global::CSIViewer.Core.Localization.Text("Preparando"),
+        TransferState.Transferring => global::CSIViewer.Core.Localization.Text("Transfiriendo"),
+        TransferState.Paused => global::CSIViewer.Core.Localization.Text("Pausada"),
+        TransferState.Verifying => global::CSIViewer.Core.Localization.Text("Verificando SHA-256"),
+        TransferState.Completed => global::CSIViewer.Core.Localization.Text("Completada"),
+        TransferState.Cancelled => global::CSIViewer.Core.Localization.Text("Cancelada"),
+        TransferState.Failed => global::CSIViewer.Core.Localization.Text("Error"),
+        TransferState.Interrupted => global::CSIViewer.Core.Localization.Text("Interrumpida"),
         _ => State.ToString()
     };
     public string EtaText
@@ -214,15 +216,17 @@ public static class PermissionNames
     {
         if (permissions == SessionPermissions.None)
         {
-            return "Ninguno";
+            return global::CSIViewer.Core.Localization.Text("Ninguno");
         }
 
         var names = new List<string>();
-        if (permissions.HasFlag(SessionPermissions.ViewScreen)) names.Add("Ver pantalla");
+        if (permissions.HasFlag(SessionPermissions.ViewScreen)) names.Add(global::CSIViewer.Core.Localization.Text("Ver pantalla"));
         if (permissions.HasFlag(SessionPermissions.ControlInput)) names.Add("Controlar entrada");
-        if (permissions.HasFlag(SessionPermissions.Chat)) names.Add("Chat");
+        if (permissions.HasFlag(SessionPermissions.Chat)) names.Add(global::CSIViewer.Core.Localization.Text("Chat"));
         if (permissions.HasFlag(SessionPermissions.SendFiles)) names.Add("Enviar archivos");
         if (permissions.HasFlag(SessionPermissions.ReceiveFiles)) names.Add("Recibir archivos");
+        if (permissions.HasFlag(SessionPermissions.Audio)) names.Add(Localization.Text("Audio del sistema"));
+        if (permissions.HasFlag(SessionPermissions.Clipboard)) names.Add(Localization.Text("Portapapeles de texto"));
         return string.Join(", ", names);
     }
 }

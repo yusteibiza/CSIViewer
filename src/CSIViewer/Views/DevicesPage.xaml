@@ -1,8 +1,4 @@
-<Page
-    x:Class="CSIViewer.Views.DevicesPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="{ThemeResource PageBackgroundBrush}">
+﻿<?xml version="1.0" encoding="utf-8"?><Page x:Class="CSIViewer.Views.DevicesPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="{ThemeResource PageBackgroundBrush}" xmlns:loc="using:CSIViewer.Presentation">
     <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -17,19 +13,13 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Spacing="4">
-                <TextBlock Text="Dispositivos" Style="{StaticResource PageTitleStyle}" />
-                <TextBlock Text="Equipos guardados, favoritos y listas personalizadas como Clientes o Casa."
-                           Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                <TextBlock Text="Dispositivos" Style="{StaticResource PageTitleStyle}" loc:Translate.Text="Dispositivos" />
+                <TextBlock Text="Equipos guardados, favoritos y listas personalizadas como Clientes o Casa." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" loc:Translate.Text="Equipos guardados, favoritos y listas personalizadas como Clientes o Casa." />
             </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Button Content="Listas" Click="ManageLists_Click"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        AutomationProperties.AutomationId="ManageListsButton"
-                        ToolTipService.ToolTip="Crear, renombrar o eliminar listas personalizadas" />
-                <Button Content="Nuevo dispositivo" Click="NewDevice_Click"
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        AutomationProperties.AutomationId="NewDeviceButton" />
-            </StackPanel>
+            <loc:WrapPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">
+                <Button Content="Listas" Click="ManageLists_Click" Style="{StaticResource SecondaryButtonStyle}" AutomationProperties.AutomationId="ManageListsButton" ToolTipService.ToolTip="Crear, renombrar o eliminar listas personalizadas" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Listas" loc:Translate.ToolTip="Crear, renombrar o eliminar listas personalizadas" />
+                <Button Content="Nuevo dispositivo" Click="NewDevice_Click" Style="{StaticResource PrimaryButtonStyle}" AutomationProperties.AutomationId="NewDeviceButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Nuevo dispositivo" />
+            </loc:WrapPanel>
         </Grid>
 
         <Border Grid.Row="1" Style="{StaticResource CardStyle}">
@@ -40,18 +30,14 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="ID DEL EQUIPO REMOTO" Style="{StaticResource FieldLabelStyle}" />
-                    <TextBox x:Name="DirectIdBox" PlaceholderText="123 456 789" MaxLength="11"
-                             FontFamily="Consolas" AutomationProperties.AutomationId="DirectIdBox" />
+                    <TextBlock Text="ID DEL EQUIPO REMOTO" Style="{StaticResource FieldLabelStyle}" loc:Translate.Text="ID DEL EQUIPO REMOTO" />
+                    <TextBox x:Name="DirectIdBox" PlaceholderText="123 456 789" MaxLength="11" FontFamily="Consolas" AutomationProperties.AutomationId="DirectIdBox" />
                 </StackPanel>
                 <StackPanel Grid.Column="1">
-                    <TextBlock Text="CONTRASEÑA TEMPORAL" Style="{StaticResource FieldLabelStyle}" />
-                    <PasswordBox x:Name="DirectPasswordBox" PlaceholderText="Contraseña"
-                                 AutomationProperties.AutomationId="DirectPasswordBox" />
+                    <TextBlock Text="CONTRASEÑA TEMPORAL" Style="{StaticResource FieldLabelStyle}" loc:Translate.Text="CONTRASEÑA TEMPORAL" />
+                    <PasswordBox x:Name="DirectPasswordBox" PlaceholderText="Contraseña" AutomationProperties.AutomationId="DirectPasswordBox" loc:Translate.PlaceholderText="Contraseña" />
                 </StackPanel>
-                <Button Grid.Column="2" Content="Conectar" VerticalAlignment="Bottom"
-                        Style="{StaticResource PrimaryButtonStyle}" Click="ConnectHost_Click"
-                        AutomationProperties.AutomationId="DirectConnectButton" />
+                <Button Grid.Column="2" Content="Conectar" VerticalAlignment="Bottom" Style="{StaticResource PrimaryButtonStyle}" Click="ConnectHost_Click" AutomationProperties.AutomationId="DirectConnectButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Conectar" />
             </Grid>
         </Border>
 
@@ -60,13 +46,8 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox x:Name="SearchBox" PlaceholderText="Buscar por nombre, ID, descripción o lista…"
-                     TextChanged="SearchBox_TextChanged"
-                     AutomationProperties.AutomationId="DeviceSearchBox" />
-            <ComboBox x:Name="ListFilterBox" Grid.Column="1" MinWidth="210"
-                      DisplayMemberPath="Name" SelectionChanged="ListFilter_SelectionChanged"
-                      AutomationProperties.AutomationId="ListFilterBox"
-                      ToolTipService.ToolTip="Filtrar dispositivos por lista" />
+            <TextBox x:Name="SearchBox" PlaceholderText="Buscar por nombre, ID, descripción o lista…" TextChanged="SearchBox_TextChanged" AutomationProperties.AutomationId="DeviceSearchBox" loc:Translate.PlaceholderText="Buscar por nombre, ID, descripción o lista…" />
+            <ComboBox x:Name="ListFilterBox" Grid.Column="1" MinWidth="210" DisplayMemberPath="Name" SelectionChanged="ListFilter_SelectionChanged" AutomationProperties.AutomationId="ListFilterBox" ToolTipService.ToolTip="Filtrar dispositivos por lista" loc:Translate.ToolTip="Filtrar dispositivos por lista" />
         </Grid>
 
         <Border Grid.Row="3" Style="{StaticResource CardStyle}" Padding="0">
@@ -82,20 +63,10 @@
                                 </Grid.ColumnDefinitions>
                                 <Grid Width="42" Height="42">
                                     <Border CornerRadius="10" Background="{ThemeResource BrandSoftBrush}">
-                                        <FontIcon Glyph="&#xE7F4;" FontSize="20" Foreground="{ThemeResource BrandBrush}" />
+                                        <FontIcon Glyph="" FontSize="20" Foreground="{ThemeResource BrandBrush}" />
                                     </Border>
-                                    <Ellipse Width="15" Height="15" Fill="{ThemeResource OnlineBrush}"
-                                             Stroke="{ThemeResource CardBackgroundBrush}" StrokeThickness="2"
-                                             HorizontalAlignment="Right" VerticalAlignment="Top"
-                                             Margin="0,-5,-5,0"
-                                             Visibility="{Binding OnlineVisibility}"
-                                             ToolTipService.ToolTip="{Binding StatusToolTip}" />
-                                    <Ellipse Width="15" Height="15" Fill="{ThemeResource OfflineBrush}"
-                                             Stroke="{ThemeResource CardBackgroundBrush}" StrokeThickness="2"
-                                             HorizontalAlignment="Right" VerticalAlignment="Top"
-                                             Margin="0,-5,-5,0"
-                                             Visibility="{Binding OfflineVisibility}"
-                                             ToolTipService.ToolTip="{Binding StatusToolTip}" />
+                                    <Ellipse Width="15" Height="15" Fill="{ThemeResource OnlineBrush}" Stroke="{ThemeResource CardBackgroundBrush}" StrokeThickness="2" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-5,-5,0" Visibility="{Binding OnlineVisibility}" ToolTipService.ToolTip="{Binding StatusToolTip}" />
+                                    <Ellipse Width="15" Height="15" Fill="{ThemeResource OfflineBrush}" Stroke="{ThemeResource CardBackgroundBrush}" StrokeThickness="2" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-5,-5,0" Visibility="{Binding OfflineVisibility}" ToolTipService.ToolTip="{Binding StatusToolTip}" />
                                 </Grid>
                                 <StackPanel Grid.Column="1" Spacing="3">
                                     <Grid ColumnSpacing="8">
@@ -105,66 +76,36 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Alias}" FontWeight="SemiBold"
-                                                       MaxWidth="300" TextTrimming="CharacterEllipsis"
-                                                       VerticalAlignment="Center"
-                                                       ToolTipService.ToolTip="{Binding Alias}" />
-                                            <StackPanel Orientation="Horizontal" Spacing="0"
-                                                        VerticalAlignment="Center"
-                                                        ToolTipService.ToolTip="{Binding StatusToolTip}">
-                                                <TextBlock Text="(conectado)" FontSize="11"
-                                                           Foreground="{ThemeResource OnlineBrush}"
-                                                           VerticalAlignment="Center"
-                                                           Visibility="{Binding OnlineVisibility}" />
-                                                <TextBlock Text="(desconectado)" FontSize="11"
-                                                           Foreground="{ThemeResource OfflineBrush}"
-                                                           VerticalAlignment="Center"
-                                                           Visibility="{Binding OfflineVisibility}" />
+                                            <TextBlock Text="{Binding Alias}" FontWeight="SemiBold" MaxWidth="300" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTipService.ToolTip="{Binding Alias}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center" ToolTipService.ToolTip="{Binding StatusToolTip}">
+                                                <TextBlock Text="(conectado)" FontSize="11" Foreground="{ThemeResource OnlineBrush}" VerticalAlignment="Center" Visibility="{Binding OnlineVisibility}" loc:Translate.Text="(conectado)" />
+                                                <TextBlock Text="(desconectado)" FontSize="11" Foreground="{ThemeResource OfflineBrush}" VerticalAlignment="Center" Visibility="{Binding OfflineVisibility}" loc:Translate.Text="(desconectado)" />
                                             </StackPanel>
                                         </StackPanel>
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
-                                                    VerticalAlignment="Center">
-                                            <FontIcon Glyph="&#xE735;" FontSize="12"
-                                                      Foreground="{ThemeResource BrandBrush}"
-                                                      Visibility="{Binding FavoriteVisibility}"
-                                                      ToolTipService.ToolTip="Favorito" />
-                                            <Border Background="{ThemeResource BrandSoftBrush}" CornerRadius="4"
-                                                    Padding="6,2" VerticalAlignment="Center"
-                                                    Visibility="{Binding ListVisibility}">
-                                                <TextBlock Text="{Binding ListName}" FontSize="11"
-                                                           VerticalAlignment="Center"
-                                                           Foreground="{ThemeResource BrandBrush}"
-                                                           TextTrimming="CharacterEllipsis" MaxWidth="140" />
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <FontIcon Glyph="" FontSize="12" Foreground="{ThemeResource BrandBrush}" Visibility="{Binding FavoriteVisibility}" ToolTipService.ToolTip="Favorito" loc:Translate.ToolTip="Favorito" />
+                                            <Border Background="{ThemeResource BrandSoftBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center" Visibility="{Binding ListVisibility}">
+                                                <TextBlock Text="{Binding ListName}" FontSize="11" VerticalAlignment="Center" Foreground="{ThemeResource BrandBrush}" TextTrimming="CharacterEllipsis" MaxWidth="140" />
                                             </Border>
                                         </StackPanel>
                                     </Grid>
-                                    <TextBlock Text="{Binding DeviceId}" FontFamily="Consolas" FontSize="12"
-                                               Style="{StaticResource MutedTextStyle}" />
-                                    <TextBlock Text="{Binding Description}" Style="{StaticResource MutedTextStyle}"
-                                               FontSize="12" TextTrimming="CharacterEllipsis"
-                                               Visibility="{Binding DescriptionVisibility}" />
-                                    <TextBlock Text="{Binding LastSeenText}" FontSize="11"
-                                               Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock Text="{Binding DeviceId}" FontFamily="Consolas" FontSize="12" Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock Text="{Binding Description}" Style="{StaticResource MutedTextStyle}" FontSize="12" TextTrimming="CharacterEllipsis" Visibility="{Binding DescriptionVisibility}" />
+                                    <TextBlock Text="{Binding LastSeenText}" FontSize="11" Style="{StaticResource MutedTextStyle}" />
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                    <Button Content="Conectar" Click="Connect_Click"
-                                            Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Content="Editar" Click="Edit_Click"
-                                            Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Content="Eliminar" Click="Delete_Click"
-                                            Style="{StaticResource DangerButtonStyle}" />
-                                </StackPanel>
+                                <loc:WrapPanel Grid.Column="2" Spacing="6" VerticalAlignment="Center">
+                                    <Button Content="Conectar" Click="Connect_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Conectar" />
+                                    <Button Content="Editar" Click="Edit_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Editar" />
+                                    <Button Content="Eliminar" Click="Delete_Click" Style="{StaticResource DangerButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Eliminar" />
+                                </loc:WrapPanel>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Spacing="8" Visibility="Collapsed">
-                    <FontIcon Glyph="&#xE7F4;" FontSize="34" Foreground="{ThemeResource MutedTextBrush}" />
-                    <TextBlock Text="No hay dispositivos que mostrar" FontWeight="SemiBold"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="Crea uno con «Nuevo dispositivo» o cambia el filtro."
-                               Style="{StaticResource MutedTextStyle}" HorizontalAlignment="Center" />
+                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8" Visibility="Collapsed">
+                    <FontIcon Glyph="" FontSize="34" Foreground="{ThemeResource MutedTextBrush}" />
+                    <TextBlock Text="No hay dispositivos que mostrar" FontWeight="SemiBold" HorizontalAlignment="Center" loc:Translate.Text="No hay dispositivos que mostrar" />
+                    <TextBlock Text="Crea uno con «Nuevo dispositivo» o cambia el filtro." Style="{StaticResource MutedTextStyle}" HorizontalAlignment="Center" loc:Translate.Text="Crea uno con «Nuevo dispositivo» o cambia el filtro." />
                 </StackPanel>
             </Grid>
         </Border>

@@ -23,18 +23,18 @@ public sealed partial class RemoteClient
     {
         if (!Guid.TryParse(sessionId, out var id) || !_sessions.TryGetValue(id, out var session) ||
             session.State != ConnectionState.Connected || !SessionPermissionPolicy.CanTransferFiles(session.Permissions))
-            throw new InvalidOperationException("La sesión ya no está disponible o no tiene permiso de archivos.");
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("La sesión ya no está disponible o no tiene permiso de archivos."));
         return session;
     }
 
     private static string RegisterFileDestination(RemoteSession session, string path)
     {
         var full = FileBrowser.ValidatePath(path);
-        if (!Directory.Exists(full)) throw new IOException("La carpeta de destino no existe.");
+        if (!Directory.Exists(full)) throw new IOException(global::CSIViewer.Core.Localization.Text("La carpeta de destino no existe."));
         foreach (var entry in session.FileDestinations)
             if (string.Equals(entry.Value, full, StringComparison.OrdinalIgnoreCase)) return entry.Key;
         if (session.FileDestinations.Count >= 256)
-            throw new IOException("Se alcanzó el límite de carpetas de esta sesión. Vuelve a conectar.");
+            throw new IOException(global::CSIViewer.Core.Localization.Text("Se alcanzó el límite de carpetas de esta sesión. Vuelve a conectar."));
         var token = Guid.NewGuid().ToString("N");
         session.FileDestinations[token] = full;
         return token;
@@ -45,7 +45,7 @@ public sealed partial class RemoteClient
         if (token is null) return _state.Settings.DownloadFolder; // Compatible con 1.0.0.
         if (session is null || session.State != ConnectionState.Connected ||
             !session.FileDestinations.TryGetValue(token, out var path))
-            throw new IOException("El destino no está autorizado en esta sesión.");
+            throw new IOException(global::CSIViewer.Core.Localization.Text("El destino no está autorizado en esta sesión."));
         return FileBrowser.ValidatePath(path);
     }
 
@@ -53,7 +53,7 @@ public sealed partial class RemoteClient
         CancellationToken cancellationToken = default)
     {
         var session = RequireFileSession(sessionId);
-        if (session.BrowseRequests.Count >= 4) throw new IOException("Hay otra navegación pendiente.");
+        if (session.BrowseRequests.Count >= 4) throw new IOException(global::CSIViewer.Core.Localization.Text("Hay otra navegación pendiente."));
         var id = Guid.NewGuid().ToString("N");
         var pending = new TaskCompletionSource<FileBrowseResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         session.BrowseRequests[id] = pending;
@@ -64,7 +64,7 @@ public sealed partial class RemoteClient
         }
         catch (TimeoutException)
         {
-            throw new IOException("El equipo remoto no respondió. El administrador de archivos requiere CSIViewer 1.0.1 en ambos equipos.");
+            throw new IOException(global::CSIViewer.Core.Localization.Text("El equipo remoto no respondió. El administrador de archivos requiere CSIViewer 1.0.1 en ambos equipos."));
         }
         finally { session.BrowseRequests.TryRemove(id, out _); }
     }
@@ -74,7 +74,7 @@ public sealed partial class RemoteClient
     {
         var session = RequireFileSession(sessionId);
         if (!Guid.TryParse(destinationToken, out _))
-            return Task.FromResult(Result<int>.Fail("invalid_destination", "Selecciona una carpeta de destino remota válida."));
+            return Task.FromResult(Result<int>.Fail("invalid_destination", global::CSIViewer.Core.Localization.Text("Selecciona una carpeta de destino remota válida.")));
         var selected = paths.ToArray();
         return Task.Run(() => SendPathsToSessionAsync(selected, session, destinationToken, cancellationToken), cancellationToken);
     }
@@ -84,7 +84,7 @@ public sealed partial class RemoteClient
     {
         var session = RequireFileSession(sessionId);
         if (!SessionPermissionPolicy.CanReceiveFiles(session.IsController, session.Permissions))
-            throw new InvalidOperationException("No hay permiso para recibir archivos.");
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("No hay permiso para recibir archivos."));
         if (paths.Length is < 1 or > 100) throw new IOException("Selecciona entre 1 y 100 elementos.");
         if (session.RequestedPulls.Count >= 4) throw new IOException("Hay varias recepciones pendientes.");
         var destination = RegisterFileDestination(session, localDirectory);
@@ -169,13 +169,13 @@ public sealed partial class RemoteClient
             {
                 var request = ControlJson.Payload<FilePullRequest>(envelope);
                 if (request is not null && Guid.TryParse(request.RequestId, out _))
-                    await SendFileControlAsync(session, "file.pull.result", new FilePullResponse(request.RequestId, "Hay otra recepción solicitada en curso.")).ConfigureAwait(false);
+                    await SendFileControlAsync(session, "file.pull.result", new FilePullResponse(request.RequestId, global::CSIViewer.Core.Localization.Text("Hay otra recepción solicitada en curso."))).ConfigureAwait(false);
             }
             else
             {
                 var request = ControlJson.Payload<FileBrowseRequest>(envelope);
                 if (request is not null && Guid.TryParse(request.RequestId, out _))
-                    await SendFileControlAsync(session, "file.browse.result", new FileBrowseResponse(request.RequestId, "", null, [], null, Error: "La navegación está ocupada. Vuelve a intentarlo.")).ConfigureAwait(false);
+                    await SendFileControlAsync(session, "file.browse.result", new FileBrowseResponse(request.RequestId, "", null, [], null, Error: global::CSIViewer.Core.Localization.Text("La navegación está ocupada. Vuelve a intentarlo."))).ConfigureAwait(false);
             }
         }
         catch (Exception ex) { _logger.LogDebug(ex, "Could not report file browser busy state"); }
@@ -199,7 +199,7 @@ public sealed partial class RemoteClient
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
         {
-            response = new(request.RequestId, request.Path, null, [], null, Error: "No se puede abrir la carpeta: " + ex.Message);
+            response = new(request.RequestId, request.Path, null, [], null, Error: global::CSIViewer.Core.Localization.Text("No se puede abrir la carpeta: ") + ex.Message);
         }
         if (session.State == ConnectionState.Connected)
             await SendFileControlAsync(session, "file.browse.result", response).ConfigureAwait(false);
@@ -215,7 +215,7 @@ public sealed partial class RemoteClient
         {
             RequireFileSession(session.SessionId);
             if (!SessionPermissionPolicy.CanSendFiles(session.IsController, session.Permissions))
-                throw new InvalidOperationException("El anfitrión no ha concedido permiso para recibir sus archivos.");
+                throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("El anfitrión no ha concedido permiso para recibir sus archivos."));
             paths = request.Paths.Select(FileBrowser.ValidatePath).ToArray();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
@@ -230,9 +230,9 @@ public sealed partial class RemoteClient
         try
         {
             var result = await SendPathsToSessionAsync(paths, session, request.DestinationToken, _lifetimeCts.Token).ConfigureAwait(false);
-            error = result.IsSuccess ? null : result.Error?.Message ?? "La recepción no pudo completarse.";
+            error = result.IsSuccess ? null : result.Error?.Message ?? global::CSIViewer.Core.Localization.Text("La recepción no pudo completarse.");
         }
-        catch (Exception ex) { error = ex is UnauthorizedAccessException ? "Windows denegó el acceso a los archivos." : "No se pudo completar la recepción."; }
+        catch (Exception ex) { error = ex is UnauthorizedAccessException ? global::CSIViewer.Core.Localization.Text("Windows denegó el acceso a los archivos.") : global::CSIViewer.Core.Localization.Text("No se pudo completar la recepción."); }
         if (session.State == ConnectionState.Connected)
             await SendFileControlAsync(session, "file.pull.finished", new FilePullResponse(request.RequestId, error)).ConfigureAwait(false);
     }

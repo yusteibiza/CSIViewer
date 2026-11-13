@@ -17,7 +17,7 @@ public sealed class StartupService
     private readonly string? _executablePath;
 
     public StartupService()
-        : this("CSIViewer", null)
+        : this(global::CSIViewer.Core.Localization.Text("CSIViewer"), null)
     {
     }
 
@@ -25,7 +25,7 @@ public sealed class StartupService
     {
         if (string.IsNullOrWhiteSpace(valueName))
         {
-            throw new ArgumentException("El nombre del valor de inicio no puede estar vacío.", nameof(valueName));
+            throw new ArgumentException(global::CSIViewer.Core.Localization.Text("El nombre del valor de inicio no puede estar vacío."), nameof(valueName));
         }
 
         _valueName = valueName;

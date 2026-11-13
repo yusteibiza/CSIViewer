@@ -26,7 +26,7 @@ public sealed class AppSettings
     public int SchemaVersion { get; set; } = 1;
     public string DeviceName { get; set; } = Environment.MachineName;
     public string ServerUrl { get; set; } = "http://localhost:5080";
-    public string EnrollmentCode { get; set; } = "DEV-1234";
+    public string EnrollmentCode { get; set; } = global::CSIViewer.Core.Localization.Text("DEV-1234");
     public string ProtectedEnrollmentCode { get; set; } = "";
     public bool AutoConnect { get; set; } = true;
     public bool StartWithWindows { get; set; }
@@ -37,7 +37,7 @@ public sealed class AppSettings
     public int Fps { get; set; } = 12;
     public int MaxWidth { get; set; } = 1280;
     public string DownloadFolder { get; set; } =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "CSIViewer");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", global::CSIViewer.Core.Localization.Text("CSIViewer"));
     public int UploadLimitKbps { get; set; }
     public bool NotificationsEnabled { get; set; } = true;
     public bool AllowIncomingConnections { get; set; } = true;
@@ -126,7 +126,7 @@ public sealed class AppSettings
             LogLevel = AppLogLevel.Information;
         }
         DownloadFolder = string.IsNullOrWhiteSpace(DownloadFolder)
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "CSIViewer")
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", global::CSIViewer.Core.Localization.Text("CSIViewer"))
             : DownloadFolder;
 
         try
@@ -139,7 +139,7 @@ public sealed class AppSettings
                 var parent = Path.GetDirectoryName(full);
                 if (!string.IsNullOrWhiteSpace(parent))
                 {
-                    DownloadFolder = Path.Combine(parent, "CSIViewer");
+                    DownloadFolder = Path.Combine(parent, global::CSIViewer.Core.Localization.Text("CSIViewer"));
                 }
             }
         }
@@ -148,9 +148,9 @@ public sealed class AppSettings
             DownloadFolder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 "Downloads",
-                "CSIViewer");
+                global::CSIViewer.Core.Localization.Text("CSIViewer"));
         }
 
-        Language = Language is "es" or "en" ? Language : "es";
+        Language = CSIViewer.Core.Localization.Normalize(Language);
     }
 }

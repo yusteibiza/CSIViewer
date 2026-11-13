@@ -82,7 +82,7 @@ public static class Program
                 .ConfigureAwait(false);
             Console.WriteLine($"SERVER_READY url={host.ActiveUrl} db={commandLine.Settings.DatabasePath}");
             Console.WriteLine("ENROLLMENT_CODE_CONFIGURED "
-                + (string.IsNullOrWhiteSpace(commandLine.Settings.EnrollmentCode) ? "no" : "yes"));
+                + (string.IsNullOrWhiteSpace(commandLine.Settings.EnrollmentCode) ? global::CSIViewer.Core.Localization.Text("no") : "yes"));
 
             foreach (var message in host.UpnpMessages)
             {
@@ -164,7 +164,7 @@ public static class Program
             {
                 AutoFlush = true
             });
-            Console.Title = "CSIViewer Servidor";
+            Console.Title = global::CSIViewer.Core.Localization.Text("CSIViewer Servidor");
         }
         catch
         {

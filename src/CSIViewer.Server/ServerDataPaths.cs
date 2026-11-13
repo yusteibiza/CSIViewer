@@ -23,7 +23,7 @@ public static class ServerDataPaths
                 Path.Combine(local, "CSIViewerServidor"),
                 Path.Combine(local, "CSIViewerServer"),
                 Path.Combine(local, "RemoteDesktopServer"),
-                Path.Combine(local, "CSIViewer")
+                Path.Combine(local, global::CSIViewer.Core.Localization.Text("CSIViewer"))
             };
 
             foreach (var root in legacyRoots)
@@ -67,7 +67,7 @@ public static class ServerDataPaths
                 Path.Combine(local, "CSIViewerServidor"),
                 Path.Combine(local, "CSIViewerServer"),
                 Path.Combine(local, "RemoteDesktopServer"),
-                Path.Combine(local, "CSIViewer")
+                Path.Combine(local, global::CSIViewer.Core.Localization.Text("CSIViewer"))
             },
             environment,
             LegacyDataMigration.IsServerDataFile);

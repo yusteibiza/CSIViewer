@@ -13,7 +13,7 @@ public sealed class UnattendedServiceManager
         var result = await RunAsync("sc.exe", $"query {ServiceName}", cancellationToken).ConfigureAwait(false);
         if (result.ExitCode != 0)
         {
-            return "No instalado";
+            return global::CSIViewer.Core.Localization.Text("No instalado");
         }
 
         // The text of sc.exe is localized; the numeric state code is not.
@@ -22,14 +22,14 @@ public sealed class UnattendedServiceManager
         {
             return int.Parse(stateMatch.Groups[1].Value) switch
             {
-                1 => "Detenido",
-                2 => "Iniciando",
+                1 => global::CSIViewer.Core.Localization.Text("Detenido"),
+                2 => global::CSIViewer.Core.Localization.Text("Iniciando"),
                 3 => "Deteniendo",
-                4 => "En ejecución",
+                4 => global::CSIViewer.Core.Localization.Text("En ejecución"),
                 5 => "Continuando",
                 6 => "Pausando",
                 7 => "Pausado",
-                _ => "Instalado"
+                _ => global::CSIViewer.Core.Localization.Text("Instalado")
             };
         }
 
@@ -38,7 +38,7 @@ public sealed class UnattendedServiceManager
             .FirstOrDefault(line =>
                 line.Contains("STATE", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("ESTADO", StringComparison.OrdinalIgnoreCase));
-        return stateLine is null ? "Instalado" : stateLine[(stateLine.IndexOf(':') + 1)..].Trim();
+        return stateLine is null ? global::CSIViewer.Core.Localization.Text("Instalado") : stateLine[(stateLine.IndexOf(':') + 1)..].Trim();
     }
 
     public string? FindHostExecutable()
@@ -75,7 +75,7 @@ public sealed class UnattendedServiceManager
         var host = FindHostExecutable();
         if (host is null)
         {
-            return "No se encontró CSIViewerHost.exe. Publica o compila el proyecto CSIViewer.Host junto al cliente.";
+            return global::CSIViewer.Core.Localization.Text("No se encontró CSIViewerHost.exe. Publica o compila el proyecto CSIViewer.Host junto al cliente.");
         }
 
         var client = Environment.ProcessPath;
@@ -92,7 +92,7 @@ public sealed class UnattendedServiceManager
 
         if (string.IsNullOrWhiteSpace(client))
         {
-            return "No se pudo determinar la ruta de CSIViewer.exe.";
+            return global::CSIViewer.Core.Localization.Text("No se pudo determinar la ruta de CSIViewer.exe.");
         }
 
         var script = $$"""
@@ -156,21 +156,21 @@ public sealed class UnattendedServiceManager
             using var process = Process.Start(startInfo);
             if (process is null)
             {
-                return "No se pudo iniciar PowerShell con permisos de administrador.";
+                return global::CSIViewer.Core.Localization.Text("No se pudo iniciar PowerShell con permisos de administrador.");
             }
 
             await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
             return process.ExitCode == 0
-                ? "Operación completada."
-                : $"La operación falló con el código {process.ExitCode}.";
+                ? global::CSIViewer.Core.Localization.Text("Operación completada.")
+                : global::CSIViewer.Core.Localization.Format("La operación falló con el código {0}.",process.ExitCode);
         }
         catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
         {
-            return "Operación cancelada: no se concedieron permisos de administrador.";
+            return global::CSIViewer.Core.Localization.Text("Operación cancelada: no se concedieron permisos de administrador.");
         }
         catch (Exception ex)
         {
-            return "No se pudo completar la operación: " + ex.GetBaseException().Message;
+            return global::CSIViewer.Core.Localization.Text("No se pudo completar la operación: ") + ex.GetBaseException().Message;
         }
     }
 

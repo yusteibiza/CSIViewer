@@ -135,8 +135,8 @@ public sealed class ServerTrayIcon : IDisposable
     private NOTIFYICONDATA CreateIconData()
     {
         var tooltip = _running
-            ? "CSIViewer Servidor — en ejecución"
-            : "CSIViewer Servidor — detenido";
+            ? global::CSIViewer.Core.Localization.Text("CSIViewer Servidor — en ejecución")
+            : global::CSIViewer.Core.Localization.Text("CSIViewer Servidor — detenido");
         return new NOTIFYICONDATA
         {
             cbSize = Marshal.SizeOf<NOTIFYICONDATA>(),
@@ -207,9 +207,9 @@ public sealed class ServerTrayIcon : IDisposable
 
         try
         {
-            AppendMenu(menu, MfString, CommandOpen, "Abrir CSIViewer Servidor");
-            AppendMenu(menu, MfString, CommandStart, "Iniciar servidor");
-            AppendMenu(menu, MfString, CommandStop, "Detener servidor");
+            AppendMenu(menu, MfString, CommandOpen, global::CSIViewer.Core.Localization.Text("Abrir CSIViewer Servidor"));
+            AppendMenu(menu, MfString, CommandStart, global::CSIViewer.Core.Localization.Text("Iniciar servidor"));
+            AppendMenu(menu, MfString, CommandStop, global::CSIViewer.Core.Localization.Text("Detener servidor"));
             AppendMenu(menu, 0x00000800, 0, null);
             AppendMenu(menu, MfString, CommandExit, "Salir");
 

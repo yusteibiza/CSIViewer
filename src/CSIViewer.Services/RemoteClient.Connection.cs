@@ -102,7 +102,7 @@ public sealed partial class RemoteClient
                             break;
 
                         case ReceivedMessageKind.Closed:
-                            await HandleServerConnectionClosedAsync(message.Signal, message.Reason ?? "Conexión cerrada")
+                            await HandleServerConnectionClosedAsync(message.Signal, message.Reason ?? global::CSIViewer.Core.Localization.Text("Conexión cerrada"))
                                 .ConfigureAwait(false);
                             break;
                     }
@@ -118,7 +118,7 @@ public sealed partial class RemoteClient
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Failed to handle inbound network message");
-                    _state.Post(() => _state.LastError = "Error procesando un mensaje de red.");
+                    _state.Post(() => _state.LastError = global::CSIViewer.Core.Localization.Text("Error procesando un mensaje de red."));
                 }
             }
         }
@@ -259,14 +259,14 @@ public sealed partial class RemoteClient
 
             if (!HasSessionOrPendingStart())
             {
-                SetConnectionState(ConnectionState.Connecting, "Conectando con el servidor…");
+                SetConnectionState(ConnectionState.Connecting, global::CSIViewer.Core.Localization.Text("Conectando con el servidor…"));
             }
 
             _state.Post(() =>
             {
                 _state.IsServerOnline = false;
-                _state.ServerStatus = "Conectando…";
-                _state.StatusMessage = "Conectando con el servidor…";
+                _state.ServerStatus = global::CSIViewer.Core.Localization.Text("Conectando…");
+                _state.StatusMessage = global::CSIViewer.Core.Localization.Text("Conectando con el servidor…");
             });
 
             try
@@ -281,7 +281,7 @@ public sealed partial class RemoteClient
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                throw new TimeoutException("El servidor no respondió al conectar.");
+                throw new TimeoutException(global::CSIViewer.Core.Localization.Text("El servidor no respondió al conectar."));
             }
 
             if (_stopping)
@@ -292,7 +292,7 @@ public sealed partial class RemoteClient
 
             if (!HasSessionOrPendingStart())
             {
-                SetConnectionState(ConnectionState.Authenticating, "Autenticando con el servidor…");
+                SetConnectionState(ConnectionState.Authenticating, global::CSIViewer.Core.Localization.Text("Autenticando con el servidor…"));
             }
 
             _state.Post(() => _state.ServerStatus = "Autenticando…");
@@ -308,12 +308,12 @@ public sealed partial class RemoteClient
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                throw new TimeoutException("El servidor no respondió a la autenticación.");
+                throw new TimeoutException(global::CSIViewer.Core.Localization.Text("El servidor no respondió a la autenticación."));
             }
 
             if (!authenticated)
             {
-                throw new InvalidOperationException("El servidor rechazó la autenticación.");
+                throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("El servidor rechazó la autenticación."));
             }
 
             if (_stopping)
@@ -334,10 +334,10 @@ public sealed partial class RemoteClient
             _state.Post(() =>
             {
                 _state.IsServerOnline = true;
-                _state.ServerStatus = "En línea";
+                _state.ServerStatus = global::CSIViewer.Core.Localization.Text("En línea");
                 _state.StatusMessage = wasDisconnected
-                    ? "Conexión restablecida."
-                    : "Conectado. Disponible para recibir asistencia.";
+                    ? global::CSIViewer.Core.Localization.Text("Conexión restablecida.")
+                    : global::CSIViewer.Core.Localization.Text("Conectado. Disponible para recibir asistencia.");
                 _state.LastError = null;
                 _state.IsReconnecting = false;
                 _state.ReconnectAttempt = 0;
@@ -346,12 +346,12 @@ public sealed partial class RemoteClient
 
             if (wasDisconnected && _state.Settings.NotificationsEnabled)
             {
-                _notifications.Show("Conexión restablecida", "El servidor vuelve a estar disponible.");
+                _notifications.Show(global::CSIViewer.Core.Localization.Text("Conexión restablecida"), global::CSIViewer.Core.Localization.Text("El servidor vuelve a estar disponible."));
             }
 
             if (!HasSessionOrPendingStart())
             {
-                SetConnectionState(ConnectionState.Connected, "Conectado al servidor.");
+                SetConnectionState(ConnectionState.Connected, global::CSIViewer.Core.Localization.Text("Conectado al servidor."));
             }
         }
         catch (Exception ex)
@@ -367,15 +367,15 @@ public sealed partial class RemoteClient
                 _state.Post(() =>
                 {
                     _state.IsServerOnline = false;
-                    _state.ServerStatus = "Servidor no disponible";
-                    _state.StatusMessage = "No se pudo conectar con el servidor.";
+                    _state.ServerStatus = global::CSIViewer.Core.Localization.Text("Servidor no disponible");
+                    _state.StatusMessage = global::CSIViewer.Core.Localization.Text("No se pudo conectar con el servidor.");
                     _state.LastError = ex.GetBaseException().Message;
                 });
 
                 if (!HasSessionOrPendingStart() &&
                     _connectionStateMachine.State is ConnectionState.Connecting or ConnectionState.Authenticating)
                 {
-                    SetConnectionState(ConnectionState.Failed, "No se pudo conectar con el servidor.");
+                    SetConnectionState(ConnectionState.Failed, global::CSIViewer.Core.Localization.Text("No se pudo conectar con el servidor."));
                 }
             }
 
@@ -396,7 +396,7 @@ public sealed partial class RemoteClient
             if (!_sessions.IsEmpty)
             {
                 await EndAllSessionsAsync(
-                        "Se cerró la conexión con el servidor.",
+                        global::CSIViewer.Core.Localization.Text("Se cerró la conexión con el servidor."),
                         sendToPeer: false,
                         finalState: ConnectionState.Disconnected)
                     .ConfigureAwait(false);
@@ -406,14 +406,14 @@ public sealed partial class RemoteClient
             _state.Post(() =>
             {
                 _state.IsServerOnline = false;
-                _state.ServerStatus = "Sin conexión";
+                _state.ServerStatus = global::CSIViewer.Core.Localization.Text("Sin conexión");
                 _state.IsReconnecting = false;
                 _state.ReconnectAttempt = 0;
             });
 
             if (!HasSessionOrPendingStart())
             {
-                SetConnectionState(ConnectionState.Disconnected, "Desconectado del servidor.");
+                SetConnectionState(ConnectionState.Disconnected, global::CSIViewer.Core.Localization.Text("Desconectado del servidor."));
             }
         }
         finally
@@ -433,8 +433,8 @@ public sealed partial class RemoteClient
         _state.Post(() =>
         {
             _state.IsServerOnline = false;
-            _state.ServerStatus = "Sin conexión";
-            _state.StatusMessage = "Conexión con el servidor perdida. Reconectando…";
+            _state.ServerStatus = global::CSIViewer.Core.Localization.Text("Sin conexión");
+            _state.StatusMessage = global::CSIViewer.Core.Localization.Text("Conexión con el servidor perdida. Reconectando…");
         });
 
         await DisposeSignalAsync(signal).ConfigureAwait(false);
@@ -442,7 +442,7 @@ public sealed partial class RemoteClient
         // A reconnection must never resurrect a pending authorization or a
         // consent decision from the previous server connection.
         await FailPendingConnectAsync(
-                "Se perdió la conexión con el servidor.",
+                global::CSIViewer.Core.Localization.Text("Se perdió la conexión con el servidor."),
                 "server_offline")
             .ConfigureAwait(false);
         ClearPendingIncomingRequests();
@@ -458,8 +458,8 @@ public sealed partial class RemoteClient
         {
             _disconnectedNotified = true;
             _notifications.Show(
-                "Conexión perdida",
-                "Se perdió la conexión con el servidor. Reconectando…");
+                global::CSIViewer.Core.Localization.Text("Conexión perdida"),
+                global::CSIViewer.Core.Localization.Text("Se perdió la conexión con el servidor. Reconectando…"));
         }
 
         var directSession = HasSessionOrPendingStart() && _transport == TransportKind.LanDirect &&
@@ -467,11 +467,11 @@ public sealed partial class RemoteClient
         if (directSession)
         {
             // A direct LAN session does not depend on the signaling socket.
-            SetConnectionState(ConnectionState.Connected, "Sesión directa LAN activa; reconectando servidor…");
+            SetConnectionState(ConnectionState.Connected, global::CSIViewer.Core.Localization.Text("Sesión directa LAN activa; reconectando servidor…"));
         }
         else if (!_sessions.IsEmpty)
         {
-            SetConnectionState(ConnectionState.Reconnecting, "Conexión perdida. Cerrando sesiones…");
+            SetConnectionState(ConnectionState.Reconnecting, global::CSIViewer.Core.Localization.Text("Conexión perdida. Cerrando sesiones…"));
             var finalState = _state.Settings.AutoConnect
                 ? ConnectionState.Reconnecting
                 : ConnectionState.Failed;
@@ -483,7 +483,7 @@ public sealed partial class RemoteClient
             {
                 await EndRemoteSessionAsync(
                         session,
-                        "Se perdió la conexión con el servidor.",
+                        global::CSIViewer.Core.Localization.Text("Se perdió la conexión con el servidor."),
                         sendToPeer: false,
                         finalState)
                     .ConfigureAwait(false);
@@ -493,14 +493,14 @@ public sealed partial class RemoteClient
             {
                 SetConnectionState(
                     ConnectionState.Connected,
-                    "Sesión directa LAN activa; reconectando servidor…");
+                    global::CSIViewer.Core.Localization.Text("Sesión directa LAN activa; reconectando servidor…"));
             }
         }
         else if (!_stopping)
         {
             SetConnectionState(
                 _state.Settings.AutoConnect ? ConnectionState.Reconnecting : ConnectionState.Failed,
-                "Conexión con el servidor perdida.");
+                global::CSIViewer.Core.Localization.Text("Conexión con el servidor perdida."));
         }
 
         if (!_stopping && _state.Settings.AutoConnect)
@@ -573,8 +573,8 @@ public sealed partial class RemoteClient
         if (outcome == ReconnectOutcome.Exhausted)
         {
             var message = policy.MaxRetries <= 0
-                ? "No se pudo reconectar con el servidor."
-                : $"No se pudo reconectar tras {policy.MaxRetries} reintentos.";
+                ? global::CSIViewer.Core.Localization.Text("No se pudo reconectar con el servidor.")
+                : global::CSIViewer.Core.Localization.Format("No se pudo reconectar tras {0} reintentos.",policy.MaxRetries);
             if (!string.IsNullOrWhiteSpace(_lastReconnectFailure) &&
                 _lastReconnectFailure.Contains("HTTPS", StringComparison.OrdinalIgnoreCase))
             {
@@ -590,7 +590,7 @@ public sealed partial class RemoteClient
             _state.Post(() =>
             {
                 _state.IsReconnecting = false;
-                _state.ServerStatus = "Sin conexión";
+                _state.ServerStatus = global::CSIViewer.Core.Localization.Text("Sin conexión");
                 _state.StatusMessage = message;
                 _state.LastError = message;
             });
@@ -598,7 +598,7 @@ public sealed partial class RemoteClient
 
             if (_state.Settings.NotificationsEnabled)
             {
-                _notifications.Show("Sin conexión", message);
+                _notifications.Show(global::CSIViewer.Core.Localization.Text("Sin conexión"), message);
             }
         }
         else if (outcome == ReconnectOutcome.Connected)
@@ -624,7 +624,7 @@ public sealed partial class RemoteClient
         var seconds = Math.Max(1, (int)Math.Ceiling(info.Delay.TotalSeconds));
         if (!info.IsInitialAttempt)
         {
-            SetConnectionState(ConnectionState.Reconnecting, "Reconectando con el servidor…");
+            SetConnectionState(ConnectionState.Reconnecting, global::CSIViewer.Core.Localization.Text("Reconectando con el servidor…"));
             _logger.LogInformation(
                 LogEvents.ReconnectAttempt,
                 "Reconnect attempt {Attempt}/{Max} in {DelaySeconds}s",
@@ -639,13 +639,13 @@ public sealed partial class RemoteClient
             _state.ReconnectAttempt = info.IsInitialAttempt ? 0 : retryNumber;
             _state.ReconnectMaxRetries = maxRetries;
             _state.ServerStatus = info.IsInitialAttempt
-                ? "Conectando…"
+                ? global::CSIViewer.Core.Localization.Text("Conectando…")
                 : maxRetries > 0
                     ? $"Reconectando ({retryNumber}/{maxRetries})…"
                     : $"Reconectando (intento {retryNumber})…";
             _state.StatusMessage = info.IsInitialAttempt
-                ? "Conectando con el servidor…"
-                : $"Reintentando en {seconds} s…";
+                ? global::CSIViewer.Core.Localization.Text("Conectando con el servidor…")
+                : global::CSIViewer.Core.Localization.Format("Reintentando en {0} s…",seconds);
         });
     }
 
@@ -785,7 +785,7 @@ public sealed partial class RemoteClient
         try
         {
             await EndAllSessionsAsync(
-                    "Aplicación cerrada.",
+                    global::CSIViewer.Core.Localization.Text("Aplicación cerrada."),
                     sendToPeer: false,
                     finalState: ConnectionState.Disconnected)
                 .ConfigureAwait(false);
