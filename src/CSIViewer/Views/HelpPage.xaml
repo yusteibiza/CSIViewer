@@ -1,0 +1,215 @@
+<Page
+    x:Class="CSIViewer.Views.HelpPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{ThemeResource PageBackgroundBrush}">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled"
+                  HorizontalContentAlignment="Stretch" VerticalScrollBarVisibility="Auto">
+        <Grid Padding="{StaticResource PagePadding}" HorizontalAlignment="Stretch">
+            <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Stretch">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Ayuda de CSIViewer" Style="{StaticResource PageTitleStyle}" />
+                    <TextBlock Text="Qué hace el programa, cómo se usa y qué significa cada opción, explicado para cualquier persona."
+                               Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="¿Qué es CSIViewer y para qué sirve?" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="CSIViewer permite que una persona vea y controle la pantalla de otro equipo Windows a través de Internet, como si estuviera sentada delante. Sirve para dar soporte, resolver problemas o ayudar a configurar un programa." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Cada sesión necesita dos datos: un ID de equipo de 9 cifras y una contraseña temporal. Sin esos dos datos nadie puede entrar. La contraseña se comprueba en el equipo que recibe la ayuda, no en el servidor." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="La conexión está cifrada de extremo a extremo: el servidor solo hace de intermediario (relay) y no puede leer la pantalla, el chat ni los archivos." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Las tres piezas" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Visor (CSIViewer): se instala en el equipo desde el que miras o controlas. También puede recibir conexiones." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Host (CSIViewer Host): se instala en el equipo que va a ser asistido. Muestra su ID y su contraseña, y pide permiso antes de aceptar una conexión." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Servidor (CSIViewer Servidor): pone en contacto al visor con el host. Puede funcionar en tu red local o en Internet; el relay evita tener que abrir puertos del router." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="El visor y el host son independientes: puedes instalar solo el visor para conectar con otros, o solo el host para que te ayuden." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Primeros pasos" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="1. Instala y abre CSIViewer en tu equipo. En Configuración escribe la URL del servidor (por ejemplo, http://yusteibiza.ddns.net:5180), pulsa Guardar y reconectar y espera a que el punto de estado se ponga verde." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="2. En el equipo que quieres ayudar, abre CSIViewer Host o CSIViewer y comprueba que aparece «En línea» y un ID de 9 cifras." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="3. Pide a esa persona su ID y la contraseña temporal que aparece en su pantalla." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="4. Entra en Control remoto, escribe el ID y la contraseña y pulsa Conectar." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="5. La otra persona verá una solicitud. Debe aceptarla y elegir qué permisos concede: ver la pantalla, controlar el ratón y el teclado, usar el chat y enviar o recibir archivos." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="6. Cuando termines, pulsa Finalizar en cualquiera de los dos equipos. Al terminar se cierran la pantalla, el chat y las transferencias de esa sesión." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Inicio (visor)" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• ID de este equipo: número que identifica a este equipo. Puedes copiarlo con el botón de al lado." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Contraseña temporal: clave que debe escribir quien quiera conectarse. Caduca a la hora indicada; puedes mostrarla, copiarla o generar otra nueva." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Permitir conexiones entrantes: si está desactivado, nadie puede conectarse a este equipo aunque tenga el ID y la contraseña." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Actividad reciente: últimas conexiones realizadas o recibidas en este equipo." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Punto de estado: verde significa que el servidor está conectado; gris significa que no hay conexión (está reconectando o el servidor está apagado)." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Control remoto" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Escribe el ID y la contraseña del equipo remoto y pulsa Conectar. Si solo quieres hablar por chat sin ver la pantalla, marca «Solo chat»." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Cuando la otra persona acepte, verás su pantalla. Arriba aparecen su nombre y el tiempo de sesión. Con el selector de monitor puedes cambiar entre varias pantallas si el equipo tiene más de una. «Pantalla completa» oculta los bordes de CSIViewer; pulsa Esc o el botón para volver." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Solo una persona puede controlar el equipo en cada momento. Si otra persona intenta controlarlo, se le indicará que el control ya está ocupado." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="En la esquina superior derecha se muestran los FPS reales, los FPS objetivo y los fotogramas descartados por red o por la interfaz. Si los descartes suben, baja la calidad o los FPS." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="El teclado y el ratón del visor se envían al equipo remoto. Al finalizar la sesión se sueltan las teclas y botones que hubieran quedado pulsados." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Dispositivos" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Guarda los equipos que usas a menudo con un nombre, una descripción y una lista (por ejemplo, Clientes o Casa). Puedes marcarlos como favoritos para que aparezcan primero." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Junto al nombre verás «(conectado)» o «(desconectado)». El estado se actualiza en vivo cuando el servidor informa de la presencia del equipo." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="La contraseña guardada es opcional y se cifra con la protección de datos de Windows (DPAPI) de este equipo. Solo se puede descifrar con tu cuenta de Windows; si cambias de equipo o de usuario, deberás volver a escribirla." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Con los botones de cada fila puedes Conectar, Editar o Eliminar el dispositivo. El buscador filtra por nombre, ID, descripción o lista." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Transferencia de archivos" Style="{StaticResource SectionTitleStyle}" AutomationProperties.AutomationId="FileTransferHelp" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Desde la versión 1.0.1 hay dos paneles: «Este equipo» a la izquierda y «Equipo remoto» a la derecha. Ambos extremos necesitan 1.0.1 o posterior y los permisos de archivos correspondientes." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="1. Abre la carpeta de origen en un panel y la carpeta de destino en el otro. Usa Unidades, Subir, Ir, Actualizar o escribe una ruta y pulsa Entrar. El doble clic solo abre carpetas: nunca ejecuta archivos." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="2. Selecciona archivos o carpetas; Ctrl y Mayús permiten seleccionar varios. «Enviar →» copia la selección local a la carpeta remota abierta. «← Recibir» copia la selección remota a la carpeta local abierta. Selecciona una carpeta real como destino, no la vista de unidades." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="3. Los paneles se actualizan al terminar; también puedes pulsar Actualizar. Anterior y Siguiente recorren carpetas con muchos elementos. «Opciones y progreso de transferencias» despliega el progreso por archivo y los selectores de archivos/carpetas anteriores." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Pausar y Reanudar funcionan dentro de la sesión; Cancelar detiene el envío. Si desconectas, vuelve a seleccionar los archivos y el destino en la nueva sesión: no se reutiliza automáticamente la autorización de la carpeta anterior. Los parciales compatibles pueden recuperar lo ya recibido." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Quitar elimina una transferencia de la lista. Si está activa, cancélala primero con el botón de cancelar." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Limpiar finalizadas borra de la lista solo las transferencias terminadas o canceladas; nunca borra las activas." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="El administrador usa la carpeta abierta del panel de destino, no necesariamente Descargas. La carpeta configurada de descargas se mantiene para los envíos clásicos sin destino. Se respetan la confirmación del receptor, la política de renombrar/sobrescribir/omitir y el límite de subida. Un archivo solo figura completado tras la verificación SHA-256 del receptor." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Si faltan permisos, los botones se desactivan. Con solo envío se muestran carpetas de destino, no los archivos remotos. Windows puede impedir abrir carpetas protegidas; no se admiten rutas de red ni enlaces. El administrador no permite borrar, renombrar ni ejecutar archivos." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Chat" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="El chat funciona durante una sesión y necesita el permiso «Chat». Puedes escribir con el teclado o insertar emojis con el botón de la cara sonriente. El historial de la conversación se guarda en este equipo para poder consultarlo más adelante." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Historial y contactos" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="El historial guarda la fecha, la duración, el resultado y el motivo de cierre de cada sesión. Puedes filtrar por texto o por resultado (correctas o fallidas)." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="El botón «Borrar historial» elimina permanentemente todas las conexiones guardadas en este equipo. No borra dispositivos, contactos ni sesiones activas. Si no quieres guardar ninguna conexión, desactiva «Guardar historial de conexiones» en Configuración." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Los contactos son personas que tú añades con un nombre y sus datos. Se guardan solo en este equipo y no se comparten con el servidor." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Configuración, opción por opción" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Text="Apariencia" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Tema: sistema (sigue a Windows), claro u oscuro. Color de énfasis: color de Windows, azul, verde, turquesa, violeta, rosa, naranja o rojo. Puedes elegirlo junto al botón del tema o en Apariencia; se aplica al momento y se guarda por aplicación. No cambia los colores de aviso/error ni la disposición del chat. El alto contraste respeta Windows. Idioma: español." />
+                        <TextBlock Text="Servidor y equipo" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Nombre del equipo: nombre visible para los demás. URL del servidor: dirección del servidor (http:// o https://). Código de inscripción: código que permite registrar este equipo en el servidor; debe coincidir con el configurado en el servidor. Guardar y reconectar aplica los cambios y vuelve a conectar." />
+                        <TextBlock Text="Calidad de imagen" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Calidad JPEG: más calidad se ve mejor pero usa más ancho de banda. FPS objetivo: fotogramas por segundo; más FPS se ve más fluido pero exige más CPU, GPU y red. Ancho máximo: resolución a la que se envía la imagen; un valor menor ahorra datos. Windows.Graphics.Capture (recomendado): captura moderna con el cursor; si falla se usa GDI de respaldo. H.264 (recomendado): comprime mejor que JPEG; si falla se usa JPEG. Conexión directa por LAN: intenta conectar sin pasar por el relay cuando los equipos están en la misma red." />
+                        <TextBlock Text="Archivos" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Carpeta de descargas: destino de los envíos clásicos; en el administrador manda la carpeta abierta del panel de destino. Si el archivo ya existe: renombrar, sobrescribir u omitir. La reanudación automática de envíos clásicos sigue disponible; tras desconectar un envío del administrador debes volver a seleccionar archivos y carpeta para autorizarla. Límite de subida: KB/s; 0 significa sin límite." />
+                        <TextBlock Text="Comportamiento" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Permitir conexiones entrantes: acepta que otros se conecten a este equipo. Máximo de clientes simultáneos: límite de conexiones. Caducidad de la contraseña temporal: minutos; 0 significa que no caduca. Permitir servidor remoto sin HTTPS: solo para pruebas en red local; no recomendado. Iniciar con Windows: abre CSIViewer al iniciar sesión. Notificaciones: avisos del sistema. Confirmar antes de recibir archivos: pide permiso antes de aceptar una transferencia. Guardar historial de conexiones: guarda el historial." />
+                        <TextBlock Text="Conexión y reconexión" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Heartbeat: latido que comprueba que la conexión sigue viva. Timeout: tiempo máximo de espera. Reintentos: número de intentos; 0 significa ilimitado. Retardo inicial y máximo: espera entre reintentos. Jitter: variación aleatoria para no reintentar todos a la vez. Timeout de mensaje: tiempo máximo para enviar un mensaje. Los valores por defecto funcionan bien en la mayoría de redes." />
+                        <TextBlock Text="Diagnóstico de red" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Nivel de detalle de logs: cuánta información se guarda. Probar servidor: comprueba que la URL responde. Probar STUN: comprueba el descubrimiento de la dirección pública UDP. Exportar diagnóstico: genera un archivo con datos útiles para revisar un problema. Abrir carpeta de logs: muestra los registros. Revocar todo el acceso: cierra las sesiones y deja de aceptar conexiones hasta que vuelvas a permitirlo." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Seguridad y privacidad" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="La contraseña temporal se verifica en el equipo que recibe la conexión. El servidor no recibe las claves de la sesión y no puede descifrar el contenido. Las contraseñas guardadas de dispositivos se protegen con DPAPI y solo se pueden descifrar con tu cuenta de Windows." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="Nadie puede conectarse sin que la otra persona acepte y conceda permiso. No hay acceso oculto. La pantalla de inicio de sesión de Windows, la pantalla de UAC y el escritorio seguro no se pueden capturar; durante esos momentos la imagen puede quedarse congelada o en negro." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Problemas frecuentes" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• El punto está gris o dice «Reconectando»: revisa la URL del servidor, que el servidor esté en marcha y que el puerto TCP esté abierto en el firewall o router." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• La contraseña no funciona: distingue mayúsculas y minúsculas y puede haber caducado. Pide que generen una nueva." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• No se ve la pantalla: la otra persona debe conceder «Ver pantalla». Si su equipo está bloqueado, en UAC o en la pantalla de inicio de sesión, no se puede capturar." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• El ratón o el teclado no responden: falta el permiso «Controlar» o hay otra persona controlando el equipo." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• Se ve lento: baja la calidad, los FPS o el ancho máximo; activa H.264 y Windows.Graphics.Capture; usa cable en lugar de Wi-Fi si es posible." />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="• El host no arranca solo: revisa Configuración > Modo desatendido y el estado de la tarea. Crear o quitar la tarea requiere aceptar UAC una vez." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Glosario" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                   Text="ID: número de 9 cifras que identifica a un equipo. Host: equipo que recibe la ayuda. Visor: equipo que mira o controla. Servidor: intermediario que conecta ambos equipos. Relay: ruta indirecta a través del servidor cuando no hay conexión directa. Contraseña temporal: clave que autoriza una conexión. Permiso: autorización concreta (ver, controlar, chat, archivos). DPAPI: protección de datos de Windows. UAC: aviso de permisos de administrador. STUN: servicio que ayuda a descubrir la dirección pública. WGC: Windows.Graphics.Capture, la captura moderna de pantalla." />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

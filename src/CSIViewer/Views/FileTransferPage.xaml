@@ -1,0 +1,182 @@
+<Page
+    x:Class="CSIViewer.Views.FileTransferPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{ThemeResource PageBackgroundBrush}">
+    <Page.Resources>
+        <DataTemplate x:Key="FileBrowserTemplate">
+            <Grid Padding="4,5" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition Width="80" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding FullPath}" />
+                <TextBlock Grid.Column="1" Text="{Binding KindText}" Style="{StaticResource MutedTextStyle}" />
+                <TextBlock Grid.Column="2" Text="{Binding SizeText}" HorizontalAlignment="Right" />
+            </Grid>
+        </DataTemplate>
+    </Page.Resources>
+    <Grid Padding="{StaticResource PagePadding}" RowSpacing="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Spacing="4">
+            <TextBlock Text="Transferencia de archivos" Style="{StaticResource PageTitleStyle}" />
+            <TextBlock Text="Selecciona archivos o carpetas y usa Enviar o Recibir. Doble clic para abrir carpetas."
+                       Style="{StaticResource MutedTextStyle}" FontSize="12" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <InfoBar x:Name="TransferStatusBar" Grid.Row="2" IsOpen="False" Severity="Informational"
+                 IsClosable="True" />
+
+        <Grid Grid.Row="3" ColumnSpacing="10" MinHeight="180">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource CardStyle}" Padding="10">
+                <Grid RowSpacing="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" /><RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Este equipo" FontWeight="SemiBold" />
+                    <TextBox x:Name="LocalPathBox" Grid.Row="1" PlaceholderText="Ruta local" KeyDown="LocalPath_KeyDown"
+                             AutomationProperties.AutomationId="LocalFilePath" />
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="4">
+                        <Button Content="Unidades" Click="LocalRoots_Click" Padding="8,4" />
+                        <Button Content="Subir" Click="LocalUp_Click" Padding="8,4" />
+                        <Button Content="Ir" Click="LocalGo_Click" Padding="8,4" AutomationProperties.AutomationId="LocalFileGo" />
+                        <Button Content="Actualizar" Click="LocalRefresh_Click" Padding="8,4" />
+                    </StackPanel>
+                    <ListView x:Name="LocalFilesList" Grid.Row="3" SelectionMode="Extended" HorizontalContentAlignment="Stretch"
+                              ItemTemplate="{StaticResource FileBrowserTemplate}" DoubleTapped="LocalFiles_DoubleTapped"
+                              SelectionChanged="BrowserSelection_Changed" AutomationProperties.AutomationId="LocalFilesList" />
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="LocalPreviousButton" Content="Anterior" Click="LocalPrevious_Click" Padding="8,4" />
+                        <Button x:Name="LocalNextButton" Content="Siguiente" Click="LocalNext_Click" Padding="8,4" />
+                        <TextBlock x:Name="LocalCountText" VerticalAlignment="Center" FontSize="11" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="12">
+                <Button x:Name="SendSelectionButton" Content="Enviar →" Click="SendSelection_Click"
+                        AutomationProperties.AutomationId="SendSelectedFiles" />
+                <Button x:Name="ReceiveSelectionButton" Content="← Recibir" Click="ReceiveSelection_Click"
+                        AutomationProperties.AutomationId="ReceiveSelectedFiles" />
+            </StackPanel>
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="10">
+                <Grid RowSpacing="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" /><RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock x:Name="RemoteBrowserTitle" Text="Equipo remoto" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBox x:Name="RemotePathBox" Grid.Row="1" PlaceholderText="Ruta remota" KeyDown="RemotePath_KeyDown"
+                             AutomationProperties.AutomationId="RemoteFilePath" />
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="4">
+                        <Button Content="Unidades" Click="RemoteRoots_Click" Padding="8,4" />
+                        <Button Content="Subir" Click="RemoteUp_Click" Padding="8,4" />
+                        <Button Content="Ir" Click="RemoteGo_Click" Padding="8,4" AutomationProperties.AutomationId="RemoteFileGo" />
+                        <Button Content="Actualizar" Click="RemoteRefresh_Click" Padding="8,4" AutomationProperties.AutomationId="RemoteFileRefresh" />
+                    </StackPanel>
+                    <ListView x:Name="RemoteFilesList" Grid.Row="3" SelectionMode="Extended" HorizontalContentAlignment="Stretch"
+                              ItemTemplate="{StaticResource FileBrowserTemplate}" DoubleTapped="RemoteFiles_DoubleTapped"
+                              SelectionChanged="BrowserSelection_Changed" AutomationProperties.AutomationId="RemoteFilesList" />
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="RemotePreviousButton" Content="Anterior" Click="RemotePrevious_Click" Padding="8,4" />
+                        <Button x:Name="RemoteNextButton" Content="Siguiente" Click="RemoteNext_Click" Padding="8,4" />
+                        <TextBlock x:Name="RemoteCountText" VerticalAlignment="Center" FontSize="11" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="4" Style="{StaticResource CardStyle}" Padding="12,8">
+            <StackPanel Spacing="6">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="SummaryText" Text="Sin transferencias activas"
+                               FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="SummaryDetailText" Grid.Column="1"
+                               Style="{StaticResource MutedTextStyle}" FontSize="12" />
+                </Grid>
+                <ProgressBar x:Name="TotalProgressBar" Maximum="1" Height="6" />
+            </StackPanel>
+        </Border>
+
+        <Expander Grid.Row="5" Header="Opciones y progreso de transferencias" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <StackPanel Spacing="8">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="SendFilesButton" Content="Seleccionar archivos" Click="SendFiles_Click" Padding="10,4" />
+                    <Button x:Name="SendFolderButton" Content="Seleccionar carpeta" Click="SendFolder_Click" Padding="10,4" />
+                    <Button Content="Abrir descargas" Click="OpenDownloadFolder_Click" Padding="10,4" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="PauseAllButton" Content="Pausar activas" Click="PauseAll_Click" FontSize="11" Padding="10,4" />
+                    <Button x:Name="ResumeAllButton" Content="Reanudar interrumpidas" Click="ResumeAll_Click" FontSize="11" Padding="10,4" />
+                    <Button x:Name="ClearFinishedButton" Content="Limpiar finalizadas" Click="ClearFinished_Click" FontSize="11" Padding="10,4" />
+                </StackPanel>
+            <ListView x:Name="TransfersList" SelectionMode="None" Padding="12" MaxHeight="160"
+                      HorizontalContentAlignment="Stretch">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="4,8" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="300" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon Glyph="&#xE8B7;" FontSize="20" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Spacing="5">
+                                <TextBlock Text="{Binding FileName}" FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis" />
+                                <ProgressBar Value="{Binding Progress}" Maximum="1" Height="4" />
+                                <TextBlock FontSize="11" Style="{StaticResource MutedTextStyle}">
+                                    <Run Text="{Binding StateText}" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding TransferredBytes}" />
+                                    <Run Text=" / " />
+                                    <Run Text="{Binding TotalBytes}" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding SpeedText}" />
+                                    <Run Text=" " />
+                                    <Run Text="{Binding EtaText}" />
+                                </TextBlock>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" Spacing="4">
+                                <TextBlock Text="{Binding DirectionText}" HorizontalAlignment="Right" FontSize="11"
+                                           Style="{StaticResource MutedTextStyle}" />
+                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+                                    <Button Content="Pausar" Click="Pause_Click" FontSize="11" Padding="8,4"
+                                            IsEnabled="{Binding CanPause}" />
+                                    <Button Content="Reanudar" Click="Resume_Click" FontSize="11" Padding="8,4"
+                                            IsEnabled="{Binding CanResume}" />
+                                    <Button Content="Cancelar" Click="Cancel_Click" FontSize="11" Padding="8,4"
+                                            IsEnabled="{Binding CanCancel}" />
+                                    <Button Content="Quitar" Click="Remove_Click" FontSize="11" Padding="8,4"
+                                            IsEnabled="{Binding CanRemove}"
+                                            ToolTipService.ToolTip="Quitar de la lista" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding Error}" HorizontalAlignment="Right" FontSize="11"
+                                           Foreground="{ThemeResource DangerBrush}" TextWrapping="Wrap" MaxWidth="240" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            </StackPanel>
+        </Expander>
+    </Grid>
+</Page>

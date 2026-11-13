@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <IsTestProject>true</IsTestProject>
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MSTest" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CSIViewer.Core\CSIViewer.Core.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Protocol\CSIViewer.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Security\CSIViewer.Security.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Application\CSIViewer.Application.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Networking\CSIViewer.Networking.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Infrastructure\CSIViewer.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Media\CSIViewer.Media.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Services\CSIViewer.Services.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+</Project>

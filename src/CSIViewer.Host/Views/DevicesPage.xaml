@@ -1,0 +1,141 @@
+<Page
+    x:Class="CSIViewer.Host.Views.DevicesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{ThemeResource PageBackgroundBrush}">
+    <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Spacing="4">
+                <TextBlock Text="Dispositivos" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Equipos guardados, favoritos y listas personalizadas como Clientes o Casa."
+                           Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Button Content="Listas" Click="ManageLists_Click"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        AutomationProperties.AutomationId="ManageListsButton"
+                        ToolTipService.ToolTip="Crear, renombrar o eliminar listas personalizadas" />
+                <Button Content="Nuevo dispositivo" Click="NewDevice_Click"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        AutomationProperties.AutomationId="NewDeviceButton" />
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}">
+            <Grid ColumnSpacing="12" RowSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="ID DEL EQUIPO REMOTO" Style="{StaticResource FieldLabelStyle}" />
+                    <TextBox x:Name="DirectIdBox" PlaceholderText="123 456 789" MaxLength="11"
+                             FontFamily="Consolas" AutomationProperties.AutomationId="DirectIdBox" />
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="CONTRASEÑA TEMPORAL" Style="{StaticResource FieldLabelStyle}" />
+                    <PasswordBox x:Name="DirectPasswordBox" PlaceholderText="Contraseña"
+                                 AutomationProperties.AutomationId="DirectPasswordBox" />
+                </StackPanel>
+                <Button Grid.Column="2" Content="Conectar" VerticalAlignment="Bottom"
+                        Style="{StaticResource PrimaryButtonStyle}" Click="ConnectHost_Click"
+                        AutomationProperties.AutomationId="DirectConnectButton" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2" ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="SearchBox" PlaceholderText="Buscar por nombre, ID, descripción o lista…"
+                     TextChanged="SearchBox_TextChanged"
+                     AutomationProperties.AutomationId="DeviceSearchBox" />
+            <ComboBox x:Name="ListFilterBox" Grid.Column="1" MinWidth="210"
+                      DisplayMemberPath="Name" SelectionChanged="ListFilter_SelectionChanged"
+                      AutomationProperties.AutomationId="ListFilterBox"
+                      ToolTipService.ToolTip="Filtrar dispositivos por lista" />
+        </Grid>
+
+        <Border Grid.Row="3" Style="{StaticResource CardStyle}" Padding="0">
+            <Grid>
+                <ListView x:Name="DevicesList" SelectionMode="None" Padding="12">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="6,10" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="42" Height="42" CornerRadius="10"
+                                        Background="{ThemeResource BrandSoftBrush}">
+                                    <FontIcon Glyph="&#xE7F4;" FontSize="20" Foreground="{ThemeResource BrandBrush}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Spacing="3">
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Alias}" FontWeight="SemiBold"
+                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                   ToolTipService.ToolTip="{Binding Alias}" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                                                    VerticalAlignment="Center">
+                                            <FontIcon Glyph="&#xE735;" FontSize="12"
+                                                      Foreground="{ThemeResource BrandBrush}"
+                                                      Visibility="{Binding FavoriteVisibility}"
+                                                      ToolTipService.ToolTip="Favorito" />
+                                            <Border Background="{ThemeResource BrandSoftBrush}" CornerRadius="4"
+                                                    Padding="6,1" Visibility="{Binding ListVisibility}">
+                                                <TextBlock Text="{Binding ListName}" FontSize="11"
+                                                           Foreground="{ThemeResource BrandBrush}"
+                                                           TextTrimming="CharacterEllipsis" MaxWidth="140" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBlock Text="{Binding DeviceId}" FontFamily="Consolas" FontSize="12"
+                                               Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock Text="{Binding Description}" Style="{StaticResource MutedTextStyle}"
+                                               FontSize="12" TextTrimming="CharacterEllipsis"
+                                               Visibility="{Binding DescriptionVisibility}" />
+                                    <TextBlock Text="{Binding LastSeenText}" FontSize="11"
+                                               Style="{StaticResource MutedTextStyle}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <Button Content="Conectar" Click="Connect_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Content="Editar" Click="Edit_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Content="Eliminar" Click="Delete_Click"
+                                            Style="{StaticResource DangerButtonStyle}" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Spacing="8" Visibility="Collapsed">
+                    <FontIcon Glyph="&#xE7F4;" FontSize="34" Foreground="{ThemeResource MutedTextBrush}" />
+                    <TextBlock Text="No hay dispositivos que mostrar" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Crea uno con «Nuevo dispositivo» o cambia el filtro."
+                               Style="{StaticResource MutedTextStyle}" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

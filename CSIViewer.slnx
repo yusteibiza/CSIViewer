@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CSIViewer.Application/CSIViewer.Application.csproj" />
+    <Project Path="src/CSIViewer.Core/CSIViewer.Core.csproj" />
+    <Project Path="src/CSIViewer.Infrastructure/CSIViewer.Infrastructure.csproj" />
+    <Project Path="src/CSIViewer.Media/CSIViewer.Media.csproj" />
+    <Project Path="src/CSIViewer.Networking/CSIViewer.Networking.csproj" />
+    <Project Path="src/CSIViewer.Protocol/CSIViewer.Protocol.csproj" />
+    <Project Path="src/CSIViewer.Security/CSIViewer.Security.csproj" />
+    <Project Path="src/CSIViewer.Server/CSIViewer.Server.csproj" />
+    <Project Path="src/CSIViewer.Host/CSIViewer.Host.csproj" />
+    <Project Path="src/CSIViewer.Host.Agent/CSIViewer.Host.Agent.csproj" />
+    <Project Path="src/CSIViewer.Services/CSIViewer.Services.csproj" />
+    <Project Path="src/CSIViewer/CSIViewer.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CSIViewer.UnitTests/CSIViewer.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/CSIViewer.TestHarness/CSIViewer.TestHarness.csproj" />
+  </Folder>
+</Solution>

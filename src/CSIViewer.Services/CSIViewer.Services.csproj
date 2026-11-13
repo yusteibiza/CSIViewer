@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CSIViewer.Core\CSIViewer.Core.csproj" />
+    <ProjectReference Include="..\CSIViewer.Protocol\CSIViewer.Protocol.csproj" />
+    <ProjectReference Include="..\CSIViewer.Security\CSIViewer.Security.csproj" />
+    <ProjectReference Include="..\CSIViewer.Application\CSIViewer.Application.csproj" />
+    <ProjectReference Include="..\CSIViewer.Networking\CSIViewer.Networking.csproj" />
+    <ProjectReference Include="..\CSIViewer.Media\CSIViewer.Media.csproj" />
+    <ProjectReference Include="..\CSIViewer.Infrastructure\CSIViewer.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+</Project>

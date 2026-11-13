@@ -1,0 +1,78 @@
+<Page
+    x:Class="CSIViewer.Host.Views.ContactsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{ThemeResource PageBackgroundBrush}">
+    <Grid Padding="{StaticResource PagePadding}" RowSpacing="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <StackPanel Spacing="4">
+                <TextBlock Text="Contactos" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Personas que agrupan varios equipos. Pulsa un equipo vinculado para conectarte."
+                           Style="{StaticResource MutedTextStyle}" />
+            </StackPanel>
+            <Button HorizontalAlignment="Right" Content="Añadir contacto" Click="AddContact_Click"
+                    Style="{StaticResource PrimaryButtonStyle}" />
+        </Grid>
+
+        <InfoBar x:Name="ContactsStatusBar" Grid.Row="1" IsOpen="False" Severity="Informational"
+                 IsClosable="True" />
+
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="0">
+            <ListView x:Name="ContactsList" SelectionMode="None" Padding="12">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="6,10" RowSpacing="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="40" Height="40" CornerRadius="20"
+                                        Background="{ThemeResource BrandSoftBrush}">
+                                    <FontIcon Glyph="&#xE77B;" FontSize="18" Foreground="{ThemeResource BrandBrush}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding Notes}" Style="{StaticResource MutedTextStyle}"
+                                               FontSize="12" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                                    <Button Content="Editar" Click="Edit_Click" Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Content="Eliminar" Click="Delete_Click" Style="{StaticResource DangerButtonStyle}" />
+                                </StackPanel>
+                            </Grid>
+                            <ItemsControl Grid.Row="1" ItemsSource="{Binding Devices}" Margin="52,0,0,0">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="6" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding Alias}" Click="ConnectDevice_Click"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                ToolTipService.ToolTip="{Binding DeviceId}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Grid.Row="1" Text="Sin dispositivos vinculados"
+                                       Style="{StaticResource MutedTextStyle}" FontSize="12"
+                                       Margin="52,0,0,0" Visibility="{Binding EmptyVisibility}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Border>
+    </Grid>
+</Page>

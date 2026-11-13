@@ -1,0 +1,48 @@
+<Page
+    x:Class="CSIViewer.Host.Views.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{ThemeResource PageBackgroundBrush}">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled" HorizontalContentAlignment="Stretch"
+                  VerticalScrollBarVisibility="Auto">
+        <Grid Padding="{StaticResource PagePadding}" HorizontalAlignment="Stretch">
+        <StackPanel Spacing="18">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Acerca de" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="CSIViewer — asistencia y control remoto para Windows."
+                           Style="{StaticResource MutedTextStyle}" />
+            </StackPanel>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Versión 0.1.0" Style="{StaticResource SectionTitleStyle}" />
+                    <TextBlock Text="WinUI 3 · .NET 10 · Windows App SDK 2.6.5"
+                               Style="{StaticResource MutedTextStyle}" />
+                    <TextBlock Text="Cliente y servidor experimentales en desarrollo. Captura Windows.Graphics.Capture + H.264 Media Foundation, con fallback JPEG/GDI."
+                               Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Este equipo" Style="{StaticResource SectionTitleStyle}" />
+                    <TextBlock x:Name="AboutDeviceIdText" FontFamily="Consolas" />
+                    <TextBlock x:Name="AboutFingerprintText" FontFamily="Consolas" FontSize="12"
+                               TextWrapping="Wrap" Style="{StaticResource MutedTextStyle}" />
+                    <TextBlock x:Name="AboutServerText" Style="{StaticResource MutedTextStyle}" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Privacidad y seguridad" Style="{StaticResource SectionTitleStyle}" />
+                    <TextBlock Text="Las sesiones requieren consentimiento explícito. La contraseña temporal se verifica en este equipo y el servidor no recibe claves de sesión. No hay acceso oculto ni persistencia encubierta."
+                               Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                    <TextBlock Text="Antes de distribuir la aplicación deben revisarse la firma de código, las licencias de códecs y la política de privacidad."
+                               Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" FontSize="12" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

@@ -1,0 +1,72 @@
+# Build
+bin/
+obj/
+# Artefactos de compilación, publicación e instaladores
+artifacts/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.tlog
+*.binlog
+*.log
+TestResults/
+[Bb]enchmarkDotNet.Artifacts/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.DotSettings.user
+
+# .NET
+*.dll
+*.pdb
+*.nupkg
+*.snupkg
+project.lock.json
+packages.lock.json
+*.nuget.g.props
+*.nuget.g.targets
+
+# WinUI / MSIX
+AppPackages/
+BundleArtifacts/
+*.appx
+*.appxbundle
+*.appxupload
+*.msix
+*.msixbundle
+*.msixupload
+Package.StoreAssociation.xml
+*.pfx
+*.cer
+*.snk
+
+# Secretos y configuracion local
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+.env
+.env.*
+*.secret
+*.key
+
+# Bases de datos y datos de ejecucion
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+logs/
+*.rdpart
+
+# Herramientas
+.vsconfig
+*.tmp
+*.bak
+*.orig
+*.rej
+Thumbs.db
+desktop.ini

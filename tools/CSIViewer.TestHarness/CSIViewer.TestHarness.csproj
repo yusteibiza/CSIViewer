@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <ProjectReference Include="..\..\src\CSIViewer.Core\CSIViewer.Core.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Protocol\CSIViewer.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Security\CSIViewer.Security.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Networking\CSIViewer.Networking.csproj" />
+    <ProjectReference Include="..\..\src\CSIViewer.Services\CSIViewer.Services.csproj" />
+  </ItemGroup>
+</Project>

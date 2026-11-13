@@ -1,0 +1,233 @@
+<Page
+    x:Class="CSIViewer.Host.Views.HostSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{ThemeResource PageBackgroundBrush}">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled"
+                  HorizontalContentAlignment="Stretch" VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="20,10" MaxWidth="740" Spacing="8" HorizontalAlignment="Center">
+            <StackPanel Spacing="1">
+                <TextBlock Text="Configuración del host" Style="{StaticResource PageTitleStyle}" FontSize="22" />
+                <TextBlock Text="Tema, servidor, calidad de imagen y modo desatendido."
+                           Style="{StaticResource MutedTextStyle}" FontSize="12" />
+            </StackPanel>
+
+            <InfoBar x:Name="StatusBar" IsOpen="False" IsClosable="True" />
+
+            <Grid ColumnSpacing="10" RowSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardStyle}" Padding="12">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Apariencia" Style="{StaticResource SectionTitleStyle}" />
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="170" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Tema" VerticalAlignment="Center" />
+                            <ComboBox x:Name="ThemeCombo" Grid.Column="1" HorizontalAlignment="Stretch"
+                                      SelectionChanged="ThemeCombo_SelectionChanged"
+                                      AutomationProperties.AutomationId="HostThemeCombo">
+                                <ComboBoxItem Content="Tema del sistema" Tag="System" />
+                                <ComboBoxItem Content="Tema claro" Tag="Light" />
+                                <ComboBoxItem Content="Tema oscuro" Tag="Dark" />
+                            </ComboBox>
+                        </Grid>
+                        <ComboBox x:Name="AccentColorCombo" Header="Color de énfasis" HorizontalAlignment="Stretch"
+                                  SelectionChanged="AccentColorCombo_SelectionChanged" AutomationProperties.AutomationId="HostAccentColorCombo">
+                            <ComboBox.ItemTemplate><DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Ellipse Width="14" Height="14" Fill="{Binding PreviewColor}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Name}" />
+                                </StackPanel>
+                            </DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardStyle}" Padding="12">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Servidor" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBox x:Name="ServerUrlBox"
+                                 PlaceholderText="URL del servidor (http://localhost:5080)"
+                                 AutomationProperties.AutomationId="HostServerUrlBox" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Guardar" Click="SaveServer_Click"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    AutomationProperties.AutomationId="HostSaveServerButton" />
+                            <Button Content="Probar" Click="TestServer_Click"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    AutomationProperties.AutomationId="HostTestServerButton" />
+                        </StackPanel>
+                        <TextBlock x:Name="ServerStatusText" Text="" Style="{StaticResource MutedTextStyle}"
+                                   FontSize="12" TextTrimming="CharacterEllipsis" />
+                        <ToggleSwitch x:Name="AllowInsecureSwitch"
+                                      Header="Permitir HTTP remoto (sin HTTPS)"
+                                      OffContent="Solo HTTPS"
+                                      OnContent="HTTP permitido"
+                                      AutomationProperties.AutomationId="HostAllowInsecureSwitch" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardStyle}" Padding="12">
+                    <StackPanel Spacing="8">
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Calidad de imagen" Style="{StaticResource SectionTitleStyle}"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Content="Guardar" Click="SaveQuality_Click"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    AutomationProperties.AutomationId="HostSaveQualityButton" />
+                        </Grid>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="78" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Perfil" VerticalAlignment="Center" />
+                            <ComboBox x:Name="QualityProfileCombo" Grid.Column="1"
+                                      AutomationProperties.AutomationId="HostQualityProfileCombo"
+                                      SelectionChanged="QualityProfile_SelectionChanged">
+                                <ComboBoxItem Content="Máxima nitidez" Tag="Sharp" />
+                                <ComboBoxItem Content="Equilibrado" Tag="Balanced" />
+                                <ComboBoxItem Content="Máxima velocidad" Tag="Speed" />
+                                <ComboBoxItem Content="Personalizado" Tag="Custom" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="78" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="42" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Calidad" VerticalAlignment="Center" />
+                            <Slider x:Name="QualitySlider" Grid.Column="1" Minimum="20" Maximum="95"
+                                    StepFrequency="1" AutomationProperties.AutomationId="HostQualitySlider" />
+                            <TextBlock x:Name="QualityValueText" Grid.Column="2" VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="78" />
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="FPS" VerticalAlignment="Center" />
+                            <ComboBox x:Name="FpsCombo" Grid.Column="1" HorizontalAlignment="Stretch"
+                                      AutomationProperties.AutomationId="HostFpsCombo" />
+                            <TextBlock Grid.Column="2" Text="objetivo" VerticalAlignment="Center"
+                                       Style="{StaticResource MutedTextStyle}" FontSize="12" />
+                        </Grid>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="78" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="52" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Ancho" VerticalAlignment="Center" />
+                            <Slider x:Name="MaxWidthSlider" Grid.Column="1" Minimum="640" Maximum="2560"
+                                    StepFrequency="80" AutomationProperties.AutomationId="HostMaxWidthSlider" />
+                            <TextBlock x:Name="MaxWidthValueText" Grid.Column="2" VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ToggleSwitch x:Name="H264Switch" Header="H.264" OffContent="JPEG"
+                                          AutomationProperties.AutomationId="HostH264Switch" />
+                            <ToggleSwitch x:Name="ModernCaptureSwitch" Grid.Column="1"
+                                          Header="Captura moderna" OffContent="GDI"
+                                          AutomationProperties.AutomationId="HostModernCaptureSwitch" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardStyle}" Padding="12">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Modo desatendido" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Text="Arranca con Windows mediante una tarea programada. No instala un servicio; UAC solo al activarlo."
+                                   Style="{StaticResource MutedTextStyle}" FontSize="12" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <ProgressRing x:Name="UnattendedBusyRing" Width="18" Height="18" IsActive="False"
+                                          Visibility="Collapsed" />
+                            <TextBlock x:Name="UnattendedStatusText" Text="Comprobando."
+                                       FontWeight="SemiBold" VerticalAlignment="Center"
+                                       AutomationProperties.AutomationId="HostUnattendedStatus" />
+                        </StackPanel>
+                        <ComboBox x:Name="ConsentModeCombo" Header="Solicitudes de conexión"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ConsentMode_SelectionChanged"
+                                  ToolTipService.ToolTip="Aceptar automáticamente concede los permisos solicitados. La contraseña sigue siendo obligatoria."
+                                  AutomationProperties.AutomationId="HostConsentModeCombo">
+                            <ComboBoxItem Content="Preguntar siempre" Tag="Ask" />
+                            <ComboBoxItem Content="Aceptar automáticamente" Tag="Accept" />
+                            <ComboBoxItem Content="Rechazar automáticamente" Tag="Reject" />
+                        </ComboBox>
+                        <Grid ColumnSpacing="8" RowSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Button x:Name="InstallUnattendedButton" Content="Activar inicio"
+                                    Click="InstallUnattended_Click"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    AutomationProperties.AutomationId="HostInstallUnattendedButton" />
+                            <Button x:Name="UninstallUnattendedButton" Content="Desactivar"
+                                    Grid.Column="1" Click="UninstallUnattended_Click"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    AutomationProperties.AutomationId="HostUninstallUnattendedButton" />
+                            <Button Content="Actualizar estado" Grid.Row="1" Grid.ColumnSpan="2"
+                                    Click="RefreshUnattended_Click"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    AutomationProperties.AutomationId="HostRefreshUnattendedButton" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Carpeta de descargas" VerticalAlignment="Center" />
+                <TextBox x:Name="DownloadFolderBox" Grid.Column="1"
+                         PlaceholderText="C:\Users\...\Downloads\CSIViewer"
+                         AutomationProperties.AutomationId="HostDownloadFolderBox" />
+                <Button Grid.Column="2" Content="Examinar" Click="BrowseDownloadFolder_Click"
+                        Style="{StaticResource SecondaryButtonStyle}" />
+                <Button Grid.Column="3" Content="Guardar carpeta" Click="SaveDownloadFolder_Click"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        AutomationProperties.AutomationId="HostSaveDownloadFolderButton" />
+            </Grid>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Privacidad y mantenimiento" Style="{StaticResource SectionTitleStyle}" />
+                    <TextBlock Text="Borra las conexiones guardadas en este equipo. No elimina los dispositivos, los contactos ni las sesiones que estén activas ahora mismo."
+                               Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                    <Button Content="Borrar historial de conexiones" Click="ClearHistory_Click"
+                            Style="{StaticResource DangerButtonStyle}" HorizontalAlignment="Left"
+                            AutomationProperties.AutomationId="HostClearHistoryButton" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

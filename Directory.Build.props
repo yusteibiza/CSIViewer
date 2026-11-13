@@ -1,0 +1,49 @@
+<Project>
+
+  <!--
+    Propiedades comunes a todos los proyectos.
+    No se fija TargetFramework ni RuntimeIdentifier aqui: cada proyecto declara
+    el suyo y la publicacion lo especifica explicitamente.
+  -->
+  <PropertyGroup>
+    <!-- 1.0.0 archivada; 1.0.1 en desarrollo (administrador de archivos). -->
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <Deterministic>true</Deterministic>
+    <DebugType>portable</DebugType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- La aplicacion esta localizada; no se activa InvariantGlobalization. -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <SatelliteResourceLanguages>en;es</SatelliteResourceLanguages>
+
+    <!-- No se recorta: WinUI, Media Foundation y la reflexion de XAML no son trim-safe. -->
+    <PublishTrimmed>false</PublishTrimmed>
+
+    <!-- En local se permite iterar; en CI las advertencias son errores. -->
+    <TreatWarningsAsErrors Condition="'$(CI)' == 'true'">true</TreatWarningsAsErrors>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!--
+      Reglas de analisis aceptadas conscientemente en esta etapa:
+      CA1848/CA1873: rendimiento de logging; se migrara a LoggerMessage en la fase de optimizacion.
+      CA1001: los servicios viven hasta el cierre del proceso; su liberacion se hace en el host.
+      CA1000/CA1822/CA1805/CA1806/CA2012/CA1305: sugerencias menores o de formato.
+    -->
+    <NoWarn>$(NoWarn);CA1000;CA1001;CA1305;CA1805;CA1806;CA1822;CA1848;CA1873;CA2012</NoWarn>
+
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>direct</NuGetAuditMode>
+  </PropertyGroup>
+
+</Project>

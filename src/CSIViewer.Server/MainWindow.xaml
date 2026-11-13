@@ -1,0 +1,571 @@
+<Window
+    x:Class="CSIViewer.Server.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="CSIViewer Servidor">
+
+    <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.Resources>
+            <Style x:Key="DropdownItemButtonStyle" TargetType="Button">
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="MinHeight" Value="36" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="CornerRadius" Value="4" />
+            </Style>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Padding="16,0,150,0"
+              Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                <FontIcon Glyph="&#xE968;" FontSize="17"
+                          Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                <TextBlock Text="CSIViewer Servidor" FontWeight="SemiBold" FontSize="13"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Padding="28" Spacing="16" MaxWidth="1040" HorizontalAlignment="Center">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="CSIViewer Servidor"
+                                   Style="{StaticResource TitleTextBlockStyle}" />
+                        <TextBlock Text="Configura el puerto, el código de inscripción y el acceso de red. Desde aquí puedes iniciar y detener el servidor."
+                                   Style="{StaticResource BodyTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <ComboBox x:Name="ThemeCombo" Header="Tema" Width="180"
+                              VerticalAlignment="Center"
+                              SelectionChanged="ThemeCombo_SelectionChanged"
+                              AutomationProperties.AutomationId="ServerThemeCombo"
+                              ToolTipService.ToolTip="Tema de la interfaz">
+                        <ComboBoxItem Content="Tema del sistema" Tag="System" />
+                        <ComboBoxItem Content="Tema claro" Tag="Light" />
+                        <ComboBoxItem Content="Tema oscuro" Tag="Dark" />
+                    </ComboBox>
+                    <ComboBox x:Name="AccentColorCombo" Header="Color de énfasis" Width="180"
+                              SelectionChanged="AccentColorCombo_SelectionChanged" AutomationProperties.AutomationId="ServerAccentColorCombo">
+                        <ComboBox.ItemTemplate><DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Ellipse Width="14" Height="14" Fill="{Binding PreviewColor}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Name}" />
+                            </StackPanel>
+                        </DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
+                    </StackPanel>
+                </Grid>
+
+                <InfoBar x:Name="StatusBar" IsOpen="False" IsClosable="True" />
+
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="20">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Width="14" Height="14" VerticalAlignment="Top" Margin="0,6,0,0">
+                            <Ellipse x:Name="RunningDot" Fill="{ThemeResource OnlineBrush}"
+                                     Visibility="Collapsed" />
+                            <Ellipse x:Name="StoppedDot" Fill="{ThemeResource OfflineBrush}" />
+                        </Grid>
+
+                        <StackPanel Grid.Column="1" Spacing="3">
+                            <TextBlock x:Name="StatusTitle" Text="Servidor detenido"
+                                       Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <TextBlock x:Name="StatusDetail"
+                                       Text="Pulsa «Iniciar servidor» para aceptar conexiones."
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock x:Name="StatusUrl" FontFamily="Consolas" FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                                    VerticalAlignment="Center">
+                            <ProgressRing x:Name="BusyRing" Width="22" Height="22"
+                                          IsActive="False" Visibility="Collapsed" />
+                            <Button x:Name="StartButton" Content="Iniciar servidor"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Click="StartServer_Click"
+                                    AutomationProperties.AutomationId="StartServerButton" />
+                            <Button x:Name="StopButton" Content="Detener servidor"
+                                    Click="StopServer_Click" IsEnabled="False"
+                                    AutomationProperties.AutomationId="StopServerButton" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="10">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Width="14" Height="14" VerticalAlignment="Top" Margin="0,6,0,0">
+                                <Ellipse x:Name="ServiceRunningDot" Fill="{ThemeResource OnlineBrush}"
+                                         Visibility="Collapsed" />
+                                <Ellipse x:Name="ServiceStoppedDot" Fill="{ThemeResource OfflineBrush}" />
+                            </Grid>
+
+                            <StackPanel Grid.Column="1" Spacing="3">
+                                <TextBlock Text="Servicio de Windows"
+                                           Style="{StaticResource SubtitleTextBlockStyle}" />
+                                <TextBlock x:Name="ServiceStatusText" Text="Comprobando el servicio…"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="El servicio arranca con Windows sin abrir esta ventana y se ejecuta como SYSTEM. Crear, eliminar, iniciar o parar el servicio requiere confirmar el aviso de administrador (UAC); después no vuelve a pedirlo. Al crear el servicio se detiene el servidor de esta ventana y se desactiva el inicio de sesión de la interfaz para no duplicarlo."
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <ProgressRing x:Name="ServiceBusyRing" Grid.Column="2" Width="22" Height="22"
+                                          IsActive="False" Visibility="Collapsed"
+                                          VerticalAlignment="Top" Margin="0,4,0,0" />
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="CreateServiceButton" Content="Crear servicio"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Click="CreateService_Click"
+                                    AutomationProperties.AutomationId="ServerCreateServiceButton" />
+                            <Button x:Name="DeleteServiceButton" Content="Eliminar servicio"
+                                    Click="DeleteService_Click" IsEnabled="False"
+                                    AutomationProperties.AutomationId="ServerDeleteServiceButton" />
+                            <Button x:Name="StartServiceButton" Content="Iniciar servicio"
+                                    Click="StartService_Click" IsEnabled="False"
+                                    AutomationProperties.AutomationId="ServerStartServiceButton" />
+                            <Button x:Name="StopServiceButton" Content="Parar servicio"
+                                    Click="StopService_Click" IsEnabled="False"
+                                    AutomationProperties.AutomationId="ServerStopServiceButton" />
+                            <Button x:Name="RefreshServiceButton" Content="Actualizar estado"
+                                    Click="RefreshService_Click"
+                                    AutomationProperties.AutomationId="ServerRefreshServiceButton" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="ConfigPanel"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="20">
+                    <StackPanel x:Name="ConfigContent" Spacing="14">
+                        <TextBlock Text="Configuración" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <Grid ColumnSpacing="20" RowSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="210" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Puerto" VerticalAlignment="Center" />
+                            <NumberBox x:Name="PortBox" Grid.Column="1" Minimum="1024" Maximum="65535"
+                                       SpinButtonPlacementMode="Inline" Width="170"
+                                       HorizontalAlignment="Left"
+                                       AutomationProperties.AutomationId="ServerPortBox" />
+
+                            <TextBlock Grid.Row="1" Text="Acceso de red" VerticalAlignment="Top"
+                                       Margin="0,8,0,0" />
+                            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
+                                <ToggleSwitch x:Name="AllInterfacesSwitch"
+                                              Header="Permitir conexiones desde otros equipos"
+                                              AutomationProperties.AutomationId="ServerAllInterfacesSwitch" />
+                                <TextBlock Text="Si se desactiva, solo se aceptan conexiones desde este equipo (localhost)."
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                    <TextBlock Text="Máximo de clientes simultáneos por host"
+                                               VerticalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <NumberBox x:Name="MaxSessionsPerHostBox" Minimum="1" Maximum="100"
+                                               SpinButtonPlacementMode="Inline" Width="140"
+                                               AutomationProperties.AutomationId="MaxSessionsPerHostBox" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="2" Text="Código de inscripción" VerticalAlignment="Center" />
+                            <TextBox x:Name="EnrollmentCodeBox" Grid.Row="2" Grid.Column="1" MaxLength="64"
+                                     Width="280" HorizontalAlignment="Left"
+                                     AutomationProperties.AutomationId="ServerEnrollmentCodeBox" />
+
+                            <TextBlock Grid.Row="3" Text="Nombre del servidor" VerticalAlignment="Center" />
+                            <TextBox x:Name="ServerNameBox" Grid.Row="3" Grid.Column="1" MaxLength="80"
+                                     AutomationProperties.AutomationId="ServerNameBox" />
+
+                            <TextBlock Grid.Row="4" Text="Base de datos" VerticalAlignment="Center" />
+                            <Grid Grid.Row="4" Grid.Column="1" ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="DatabasePathBox"
+                                         AutomationProperties.AutomationId="ServerDatabasePathBox" />
+                                <Button Grid.Column="1" Content="Examinar…"
+                                        Click="BrowseDatabase_Click"
+                                        Style="{StaticResource DefaultButtonStyle}" />
+                            </Grid>
+
+                            <TextBlock Grid.Row="5" Text="Router (UPnP)" VerticalAlignment="Top"
+                                       Margin="0,8,0,0" />
+                            <StackPanel Grid.Row="5" Grid.Column="1" Spacing="4">
+                                <ToggleSwitch x:Name="UpnpSwitch"
+                                              Header="Abrir el puerto automáticamente en el router"
+                                              AutomationProperties.AutomationId="ServerUpnpSwitch" />
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <TextBlock Text="Puerto externo" VerticalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <NumberBox x:Name="UpnpExternalPortBox" Minimum="0" Maximum="65535"
+                                               SpinButtonPlacementMode="Inline" Width="140"
+                                               AutomationProperties.AutomationId="ServerUpnpExternalPortBox" />
+                                    <TextBlock Text="0 = usar el mismo puerto" VerticalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               FontSize="12" />
+                                </StackPanel>
+                                <TextBlock Text="Requiere UPnP activado en el router y el acceso de red habilitado. Si el router no lo permite, el servidor seguirá funcionando en local."
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="6" Text="HTTPS" VerticalAlignment="Top"
+                                       Margin="0,8,0,0" />
+                            <StackPanel Grid.Row="6" Grid.Column="1" Spacing="4">
+                                <ToggleSwitch x:Name="HttpsSwitch"
+                                              Header="Usar HTTPS/WSS"
+                                              AutomationProperties.AutomationId="ServerHttpsSwitch" />
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="CertificateThumbprintBox"
+                                             PlaceholderText="Huella SHA-1 del certificado (con clave privada)"
+                                             AutomationProperties.AutomationId="ServerCertificateThumbprintBox" />
+                                    <Button Grid.Column="1" Content="Generar certificado de prueba"
+                                            Click="GenerateCertificate_Click"
+                                            Style="{StaticResource DefaultButtonStyle}" />
+                                </Grid>
+                                <TextBlock Text="El certificado se busca en CurrentUser\My y LocalMachine\My. Para el servicio y varios equipos, instálalo en LocalMachine\My con scripts\new-server-certificate.ps1 -Machine."
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="7" Text="STUN" VerticalAlignment="Top"
+                                       Margin="0,8,0,0" />
+                            <StackPanel Grid.Row="7" Grid.Column="1" Spacing="4">
+                                <ToggleSwitch x:Name="StunSwitch"
+                                              Header="Activar servidor STUN UDP"
+                                              AutomationProperties.AutomationId="ServerStunSwitch" />
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <TextBlock Text="Puerto STUN" VerticalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <NumberBox x:Name="StunPortBox" Minimum="1024" Maximum="65535"
+                                               SpinButtonPlacementMode="Inline" Width="140"
+                                               AutomationProperties.AutomationId="ServerStunPortBox" />
+                                </StackPanel>
+                                <TextBlock Text="Permite a los clientes descubrir su dirección pública UDP para futuras conexiones P2P. Abre el puerto UDP en el firewall/router si quieres usarlo desde Internet."
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Spacing="4">
+                            <ToggleSwitch x:Name="StartWithWindowsSwitch"
+                                          Header="Iniciar con Windows"
+                                          Toggled="StartWithWindowsSwitch_Toggled"
+                                          AutomationProperties.AutomationId="ServerStartWithWindowsSwitch" />
+                            <TextBlock Text="Registra CSIViewer Servidor en el inicio de sesión de Windows y abre la interfaz automáticamente, sin ventana de consola. Si «Iniciar el servidor al abrir la interfaz» está activado, el servidor también arranca."
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <ToggleSwitch x:Name="AutoStartSwitch"
+                                      Header="Iniciar el servidor al abrir la interfaz"
+                                      AutomationProperties.AutomationId="ServerAutoStartSwitch" />
+
+                        <Grid ColumnSpacing="20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Nivel de detalle de logs" VerticalAlignment="Center" />
+                            <DropDownButton x:Name="LogLevelButton" Grid.Column="1" MinWidth="300"
+                                            MinHeight="40" Padding="12,0"
+                                            HorizontalContentAlignment="Left"
+                                            HorizontalAlignment="Left"
+                                            AutomationProperties.AutomationId="ServerLogLevelCombo">
+                                <DropDownButton.Flyout>
+                                    <Flyout Placement="TopEdgeAlignedLeft" Opened="LogLevelFlyout_Opened">
+                                        <Flyout.FlyoutPresenterStyle>
+                                            <Style TargetType="FlyoutPresenter">
+                                                <Setter Property="Padding" Value="0" />
+                                                <Setter Property="MinWidth" Value="0" />
+                                                <Setter Property="MaxWidth" Value="360" />
+                                            </Style>
+                                        </Flyout.FlyoutPresenterStyle>
+                                        <StackPanel Width="300" Padding="4" Spacing="2">
+                                            <Button x:Name="DebugLevelItem" Tag="Debug"
+                                                    Style="{StaticResource DropdownItemButtonStyle}"
+                                                    Click="LogLevelItem_Click">
+                                                <Grid ColumnSpacing="8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="3" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border x:Name="DebugLevelBar" Width="3" Height="18"
+                                                            CornerRadius="1.5" VerticalAlignment="Center"
+                                                            Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                            Visibility="Collapsed" />
+                                                    <TextBlock Grid.Column="1" Text="Depuración (máximo detalle)"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </Button>
+                                            <Button x:Name="InformationLevelItem" Tag="Information"
+                                                    Style="{StaticResource DropdownItemButtonStyle}"
+                                                    Click="LogLevelItem_Click">
+                                                <Grid ColumnSpacing="8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="3" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border x:Name="InformationLevelBar" Width="3" Height="18"
+                                                            CornerRadius="1.5" VerticalAlignment="Center"
+                                                            Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                            Visibility="Collapsed" />
+                                                    <TextBlock Grid.Column="1" Text="Información"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </Button>
+                                            <Button x:Name="WarningLevelItem" Tag="Warning"
+                                                    Style="{StaticResource DropdownItemButtonStyle}"
+                                                    Click="LogLevelItem_Click">
+                                                <Grid ColumnSpacing="8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="3" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border x:Name="WarningLevelBar" Width="3" Height="18"
+                                                            CornerRadius="1.5" VerticalAlignment="Center"
+                                                            Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                            Visibility="Collapsed" />
+                                                    <TextBlock Grid.Column="1" Text="Advertencia"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </Button>
+                                            <Button x:Name="ErrorLevelItem" Tag="Error"
+                                                    Style="{StaticResource DropdownItemButtonStyle}"
+                                                    Click="LogLevelItem_Click">
+                                                <Grid ColumnSpacing="8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="3" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border x:Name="ErrorLevelBar" Width="3" Height="18"
+                                                            CornerRadius="1.5" VerticalAlignment="Center"
+                                                            Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                            Visibility="Collapsed" />
+                                                    <TextBlock Grid.Column="1" Text="Error"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </Button>
+                                            <Button x:Name="CriticalLevelItem" Tag="Critical"
+                                                    Style="{StaticResource DropdownItemButtonStyle}"
+                                                    Click="LogLevelItem_Click">
+                                                <Grid ColumnSpacing="8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="3" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border x:Name="CriticalLevelBar" Width="3" Height="18"
+                                                            CornerRadius="1.5" VerticalAlignment="Center"
+                                                            Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                            Visibility="Collapsed" />
+                                                    <TextBlock Grid.Column="1" Text="Crítico"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </Button>
+                                        </StackPanel>
+                                    </Flyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button Content="Abrir carpeta de logs" Click="OpenLogs_Click"
+                                    Style="{StaticResource DefaultButtonStyle}" />
+                            <Button Content="Exportar diagnóstico" Click="ExportDiagnostics_Click"
+                                    Style="{StaticResource DefaultButtonStyle}" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <Button x:Name="SaveButton" Content="Guardar configuración"
+                                    Click="SaveSettings_Click"
+                                    Style="{StaticResource DefaultButtonStyle}"
+                                    AutomationProperties.AutomationId="ServerSaveButton" />
+                            <TextBlock x:Name="SaveHint" VerticalAlignment="Center"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Mantenimiento" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Borra el historial de sesiones guardado en la base de datos del servidor. No elimina los equipos registrados ni interrumpe las sesiones activas."
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                        <Button x:Name="ClearHistoryButton" Content="Borrar historial de sesiones"
+                                Click="ClearHistory_Click"
+                                Style="{StaticResource DefaultButtonStyle}"
+                                HorizontalAlignment="Left"
+                                AutomationProperties.AutomationId="ServerClearHistoryButton" />
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="20">
+                    <Expander HorizontalAlignment="Stretch" IsExpanded="False">
+                        <Expander.Header>
+                            <TextBlock Text="Ayuda: qué hace el servidor y qué significa cada opción"
+                                       Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        </Expander.Header>
+                        <StackPanel Spacing="8" Margin="0,4,0,0">
+                            <TextBlock Text="Qué es CSIViewer Servidor" FontWeight="SemiBold" />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="Es el intermediario que permite que el visor y el host se encuentren a través de Internet. Señaliza las conexiones y, cuando no hay conexión directa, retransmite (relay) el vídeo, el chat y los archivos. No puede leer el contenido: la sesión va cifrada de extremo a extremo. También guarda la lista de equipos registrados y el historial de sesiones en una base de datos SQLite." />
+
+                            <TextBlock Text="Transferencia de archivos (1.0.1)" FontWeight="SemiBold" />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       AutomationProperties.AutomationId="FileTransferHelp" Text="Administrador de archivos (1.0.1): visor y host muestran sus carpetas en dos paneles. Enviar → copia del equipo local al remoto; ← Recibir hace lo contrario, hacia la carpeta abierta del otro panel. Se requieren permisos y autorización de recepción. El servidor solo retransmite mensajes cifrados: no explora ni guarda los archivos transferidos. Los dos extremos deben usar 1.0.1 o posterior. Tras desconectar hay que seleccionar otra vez el destino para autorizarlo en la nueva sesión." />
+                            <TextBlock Text="Apariencia" FontWeight="SemiBold" />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="Junto al selector de tema puedes elegir el color de énfasis (Windows, azul, verde, turquesa, violeta, rosa, naranja o rojo). Se aplica sin reiniciar el servidor y se guarda solo para su interfaz; no cambia los colores de estado/error ni la configuración del servicio o de los otros equipos. El alto contraste respeta los colores de Windows." />
+                            <TextBlock Text="Formas de ejecutarlo" FontWeight="SemiBold" />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Interfaz (sin argumentos): abre esta ventana para configurar y controlar el servidor." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Consola: CSIViewerServidor.exe --modo=servidor funciona sin ventana y muestra mensajes en la consola." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Servicio de Windows: arranca con el equipo, sin que nadie inicie sesión ni abra la interfaz. Se crea, inicia, para o elimina desde la tarjeta «Servicio de Windows»; solo se pide UAC al hacerlo." />
+
+                            <TextBlock Text="Configuración, opción por opción" FontWeight="SemiBold" />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Puerto: puerto TCP donde escucha el servidor (por defecto 5080 o 5180). Debe estar abierto en el firewall y, si usas Internet, redirigido en el router." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Acceso de red: si está desactivado, solo acepta conexiones desde el propio equipo (localhost). Actívalo para que host y visor se conecten desde otros equipos o desde Internet." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Router (UPnP): intenta abrir el puerto automáticamente en el router. Si el router no lo permite, el servidor sigue funcionando en local; abre el puerto manualmente." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• HTTPS: cifra la conexión web con un certificado. Indica la huella SHA-1 de un certificado con clave privada; el botón «Generar certificado de prueba» crea uno para pruebas. Para uso real, instala un certificado de confianza." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• STUN: permite que los clientes descubran su dirección pública UDP para futuras conexiones directas. Abre el puerto UDP indicado si quieres usarlo desde Internet." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Base de datos: archivo SQLite donde se guardan equipos y sesiones. Usa una ruta absoluta y una carpeta con permisos de escritura." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Nombre del servidor: nombre visible para los clientes. Código de inscripción: clave que deben usar el visor y el host para registrarse; debe coincidir exactamente." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Máximo de clientes simultáneos por host: limita cuántas conexiones puede tener un mismo equipo." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Nivel de detalle de logs: cuánta información se guarda en la carpeta de logs. «Depuración» guarda el máximo detalle; úsalo solo para investigar un problema." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Iniciar con Windows: abre la interfaz al iniciar sesión. Es distinto del servicio: el servicio arranca sin sesión de usuario." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Iniciar el servidor al abrir la interfaz: arranca el servidor automáticamente al abrir esta ventana. Si el servidor ya está en marcha (consola o servicio), la ventana solo lo administra." />
+
+                            <TextBlock Text="Primeros pasos" FontWeight="SemiBold" />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="1. Elige puerto, acceso de red, código de inscripción y ruta de la base de datos. 2. Pulsa Guardar configuración. 3. Pulsa Iniciar servidor y comprueba que el punto se pone verde. 4. Instala CSIViewer o CSIViewer Host en los equipos, escribe la URL del servidor y el mismo código de inscripción. 5. Comprueba la salud con http://localhost:PUERTO/api/health." />
+
+                            <TextBlock Text="Mantenimiento" FontWeight="SemiBold" />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="«Borrar historial de sesiones» elimina los registros de sesiones de la base de datos; no borra los equipos registrados ni corta las sesiones activas. «Abrir carpeta de logs» muestra los registros y «Exportar diagnóstico» genera un archivo con información útil para revisar problemas." />
+
+                            <TextBlock Text="Seguridad" FontWeight="SemiBold" />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="El código de inscripción impide que equipos desconocidos se registren. El servidor ve qué equipos se conectan y cuándo, pero no puede descifrar la pantalla, el chat ni los archivos. Protege el equipo del servidor y limita quién puede abrir su interfaz o instalar el servicio." />
+
+                            <TextBlock Text="Problemas frecuentes" FontWeight="SemiBold" />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• El visor o el host no conectan: comprueba la URL, el puerto, el acceso de red y el firewall. Si usas un nombre DDNS, actualízalo con tu dirección pública actual." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• El puerto está ocupado: otro programa o el propio servidor ya lo está usando. Detén la otra instancia o cambia el puerto." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• El servicio no arranca: revisa que el ejecutable exista, que la base de datos sea accesible y que el puerto no esté ocupado. Consulta los logs del servicio en %ProgramData%\\CSIViewerServidor\\logs." />
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                       Text="• Cambios sin efecto: pulsa Guardar configuración; si el servidor está en marcha, detenlo y vuelve a iniciarlo para aplicar puerto, HTTPS o base de datos." />
+                        </StackPanel>
+                    </Expander>
+                </Border>
+
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Modo sin interfaz"
+                                   Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="Sin argumentos, CSIViewer Servidor abre esta interfaz. Para ejecutar únicamente el servidor en consola, sin ventana, usa:"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="CSIViewerServidor.exe --modo=servidor"
+                                   FontFamily="Consolas" FontSize="12"
+                                   IsTextSelectionEnabled="True" />
+                        <TextBlock Text="Esta interfaz guarda su configuración en %LOCALAPPDATA%\CSIViewerServidor\serversettings.json y el modo consola la reutiliza."
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="Al cerrar la ventana, CSIViewer Servidor permanece en la bandeja de notificaciones. Usa «Salir» en su menú para detenerlo del todo."
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

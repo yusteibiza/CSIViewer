@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <AssemblyName>CSIViewerServidor</AssemblyName>
+    <RootNamespace>CSIViewer.Server</RootNamespace>
+    <ApplicationIcon>Assets\Appicon.ico</ApplicationIcon>
+    <AssemblyTitle>CSIViewer Servidor</AssemblyTitle>
+    <Product>CSIViewer Servidor</Product>
+    <Description>CSIViewer Servidor — señalización y relay para Windows</Description>
+    <Company>CSIViewer</Company>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CSIViewer.Core\CSIViewer.Core.csproj" />
+    <Compile Include="..\Shared\AccentAppearance.cs" Link="Presentation\AccentAppearance.cs" />
+    <ProjectReference Include="..\CSIViewer.Protocol\CSIViewer.Protocol.csproj" />
+    <ProjectReference Include="..\CSIViewer.Security\CSIViewer.Security.csproj" />
+    <ProjectReference Include="..\CSIViewer.Networking\CSIViewer.Networking.csproj" />
+    <ProjectReference Include="..\CSIViewer.Infrastructure\CSIViewer.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\Appicon.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="CopyWinUIResourcesToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <_WinUIXbf Include="$(TargetDir)*.xbf" />
+      <_WinUIResourcePri Include="$(TargetDir)$(AssemblyName).pri" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WinUIXbf)" DestinationFolder="$(PublishDir)"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_WinUIResourcePri)" DestinationFolder="$(PublishDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+</Project>

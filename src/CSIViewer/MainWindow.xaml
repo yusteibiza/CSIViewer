@@ -1,0 +1,133 @@
+<Window
+    x:Class="CSIViewer.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="CSIViewer">
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="44" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Solo título y zona de arrastre. Los botones de ventana del sistema
+             se dibujan a la derecha y no deben quedar tapados por controles. -->
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Padding="16,0,150,0"
+              Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                <FontIcon Glyph="&#xE968;" FontSize="17" Foreground="{ThemeResource BrandBrush}" />
+                <TextBlock x:Name="AppTitleText" Text="CSIViewer" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Barra de estado fuera de la barra de título, para no invadir los
+             botones minimizar/maximizar/cerrar. -->
+        <Grid x:Name="StatusBarRow" Grid.Row="1" Padding="20,0,20,0" Background="{ThemeResource PageBackgroundBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Button x:Name="HostBackButton" Visibility="Collapsed" Width="30" Height="28"
+                        HorizontalAlignment="Left" VerticalAlignment="Center"
+                        Click="HostBack_Click" ToolTipService.ToolTip="Volver al inicio del host"
+                        AutomationProperties.AutomationId="HostBackButton"
+                        AutomationProperties.Name="Volver al inicio del host">
+                    <FontIcon Glyph="&#xE72B;" FontSize="14" />
+                </Button>
+                <TextBlock x:Name="TopBarHintText" Text="Asistencia y control remoto"
+                           Style="{StaticResource MutedTextStyle}" VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right"
+                        VerticalAlignment="Center" Spacing="10">
+                <Border Style="{StaticResource StatusPillStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Ellipse x:Name="TopStatusDot" Width="8" Height="8"
+                                 Fill="{ThemeResource OfflineBrush}" VerticalAlignment="Center" />
+                        <TextBlock x:Name="ServerStatusText" Text="Sin conexión" FontSize="12" />
+                    </StackPanel>
+                </Border>
+                <TextBlock x:Name="DeviceIdHeaderText" Text="ID —" VerticalAlignment="Center"
+                           Foreground="{ThemeResource MutedTextBrush}" FontFamily="Consolas" FontSize="12" />
+                <Button x:Name="ThemeButton" Width="34" Height="30"
+                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                        ToolTipService.ToolTip="Cambiar tema">
+                    <FontIcon Glyph="&#xE793;" FontSize="15" />
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="Tema claro" Tag="Light" Click="ThemeMenuItem_Click" />
+                            <MenuFlyoutItem Text="Tema oscuro" Tag="Dark" Click="ThemeMenuItem_Click" />
+                            <MenuFlyoutItem Text="Tema del sistema" Tag="System" Click="ThemeMenuItem_Click" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+                <Button Width="34" Height="30" ToolTipService.ToolTip="Color de énfasis"
+                        AutomationProperties.Name="Color de énfasis" AutomationProperties.AutomationId="AccentColorButton">
+                    <FontIcon Glyph="&#xE790;" FontSize="15" Foreground="{ThemeResource BrandBrush}" />
+                    <Button.Flyout><MenuFlyout x:Name="AccentMenu" /></Button.Flyout>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <InfoBar x:Name="SessionBanner" Grid.Row="2" Severity="Success" IsOpen="False"
+                 Title="Sesión remota activa" Message="Hay una sesión remota en curso."
+                 IsClosable="False" Margin="16,0,16,8">
+            <InfoBar.ActionButton>
+                <Button Content="Finalizar sesión" Click="EndSession_Click" />
+            </InfoBar.ActionButton>
+        </InfoBar>
+
+        <NavigationView x:Name="NavView" Grid.Row="3" Style="{StaticResource NavigationViewStyle}"
+                         SelectionChanged="NavView_SelectionChanged">
+            <NavigationView.Resources>
+                <!-- Avoid a second light border/rounded corner around remote content. -->
+                <Thickness x:Key="NavigationViewContentGridBorderThickness">0</Thickness>
+                <CornerRadius x:Key="NavigationViewContentGridCornerRadius">0</CornerRadius>
+            </NavigationView.Resources>
+            <NavigationView.MenuItems>
+                <NavigationViewItem Content="Inicio" Tag="home">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE80F;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Control remoto" Tag="remote" AutomationProperties.AutomationId="NavRemote">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE8AF;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Dispositivos" Tag="devices">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE7F4;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Transferencia de archivos" Tag="files" AutomationProperties.AutomationId="NavFiles">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE8B7;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Chat" Tag="chat">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE8BD;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Historial" Tag="history">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE81C;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Contactos" Tag="contacts">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE77B;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem Content="Ayuda" Tag="help" AutomationProperties.AutomationId="NavHelp">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE897;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Configuración" Tag="settings">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE713;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Acerca de" Tag="about">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE897;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.FooterMenuItems>
+            <Frame x:Name="ContentFrame" />
+        </NavigationView>
+
+        <!-- Ventana del host: un contenido propio a pantalla completa, sin la
+             navegación del cliente. -->
+        <Frame x:Name="HostFrame" Grid.Row="3" Visibility="Collapsed" />
+    </Grid>
+</Window>

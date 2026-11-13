@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <AssemblyName>CSIViewer</AssemblyName>
+    <RootNamespace>CSIViewer</RootNamespace>
+    <ApplicationIcon>Assets\Appicon.ico</ApplicationIcon>
+    <AssemblyTitle>CSIViewer</AssemblyTitle>
+    <Product>CSIViewer</Product>
+    <Description>CSIViewer — asistencia y control remoto para Windows</Description>
+    <Company>CSIViewer</Company>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType Condition="'$(PackageMsix)' != 'true'">None</WindowsPackageType>
+    <WindowsAppSDKSelfContained Condition="'$(PackageMsix)' != 'true'">true</WindowsAppSDKSelfContained>
+    <EnableMsixTooling Condition="'$(PackageMsix)' == 'true'">true</EnableMsixTooling>
+    <EnableMsixTooling Condition="'$(PackageMsix)' != 'true'">false</EnableMsixTooling>
+    <AppxPackageName Condition="'$(PackageMsix)' == 'true'">CSIViewer</AppxPackageName>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <GenerateAppxPackageOnBuild Condition="'$(PackageMsix)' == 'true'">true</GenerateAppxPackageOnBuild>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(PackageMsix)' == 'true'">
+    <AppxManifest Include="Package.appxmanifest" />
+    <Content Include="Assets\**" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(PackageMsix)' != 'true'">
+    <Content Include="Assets\Appicon.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CSIViewer.Core\CSIViewer.Core.csproj" />
+    <Compile Include="..\Shared\AccentAppearance.cs" Link="Presentation\AccentAppearance.cs" />
+    <ProjectReference Include="..\CSIViewer.Application\CSIViewer.Application.csproj" />
+    <ProjectReference Include="..\CSIViewer.Services\CSIViewer.Services.csproj" />
+  </ItemGroup>
+  <Target Name="CopyWinUIResourcesToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <_WinUIXbf Include="$(TargetDir)*.xbf" />
+      <_WinUIResourcePri Include="$(TargetDir)$(AssemblyName).pri" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WinUIXbf)" DestinationFolder="$(PublishDir)"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_WinUIResourcePri)" DestinationFolder="$(PublishDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+</Project>
