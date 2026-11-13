@@ -2,6 +2,13 @@
 
 Documento de transferencia de contexto para que otro modelo de IA continúe el proyecto sin repetir errores ni romper lo que funciona.
 
+> **AYUDA/ÉNFASIS — 13/11, 19:55:** ayuda interna actualizada y selector Windows
+> + siete colores en visor/host/servidor, persistente junto al tema y en Apariencia.
+> 205/205 tests Debug/Release, 33/33 comprobaciones UI en cada configuración,
+> archivos 7/7 y fullscreen 15/15 Release. Informe 22 con paquetes/hashes.
+> **Nueva petición activa:** multiidioma es/en/fr/ca, selector junto al tema y color
+> en cada configuración y revisión de desbordamientos; aún no finalizada.
+
 > **ÚLTIMA REVISIÓN — 13/11, 19:29:** corregida pérdida real de contraseñas de
 > dispositivos al conectar/recibir sesión. PersistKnownDeviceAsync llamaba Upsert
 > sin ProtectedPassword; ahora RecordConnectionAsync solo actualiza datos de
