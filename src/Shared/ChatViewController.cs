@@ -58,6 +58,17 @@ public sealed class ChatViewController
             if (e.PropertyName is nameof(AppState.IsSessionActive) or nameof(AppState.ActivePermissions) or nameof(AppState.RemoteDeviceId)) QueueRefresh();
         };
         client.ChatMessageReceived += (_, _) => QueueRefresh();
+        client.KnownDeviceDeleted += (_, peer) => view.Devices.DispatcherQueue.TryEnqueue(() =>
+        {
+            _archivedPeers.Remove(peer);
+            _drafts.Remove(peer);
+            if (_selectedPeer == peer)
+            {
+                _loadCts?.Cancel();
+                _view.Message.Text = "";
+            }
+            QueueRefresh();
+        });
         Localization.Changed += (_, _) => view.Devices.DispatcherQueue.TryEnqueue(() =>
         {
             RefreshEmojiCategories(); RebuildRows(force: true); RefreshState();
@@ -69,7 +80,9 @@ public sealed class ChatViewController
     {
         try
         {
-            foreach (var peer in await _client.GetChatPeerDeviceIdsAsync()) _archivedPeers.Add(peer);
+            _archivedPeers.Clear();
+            foreach (var peer in await _client.GetChatPeerDeviceIdsAsync())
+                if (!_client.IsChatDeviceRemoved(peer)) _archivedPeers.Add(peer);
             RefreshChoices();
             await LoadSelectedAsync();
         }
@@ -93,7 +106,7 @@ public sealed class ChatViewController
         var names = new Dictionary<string, string>(StringComparer.Ordinal);
         void Add(string? id, string? alias = null)
         {
-            if (string.IsNullOrWhiteSpace(id) || id == "—") return;
+            if (string.IsNullOrWhiteSpace(id) || id == "—" || _client.IsChatDeviceRemoved(id)) return;
             if (!names.ContainsKey(id) || !string.IsNullOrWhiteSpace(alias))
                 names[id] = string.IsNullOrWhiteSpace(alias) || alias == id ? id : $"{alias} · {id}";
         }
@@ -102,7 +115,6 @@ public sealed class ChatViewController
             foreach (var id in _archivedPeers) Add(id);
             foreach (var message in _state.ChatMessages) Add(message.PeerDeviceId);
             foreach (var device in _state.KnownDevices) Add(device.DeviceId, device.Alias);
-            Add(_selectedPeer);
         }
         if (_state.IsSessionActive) Add(_state.RemoteDeviceId, _state.RemoteDeviceName);
         var choices = names.Select(x => new ChatDeviceChoice(x.Key, x.Value))
@@ -111,7 +123,7 @@ public sealed class ChatViewController
             ?? choices.FirstOrDefault(x => _state.IsSessionActive && x.DeviceId == _state.RemoteDeviceId)
             ?? choices.FirstOrDefault();
         var changed = selected?.DeviceId != _selectedPeer;
-        if (changed && _selectedPeer is { } old) _drafts[old] = _view.Message.Text;
+        if (changed && _selectedPeer is { } old && !_client.IsChatDeviceRemoved(old)) _drafts[old] = _view.Message.Text;
         _selectedPeer = selected?.DeviceId;
         if (_sessionOnly && changed) { _drafts.Clear(); _view.Message.Text = ""; _notice = null; }
         _changingChoices = true;
@@ -221,7 +233,7 @@ public sealed class ChatViewController
             {
                 XamlRoot = _view.Devices.XamlRoot, RequestedTheme = _theme(),
                 Title = Localization.Text("Borrar historial de chat"),
-                Content = Localization.Format("Se borrará el historial local de {0}. No se borrará en el otro equipo. ¿Continuar?", name),
+                Content = Localization.Format("Se borrará el historial de chat de {0}. ¿Continuar?", name),
                 PrimaryButtonText = Localization.Text("Borrar"), CloseButtonText = Localization.Text("Cancelar"),
                 DefaultButton = ContentDialogButton.Close
             };
@@ -231,7 +243,13 @@ public sealed class ChatViewController
             Notice(Localization.Text("Historial de chat borrado."), InfoBarSeverity.Success);
         }
         catch (Exception) { Notice(Localization.Text("No se pudo borrar el historial de chat."), InfoBarSeverity.Error); }
-        finally { _busy = false; RebuildRows(); RefreshState(); }
+        finally
+        {
+            _busy = false;
+            var changed = RefreshChoices();
+            RebuildRows(); RefreshState();
+            if (changed) await LoadSelectedAsync();
+        }
     }
 
     public async Task ExportSelectedAsync()

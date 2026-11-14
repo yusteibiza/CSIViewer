@@ -11,12 +11,52 @@ namespace CSIViewer.Media;
 /// Captura GDI compatible con el escritorio completo. Es la primera implementacion funcional;
 /// el pipeline H.264/Windows.Graphics.Capture queda como optimizacion posterior.
 /// </summary>
-public sealed class GdiScreenCapture : IAsyncDisposable
+public sealed class GdiScreenCapture : IHostCapture
 {
     private CancellationTokenSource? _cts;
     private Task? _loop;
 
     public bool IsRunning => _loop is { IsCompleted: false };
+
+    // Used only by the explicitly provisioned SYSTEM login endpoint. Native
+    // resources never leave the desktop-bound thread or survive a desktop change.
+    internal static CaptureFrame CaptureOnce(MonitorInfo monitor, int maxWidth, int jpegQuality, bool encodeJpeg)
+    {
+        var scale = Math.Min(1.0, (double)Math.Clamp(maxWidth, 640, 2560) / monitor.Width);
+        var width = Math.Max(1, (int)(monitor.Width * scale));
+        var height = Math.Max(1, (int)(monitor.Height * scale));
+        var dc = GetDC(IntPtr.Zero);
+        if (dc == IntPtr.Zero) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+        var target = IntPtr.Zero;
+        var bitmap = IntPtr.Zero;
+        var previous = IntPtr.Zero;
+        try
+        {
+            target = CreateCompatibleDC(dc);
+            bitmap = CreateCompatibleBitmap(dc, width, height);
+            if (target == IntPtr.Zero || bitmap == IntPtr.Zero)
+                throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+            previous = SelectObject(target, bitmap);
+            if (previous == IntPtr.Zero || previous == new IntPtr(-1))
+                throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+            _ = SetStretchBltMode(target, 4);
+            if (!StretchBlt(target, 0, 0, width, height, dc, monitor.X, monitor.Y,
+                    monitor.Width, monitor.Height, SRCCOPY | CAPTUREBLT))
+                throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+            var pixels = ReadPixels(target, bitmap, width, height);
+            if (pixels.Length == 0) throw new InvalidOperationException("Desktop capture returned no pixels.");
+            return encodeJpeg
+                ? new CaptureFrame([], 0, 0, EncodeJpegAsync(pixels, width, height, jpegQuality).GetAwaiter().GetResult())
+                : new CaptureFrame(pixels, width, height);
+        }
+        finally
+        {
+            if (previous != IntPtr.Zero && previous != new IntPtr(-1)) SelectObject(target, previous);
+            if (bitmap != IntPtr.Zero) DeleteObject(bitmap);
+            if (target != IntPtr.Zero) DeleteDC(target);
+            _ = ReleaseDC(IntPtr.Zero, dc);
+        }
+    }
 
     public void Start(
         MonitorInfo monitor,

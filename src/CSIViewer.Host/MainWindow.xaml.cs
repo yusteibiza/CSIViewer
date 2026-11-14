@@ -72,6 +72,7 @@ public sealed partial class MainWindow : Window
             if (App.IsUnattended && !_forceClose)
             {
                 args.Cancel = true;
+                _client.NotifyHostWindowVisibilityChanged();
                 AppWindow.Hide();
             }
         };
@@ -270,6 +271,9 @@ public sealed partial class MainWindow : Window
 
     private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
     {
+        if ((args.DidSizeChange || args.DidPresenterChange) &&
+            AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized })
+            _client.NotifyHostWindowVisibilityChanged();
         if (!_placementRestored || _suppressPlacementSave)
         {
             return;
@@ -672,7 +676,11 @@ public sealed partial class MainWindow : Window
 
     public void AllowClose() => _forceClose = true;
 
-    public void HideToTray() => AppWindow.Hide();
+    public void HideToTray()
+    {
+        _client.NotifyHostWindowVisibilityChanged();
+        AppWindow.Hide();
+    }
 
     public void NavigateTo(string tag)
     {

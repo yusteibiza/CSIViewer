@@ -19,6 +19,10 @@ public sealed partial class RemoteClient
     private volatile bool _revokingAccess;
     private int _captureViewerCount;
 
+    private bool IsLiveSession(RemoteSession session) => !_revokingAccess &&
+        session.State == ConnectionState.Connected &&
+        _sessions.TryGetValue(session.Id, out var current) && ReferenceEquals(current, session);
+
     private sealed class RemoteSession : IDisposable
     {
         public required Guid Id { get; init; }
@@ -35,6 +39,7 @@ public sealed partial class RemoteClient
         public CancellationTokenSource? DirectCts { get; set; }
         public Task? DirectReceiveTask { get; set; }
         public bool ControlOwner { get; set; }
+        public object InputGate { get; } = new();
         public ControlRestriction ControlRestriction { get; init; }
         public bool VideoConfigured { get; set; }
         public ConnectionStateMachine StateMachine { get; } = new();
@@ -69,7 +74,10 @@ public sealed partial class RemoteClient
             AudioEnabled = ClipboardEnabled = false;
             Interlocked.Exchange(ref PendingClipboardText, null);
             Interlocked.Exchange(ref AudioStream, null)?.Dispose();
-            StateMachine.TryTransition(ConnectionState.Disconnecting, out _);
+            lock (InputGate)
+            {
+                StateMachine.TryTransition(ConnectionState.Disconnecting, out _);
+            }
             foreach (var request in BrowseRequests.Values) request.TrySetCanceled();
             foreach (var request in PullRequests.Values) request.TrySetCanceled();
             foreach (var request in DirectoryRequests.Values) request.TrySetCanceled();
@@ -178,10 +186,14 @@ public sealed partial class RemoteClient
         DateTimeOffset startedAt,
         string publicKey)
     {
+        var chatVersion = _chatHistoryVersions.GetOrAdd(remoteId, 0);
+        await _chatHistoryGate.WaitAsync().ConfigureAwait(false);
         try
         {
+            if (_chatHistoryVersions.GetOrAdd(remoteId, 0) != chatVersion) return;
             var knownDevice = await _knownDevices.RecordConnectionAsync(remoteId, remoteName, startedAt, publicKey)
                 .ConfigureAwait(false);
+            RestoreChatForSavedDevice(remoteId);
             if (!string.IsNullOrWhiteSpace(publicKey))
             {
                 _knownDeviceKeys[remoteId] = publicKey;
@@ -189,6 +201,7 @@ public sealed partial class RemoteClient
 
             _state.Post(() =>
             {
+                if (IsChatDeviceRemoved(remoteId) || _chatHistoryVersions.GetOrAdd(remoteId, 0) != chatVersion) return;
                 for (var index = 0; index < _state.KnownDevices.Count; index++)
                 {
                     var current = _state.KnownDevices[index];
@@ -209,6 +222,7 @@ public sealed partial class RemoteClient
         {
             _logger.LogDebug(ex, "Could not persist known device {DeviceId}", remoteId);
         }
+        finally { _chatHistoryGate.Release(); }
     }
 
     private async Task SendPendingControlAsync(
@@ -228,10 +242,11 @@ public sealed partial class RemoteClient
             using var timeout = CreateTimeoutToken(
                 TimeSpan.FromSeconds(seconds),
                 _lifetimeCts.Token);
-            var frame = pending.Crypto.Encrypt(
+            await pending.Crypto.EncryptAndSendAsync(
                 SessionFrameKind.Control,
-                ControlJson.Create(type, payload));
-            await signal.SendBinaryAsync(frame, timeout.Token).ConfigureAwait(false);
+                ControlJson.Create(type, payload),
+                signal.SendBinaryAsync,
+                timeout.Token).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException or SocketException
                                        or System.Net.WebSockets.WebSocketException
@@ -281,20 +296,21 @@ public sealed partial class RemoteClient
 
         try
         {
-            var frame = session.Crypto.Encrypt(kind, plaintext);
             if (kind is SessionFrameKind.Video or SessionFrameKind.Audio)
             {
                 // Cancelling ClientWebSocket.SendAsync aborts the whole
                 // signaling socket. Video frames are droppable, so never use
                 // a timeout that could tear down every concurrent session.
-                await signal.SendBinaryAsync(frame, cancellationToken).ConfigureAwait(false);
+                await session.Crypto.EncryptAndSendAsync(kind, plaintext, signal.SendBinaryAsync, cancellationToken)
+                    .ConfigureAwait(false);
                 return true;
             }
 
             using var timeout = CreateTimeoutToken(
                 TimeSpan.FromSeconds(seconds),
                 cancellationToken);
-            await signal.SendBinaryAsync(frame, timeout.Token).ConfigureAwait(false);
+            await session.Crypto.EncryptAndSendAsync(kind, plaintext, signal.SendBinaryAsync, timeout.Token)
+                .ConfigureAwait(false);
             return true;
         }
         catch (Exception ex) when (ex is IOException or SocketException
@@ -423,12 +439,26 @@ public sealed partial class RemoteClient
         await _sessionEndGate.WaitAsync().ConfigureAwait(false);
         try
         {
-            if (!_sessions.TryRemove(session.Id, out _))
+            lock (session.InputGate)
             {
-                return;
+                if (!_sessions.TryRemove(session.Id, out _))
+                {
+                    return;
+                }
+
+                session.MarkDisconnecting();
+                // Finish any in-flight injection before releasing pressed
+                // inputs, and never wait for chat/network/disk cleanup first.
+                if (session.ControlOwner)
+                {
+                    var released = _input.ReleaseAll();
+                    _logger.LogInformation(
+                        "Released {Released} pressed input(s) for control session {SessionId}",
+                        released,
+                        session.SessionId);
+                }
             }
 
-            session.MarkDisconnecting();
             await ClearTemporaryChatAsync(session.RemoteDeviceId).ConfigureAwait(false);
             _sessionManager.TryRemove(session.Id, out _, out _);
             // Publish the removed session immediately. Capture/file/history
@@ -443,17 +473,6 @@ public sealed partial class RemoteClient
                 session.RemoteDeviceId,
                 reason,
                 finalState);
-
-            // If this session owned mouse/keyboard input, release every key
-            // and button that may still be logically pressed on the host.
-            if (session.ControlOwner)
-            {
-                var released = _input.ReleaseAll();
-                _logger.LogInformation(
-                    "Released {Released} pressed input(s) for control session {SessionId}",
-                    released,
-                    session.SessionId);
-            }
 
             if (sendToPeer)
             {
@@ -720,6 +739,9 @@ public sealed partial class RemoteClient
 
             try
             {
+                _captureRunning = false;
+                _usingModernCapture = false;
+                Interlocked.Increment(ref _hostCaptureGeneration);
                 await _modernCapture.StopAsync()
                     .WaitAsync(TimeSpan.FromSeconds(3))
                     .ConfigureAwait(false);

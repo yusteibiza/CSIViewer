@@ -23,6 +23,26 @@
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Exercise the real headless server sources without launching WinUI/SCM. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
+    <Compile Include="../../src/CSIViewer.Server/ServerHost.cs" Link="Server/ServerHost.cs" />
+    <Compile Include="../../src/Shared/ProtectedInstallation.cs" Link="Server/ProtectedInstallation.cs" />
+    <Compile Include="../../src/CSIViewer.Server/ServerRuntimeSettings.cs" Link="Server/ServerRuntimeSettings.cs" />
+    <Compile Include="../../src/CSIViewer.Server/ServerDataPaths.cs" Link="Server/ServerDataPaths.cs" />
+    <Compile Include="../../src/CSIViewer.Server/ServerDataPermissions.cs" Link="Server/ServerDataPermissions.cs" />
+    <Compile Include="../../src/CSIViewer.Server/ServerSettingsStore.cs" Link="Server/ServerSettingsStore.cs" />
+    <Compile Include="../../src/CSIViewer.Server/ServerServiceManager.cs" Link="Server/ServerServiceManager.cs" />
+    <Compile Include="../../src/CSIViewer.Server/ServerCommandLine.cs" Link="Server/ServerCommandLine.cs" />
+    <Compile Include="../../src/CSIViewer.Server/ServerServiceLog.cs" Link="Server/ServerServiceLog.cs" />
+    <Compile Include="../../src/CSIViewer.Server/UpnpPortMapper.cs" Link="Server/UpnpPortMapper.cs" />
+    <Compile Include="../../src/CSIViewer.Server/StunServerService.cs" Link="Server/StunServerService.cs" />
+    <Compile Include="../../src/CSIViewer.Server/DeviceRegistry.cs" Link="Server/DeviceRegistry.cs" />
+    <Compile Include="../../src/CSIViewer.Server/RegistrationThrottle.cs" Link="Server/RegistrationThrottle.cs" />
+    <Compile Include="../../src/CSIViewer.Server/Persistence/*.cs" Link="Server/Persistence/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../src/CSIViewer.Media/WindowsGraphicsCapture.cs" LogicalName="UiContracts.media.WgcCode" />
     <EmbeddedResource Include="../../src/CSIViewer/Views/FileTransferPage.xaml" LogicalName="UiContracts.viewer.Files" />
     <EmbeddedResource Include="../../src/CSIViewer/Themes/Colors.xaml" LogicalName="UiContracts.viewer.Colors" />
     <EmbeddedResource Include="../../src/CSIViewer/MainWindow.xaml" LogicalName="UiContracts.viewer.Main" />

@@ -24,7 +24,7 @@ public sealed class ServerCommandLine
         var valueOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "--modo", "--mode", "--port", "--url", "--urls", "--db", "--database",
-            "--enrollment-code", "--code", "--server-name", "--name", "--theme",
+            "--enrollment-code", "--code", "--enrollment-verifier", "--server-name", "--name", "--theme",
             "--upnp-external-port", "--cert-thumbprint", "--stun-port", "--max-sessions-per-host",
             "--log-level", "--loglevel"
         };
@@ -83,6 +83,12 @@ public sealed class ServerCommandLine
                 case "--enrollment-code":
                 case "--code":
                     settings.EnrollmentCode = value ?? "";
+                    settings.EnrollmentVerifier = "";
+                    break;
+
+                case "--enrollment-verifier":
+                    settings.EnrollmentCode = "";
+                    settings.EnrollmentVerifier = value ?? "";
                     break;
 
                 case "--server-name":

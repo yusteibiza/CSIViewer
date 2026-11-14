@@ -2,6 +2,31 @@ param([Parameter(Mandatory=$true)][string]$Root)
 $ErrorActionPreference='Stop'
 $overrides=@{
  en=@{
+  'Se borrará el historial de chat de {0}. ¿Continuar?'='The chat history for {0} will be deleted. Continue?';
+  '¿Quieres eliminar «{0}» ({1}) de tus dispositivos guardados? También se borrará su historial de chat.'='Delete “{0}” ({1}) from your saved devices? Its chat history will also be deleted.';
+  'Selecciona un dispositivo para consultar solo su conversación, incluso sin conexión. Borrar chat pide confirmación y elimina su historial local. Al eliminar un dispositivo también se borra su chat y desaparece del selector. Exportar chat guarda toda la conversación en un archivo de texto UTF-8. Los emojis están organizados por categorías. Para enviar mensajes necesitas una sesión con permiso Chat.'='Select a device to view only its conversation, even offline. Delete chat asks for confirmation and deletes its local history. Deleting a device also deletes its chat and removes it from the selector. Export chat saves the entire conversation as a UTF-8 text file. Emojis are organized by category. Sending messages requires a session with Chat permission.';
+  'Captura moderna sin respuesta; recuperando la imagen con GDI.'='Modern capture is not responding; recovering the image with GDI.';
+  'Activado (en ejecución)'='Enabled (running)';
+  'Arranca con Windows mediante una tarea programada. Consultar el estado no requiere UAC; cambiar el inicio requiere administración.'='Starts with Windows through a scheduled task. Checking status does not require UAC; changing startup requires administrator rights.';
+  'Falta el agente de arranque: {0}. Repara la instalación de CSIViewer Host.'='The startup agent is missing: {0}. Repair the CSIViewer Host installation.';
+  'No existe el archivo o la carpeta.'='The file or folder does not exist.';
+  'El agente debe estar instalado en Program Files.'='The agent must be installed in Program Files.';
+  'La ruta contiene un enlace o una redirección.'='The path contains a link or redirection.';
+  'El propietario no es SYSTEM, Administradores ni TrustedInstaller.'='The owner is not SYSTEM, Administrators or TrustedInstaller.';
+  'Una cuenta no administrativa puede modificar la instalación.'='A non-administrator account can modify the installation.';
+  'Windows no permite leer los permisos de esta ruta.'='Windows does not allow reading the permissions for this path.';
+  'No se puede activar el inicio. Ruta: {0}. Motivo: {1}'='Startup cannot be enabled. Path: {0}. Reason: {1}';
+  'No se pueden comprobar los permisos de {0}. No se ha modificado el inicio automático.'='The permissions for {0} could not be checked. Startup has not been changed.';
+  'Valores por defecto'='Default values';'Restablecer'='Revert changes';
+  'Iniciar servidor y Crear servicio utilizan la configuración guardada.'='Start server and Create service use the saved settings.';
+  'Estado no accesible. Actualiza con permisos de administrador.'='Status unavailable. Refresh with administrator rights.';
+  ' (último estado confirmado)'=' (last confirmed status)';
+  'Para activar el inicio, instala CSIViewer Host para todos los usuarios en una carpeta protegida.'='To enable startup, install CSIViewer Host for all users in a protected folder.';
+  'Permiso de administrador cancelado; no se ha cambiado nada.'='Administrator approval cancelled; nothing has changed.';
+  'La operación no se ha confirmado. Código {0}. No se mostrará como activada sin verificar la tarea.'='The operation could not be confirmed. Code {0}. Startup will not be shown as enabled until the task is verified.';
+  'Acceso al inicio de Windows'='Windows sign-in access';
+  'Requiere administración y un ID de equipo distinto. HTTP remoto solo con autorización explícita.'='Requires administrator rights and a separate machine ID. Remote HTTP requires explicit approval.';
+  'Instala CSIViewer Host para todos los usuarios en la ruta predeterminada para configurar esta función.'='Install CSIViewer Host for all users in the default location to configure this feature.';
   'Conectado sin control de ratón y teclado'='Connected without mouse and keyboard control';
   'Otra sesión tiene el control de este equipo. Finaliza esa sesión y vuelve a conectar solicitando el permiso de control.'='Another session controls this computer. End that session and reconnect requesting control permission.';
   'El equipo remoto no ha concedido el permiso de control. Finaliza la sesión y vuelve a solicitar «Controlar ratón y teclado».'='The remote computer has not granted control permission. End the session and request “Control mouse and keyboard” again.';
@@ -27,7 +52,6 @@ $overrides=@{
   'Revisa los permisos'='Review permissions';
   'Selecciona los permisos, incluido audio o portapapeles si los necesitas, y pulsa Conectar.'='Select the permissions, including audio or clipboard if needed, then click Connect.';
   'Al elegir un dispositivo guardado se preparan el ID y la contraseña. Revisa los permisos antes de pulsar Conectar: audio y portapapeles son opcionales y deben solicitarse antes de iniciar la sesión.'='Selecting a saved device prefills its ID and password. Review the permissions before clicking Connect: audio and clipboard are optional and must be requested before starting the session.';
-  'Selecciona un dispositivo para consultar solo su conversación, incluso sin conexión. Borrar chat pide confirmación y elimina únicamente el historial local de ese dispositivo; no borra el del otro equipo. Exportar chat guarda toda la conversación en un archivo de texto UTF-8. Los emojis están organizados por categorías. Para enviar mensajes necesitas una sesión con permiso Chat.'='Select a device to view only its conversation, even offline. Delete chat asks for confirmation and deletes only the local history for that device, not the history on the other computer. Export chat saves the entire conversation as a UTF-8 text file. Emojis are organized by category. Sending messages requires a session with Chat permission.';
   'Dispositivo'='Device';'Borrar chat'='Delete chat';'Exportar chat'='Export chat';'Chat con {0}'='Chat with {0}';'Yo'='Me';
   'Más usados'='Frequently used';'Caras y emociones'='Faces and emotions';'Gestos y personas'='Gestures and people';
   'Animales y naturaleza'='Animals and nature';'Comida y bebida'='Food and drink';'Viajes y lugares'='Travel and places';
@@ -45,6 +69,31 @@ $overrides=@{
   'Abre origen y destino con Unidades, Subir, Ir o la ruta editable. Doble clic abre carpetas, nunca ejecuta archivos. Selecciona varios con Ctrl/Mayús. «Enviar →» copia del panel local al remoto y «← Recibir» del remoto al local. El destino es la carpeta abierta, no necesariamente Descargas; la vista de unidades no es un destino.'='Open the source and destination using Drives, Up, Go or the path field. Double-click opens folders, never files. Use Ctrl/Shift to select multiple items. Send → copies from the local pane to the remote pane; ← Receive copies in the opposite direction. The destination is the open folder, not necessarily Downloads. The drives view is not a destination.'
  }
  fr=@{
+  'Se borrará el historial de chat de {0}. ¿Continuar?'="L’historique du chat de {0} sera supprimé. Continuer ?";
+  '¿Quieres eliminar «{0}» ({1}) de tus dispositivos guardados? También se borrará su historial de chat.'="Supprimer « {0} » ({1}) de vos appareils enregistrés ? Son historique de chat sera également supprimé.";
+  'Selecciona un dispositivo para consultar solo su conversación, incluso sin conexión. Borrar chat pide confirmación y elimina su historial local. Al eliminar un dispositivo también se borra su chat y desaparece del selector. Exportar chat guarda toda la conversación en un archivo de texto UTF-8. Los emojis están organizados por categorías. Para enviar mensajes necesitas una sesión con permiso Chat.'="Sélectionnez un appareil pour consulter uniquement sa conversation, même hors ligne. Effacer le chat demande confirmation et supprime son historique local. Supprimer un appareil supprime aussi son chat et le retire du sélecteur. Exporter le chat enregistre toute la conversation dans un fichier texte UTF-8. Les émojis sont classés par catégorie. L’envoi de messages nécessite une session avec l’autorisation Chat.";
+  'Captura moderna sin respuesta; recuperando la imagen con GDI.'="La capture moderne ne répond pas ; récupération de l’image avec GDI.";
+  'Activado (en ejecución)'="Activé (en cours d’exécution)";
+  'Arranca con Windows mediante una tarea programada. Consultar el estado no requiere UAC; cambiar el inicio requiere administración.'="Démarre avec Windows via une tâche planifiée. Consulter l’état ne nécessite pas l’UAC ; modifier le démarrage nécessite les droits administrateur.";
+  'Falta el agente de arranque: {0}. Repara la instalación de CSIViewer Host.'="L’agent de démarrage est absent : {0}. Réparez l’installation de CSIViewer Host.";
+  'No existe el archivo o la carpeta.'="Le fichier ou le dossier n’existe pas.";
+  'El agente debe estar instalado en Program Files.'="L’agent doit être installé dans Program Files.";
+  'La ruta contiene un enlace o una redirección.'='Le chemin contient un lien ou une redirection.';
+  'El propietario no es SYSTEM, Administradores ni TrustedInstaller.'="Le propriétaire n’est ni SYSTEM, ni Administrateurs, ni TrustedInstaller.";
+  'Una cuenta no administrativa puede modificar la instalación.'="Un compte non administrateur peut modifier l’installation.";
+  'Windows no permite leer los permisos de esta ruta.'='Windows ne permet pas de lire les autorisations de ce chemin.';
+  'No se puede activar el inicio. Ruta: {0}. Motivo: {1}'="Impossible d’activer le démarrage. Chemin : {0}. Motif : {1}";
+  'No se pueden comprobar los permisos de {0}. No se ha modificado el inicio automático.'="Impossible de vérifier les autorisations de {0}. Le démarrage automatique n’a pas été modifié.";
+  'Valores por defecto'='Valeurs par défaut';'Restablecer'='Annuler les modifications';
+  'Iniciar servidor y Crear servicio utilizan la configuración guardada.'='Démarrer le serveur et Créer le service utilisent les paramètres enregistrés.';
+  'Estado no accesible. Actualiza con permisos de administrador.'='État inaccessible. Actualisez avec les droits administrateur.';
+  ' (último estado confirmado)'=' (dernier état confirmé)';
+  'Para activar el inicio, instala CSIViewer Host para todos los usuarios en una carpeta protegida.'='Pour activer le démarrage, installez CSIViewer Host pour tous les utilisateurs dans un dossier protégé.';
+  'Permiso de administrador cancelado; no se ha cambiado nada.'="Autorisation administrateur annulée ; aucune modification n’a été effectuée.";
+  'La operación no se ha confirmado. Código {0}. No se mostrará como activada sin verificar la tarea.'="L’opération n’a pas été confirmée. Code {0}. Le démarrage ne sera pas indiqué comme activé sans vérification de la tâche.";
+  'Acceso al inicio de Windows'='Accès à la connexion Windows';
+  'Requiere administración y un ID de equipo distinto. HTTP remoto solo con autorización explícita.'='Nécessite les droits administrateur et un identifiant de machine distinct. HTTP distant uniquement avec autorisation explicite.';
+  'Instala CSIViewer Host para todos los usuarios en la ruta predeterminada para configurar esta función.'='Installez CSIViewer Host pour tous les utilisateurs dans le dossier par défaut pour configurer cette fonction.';
   'Conectado sin control de ratón y teclado'='Connecté sans contrôle de la souris et du clavier';
   'Otra sesión tiene el control de este equipo. Finaliza esa sesión y vuelve a conectar solicitando el permiso de control.'='Une autre session contrôle cet ordinateur. Terminez cette session et reconnectez-vous en demandant le droit de contrôle.';
   'El equipo remoto no ha concedido el permiso de control. Finaliza la sesión y vuelve a solicitar «Controlar ratón y teclado».'="L’ordinateur distant n’a pas accordé le droit de contrôle. Terminez la session et redemandez « Contrôler la souris et le clavier ».";
@@ -70,7 +119,6 @@ $overrides=@{
   'Revisa los permisos'='Vérifiez les autorisations';
   'Selecciona los permisos, incluido audio o portapapeles si los necesitas, y pulsa Conectar.'='Sélectionnez les autorisations, y compris le son ou le presse-papiers si nécessaire, puis cliquez sur Connecter.';
   'Al elegir un dispositivo guardado se preparan el ID y la contraseña. Revisa los permisos antes de pulsar Conectar: audio y portapapeles son opcionales y deben solicitarse antes de iniciar la sesión.'="La sélection d’un appareil enregistré préremplit son ID et son mot de passe. Vérifiez les autorisations avant de cliquer sur Connecter : le son et le presse-papiers sont facultatifs et doivent être demandés avant de démarrer la session.";
-  'Selecciona un dispositivo para consultar solo su conversación, incluso sin conexión. Borrar chat pide confirmación y elimina únicamente el historial local de ese dispositivo; no borra el del otro equipo. Exportar chat guarda toda la conversación en un archivo de texto UTF-8. Los emojis están organizados por categorías. Para enviar mensajes necesitas una sesión con permiso Chat.'="Sélectionnez un appareil pour consulter uniquement sa conversation, même hors ligne. Effacer le chat demande confirmation et supprime uniquement l’historique local de cet appareil, pas celui de l’autre ordinateur. Exporter le chat enregistre toute la conversation dans un fichier texte UTF-8. Les émojis sont classés par catégorie. L’envoi de messages nécessite une session avec l’autorisation Chat.";
   'Dispositivo'='Appareil';'Borrar chat'='Effacer le chat';'Exportar chat'='Exporter le chat';'Chat con {0}'='Discussion avec {0}';'Yo'='Moi';
   'Más usados'='Les plus utilisés';'Caras y emociones'='Visages et émotions';'Gestos y personas'='Gestes et personnes';
   'Animales y naturaleza'='Animaux et nature';'Comida y bebida'='Aliments et boissons';'Viajes y lugares'='Voyages et lieux';
@@ -91,6 +139,31 @@ $overrides=@{
   'Abre origen y destino con Unidades, Subir, Ir o la ruta editable. Doble clic abre carpetas, nunca ejecuta archivos. Selecciona varios con Ctrl/Mayús. «Enviar →» copia del panel local al remoto y «← Recibir» del remoto al local. El destino es la carpeta abierta, no necesariamente Descargas; la vista de unidades no es un destino.'="Ouvrez les dossiers source et de destination avec Lecteurs, Dossier parent, Aller ou le champ du chemin. Le double-clic ouvre les dossiers, jamais les fichiers. Utilisez Ctrl/Maj pour sélectionner plusieurs éléments. Envoyer → copie du volet local vers le volet distant ; ← Recevoir fait l’inverse. La destination est le dossier ouvert, pas forcément Téléchargements. La vue des lecteurs n’est pas une destination."
  }
  ca=@{
+  'Se borrará el historial de chat de {0}. ¿Continuar?'="S’esborrarà l’historial de xat de {0}. Vols continuar?";
+  '¿Quieres eliminar «{0}» ({1}) de tus dispositivos guardados? También se borrará su historial de chat.'="Vols eliminar «{0}» ({1}) dels dispositius desats? També s’esborrarà el seu historial de xat.";
+  'Selecciona un dispositivo para consultar solo su conversación, incluso sin conexión. Borrar chat pide confirmación y elimina su historial local. Al eliminar un dispositivo también se borra su chat y desaparece del selector. Exportar chat guarda toda la conversación en un archivo de texto UTF-8. Los emojis están organizados por categorías. Para enviar mensajes necesitas una sesión con permiso Chat.'="Selecciona un dispositiu per consultar només la seva conversa, fins i tot sense connexió. Esborra el xat demana confirmació i elimina el seu historial local. Eliminar un dispositiu també esborra el seu xat i el treu del selector. Exporta el xat desa tota la conversa en un fitxer de text UTF-8. Els emojis estan organitzats per categories. Per enviar missatges necessites una sessió amb permís Xat.";
+  'Captura moderna sin respuesta; recuperando la imagen con GDI.'="La captura moderna no respon; recuperant la imatge amb GDI.";
+  'Activado (en ejecución)'="Activat (en execució)";
+  'Arranca con Windows mediante una tarea programada. Consultar el estado no requiere UAC; cambiar el inicio requiere administración.'="S’inicia amb Windows mitjançant una tasca programada. Consultar l’estat no requereix UAC; canviar l’inici requereix administració.";
+  'Falta el agente de arranque: {0}. Repara la instalación de CSIViewer Host.'="Falta l’agent d’inici: {0}. Repara la instal·lació de CSIViewer Host.";
+  'No existe el archivo o la carpeta.'='El fitxer o la carpeta no existeix.';
+  'El agente debe estar instalado en Program Files.'="L’agent ha d’estar instal·lat a Program Files.";
+  'La ruta contiene un enlace o una redirección.'='La ruta conté un enllaç o una redirecció.';
+  'El propietario no es SYSTEM, Administradores ni TrustedInstaller.'='El propietari no és SYSTEM, Administradors ni TrustedInstaller.';
+  'Una cuenta no administrativa puede modificar la instalación.'='Un compte no administratiu pot modificar la instal·lació.';
+  'Windows no permite leer los permisos de esta ruta.'="Windows no permet llegir els permisos d’aquesta ruta.";
+  'No se puede activar el inicio. Ruta: {0}. Motivo: {1}'="No es pot activar l’inici. Ruta: {0}. Motiu: {1}";
+  'No se pueden comprobar los permisos de {0}. No se ha modificado el inicio automático.'="No es poden comprovar els permisos de {0}. No s’ha modificat l’inici automàtic.";
+  'Valores por defecto'='Valors per defecte';'Restablecer'='Desfés els canvis';
+  'Iniciar servidor y Crear servicio utilizan la configuración guardada.'='Inicia el servidor i Crea el servei utilitzen la configuració desada.';
+  'Estado no accesible. Actualiza con permisos de administrador.'="Estat no accessible. Actualitza amb permisos d’administrador.";
+  ' (último estado confirmado)'=' (últim estat confirmat)';
+  'Para activar el inicio, instala CSIViewer Host para todos los usuarios en una carpeta protegida.'="Per activar l’inici, instal·la CSIViewer Host per a tots els usuaris en una carpeta protegida.";
+  'Permiso de administrador cancelado; no se ha cambiado nada.'="Permís d’administrador cancel·lat; no s’ha canviat res.";
+  'La operación no se ha confirmado. Código {0}. No se mostrará como activada sin verificar la tarea.'="L’operació no s’ha confirmat. Codi {0}. No es mostrarà com a activada sense verificar la tasca.";
+  'Acceso al inicio de Windows'="Accés a l’inici de sessió de Windows";
+  'Requiere administración y un ID de equipo distinto. HTTP remoto solo con autorización explícita.'="Requereix administració i un ID d’equip diferent. HTTP remot només amb autorització explícita.";
+  'Instala CSIViewer Host para todos los usuarios en la ruta predeterminada para configurar esta función.'='Instal·la CSIViewer Host per a tots els usuaris a la ubicació predeterminada per configurar aquesta funció.';
   'Conectado sin control de ratón y teclado'='Connectat sense control del ratolí i del teclat';
   'Otra sesión tiene el control de este equipo. Finaliza esa sesión y vuelve a conectar solicitando el permiso de control.'="Una altra sessió té el control d’aquest equip. Finalitza aquesta sessió i torna a connectar sol·licitant el permís de control.";
   'El equipo remoto no ha concedido el permiso de control. Finaliza la sesión y vuelve a solicitar «Controlar ratón y teclado».'="L’equip remot no ha concedit el permís de control. Finalitza la sessió i torna a sol·licitar «Controlar el ratolí i el teclat».";
@@ -116,7 +189,6 @@ $overrides=@{
   'Revisa los permisos'='Revisa els permisos';
   'Selecciona los permisos, incluido audio o portapapeles si los necesitas, y pulsa Conectar.'='Selecciona els permisos, incloent-hi àudio o porta-retalls si els necessites, i prem Connecta.';
   'Al elegir un dispositivo guardado se preparan el ID y la contraseña. Revisa los permisos antes de pulsar Conectar: audio y portapapeles son opcionales y deben solicitarse antes de iniciar la sesión.'="En seleccionar un dispositiu desat es preparen l’ID i la contrasenya. Revisa els permisos abans de prémer Connecta: l’àudio i el porta-retalls són opcionals i s’han de sol·licitar abans d’iniciar la sessió.";
-  'Selecciona un dispositivo para consultar solo su conversación, incluso sin conexión. Borrar chat pide confirmación y elimina únicamente el historial local de ese dispositivo; no borra el del otro equipo. Exportar chat guarda toda la conversación en un archivo de texto UTF-8. Los emojis están organizados por categorías. Para enviar mensajes necesitas una sesión con permiso Chat.'="Selecciona un dispositiu per consultar només la seva conversa, fins i tot sense connexió. Esborra el xat demana confirmació i elimina únicament l’historial local d’aquest dispositiu, no el de l’altre equip. Exporta el xat desa tota la conversa en un fitxer de text UTF-8. Els emojis estan organitzats per categories. Per enviar missatges necessites una sessió amb permís Xat.";
   'Dispositivo'='Dispositiu';'Borrar chat'='Esborra el xat';'Exportar chat'='Exporta el xat';'Chat con {0}'='Xat amb {0}';'Yo'='Jo';
   'Más usados'='Més utilitzats';'Caras y emociones'='Cares i emocions';'Gestos y personas'='Gestos i persones';
   'Animales y naturaleza'='Animals i natura';'Comida y bebida'='Menjar i beguda';'Viajes y lugares'='Viatges i llocs';
@@ -135,13 +207,22 @@ $overrides=@{
  }
 }
 $options=[Text.Json.JsonSerializerOptions]::new();$options.WriteIndented=$true;$options.Encoder=[Text.Encodings.Web.JavaScriptEncoder]::UnsafeRelaxedJsonEscaping
+$spanishPath=Join-Path $Root 'src/CSIViewer.Core/Resources/es.json'
+$spanish=[Text.Json.JsonDocument]::Parse([IO.File]::ReadAllText($spanishPath))
+$activeKeys=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+foreach($property in $spanish.RootElement.EnumerateObject()){[void]$activeKeys.Add($property.Name)}
+$spanish.Dispose()
 foreach($language in @('en','fr','ca')){
  $path=Join-Path $Root "src/CSIViewer.Core/Resources/$language.json"
  $document=[Text.Json.JsonDocument]::Parse([IO.File]::ReadAllText($path))
  $values=[Collections.Generic.SortedDictionary[string,string]]::new([StringComparer]::Ordinal)
- foreach($property in $document.RootElement.EnumerateObject()){$values[$property.Name]=$property.Value.GetString()}
+  foreach($property in $document.RootElement.EnumerateObject()){
+   if($activeKeys.Contains($property.Name)){$values[$property.Name]=$property.Value.GetString()}
+  }
  $document.Dispose()
- foreach($key in $overrides[$language].Keys){$values[$key]=$overrides[$language][$key]}
+  foreach($key in $overrides[$language].Keys){
+   if($activeKeys.Contains($key)){$values[$key]=$overrides[$language][$key]}
+  }
  foreach($key in @($values.Keys)){
    $leading=[regex]::Match($key,'^\s*').Value;$trailing=[regex]::Match($key,'\s*$').Value
    $values[$key]=$leading+$values[$key].Trim()+$trailing

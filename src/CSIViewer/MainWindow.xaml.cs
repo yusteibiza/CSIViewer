@@ -269,6 +269,9 @@ public sealed partial class MainWindow : Window
 
     private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
     {
+        if ((args.DidSizeChange || args.DidPresenterChange) &&
+            AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized })
+            _client.NotifyHostWindowVisibilityChanged();
         if (!_placementRestored || _suppressPlacementSave)
         {
             return;

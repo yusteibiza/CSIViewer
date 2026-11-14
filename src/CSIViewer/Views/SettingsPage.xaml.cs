@@ -16,6 +16,14 @@ namespace CSIViewer.Views;
 
 public sealed partial class SettingsPage : Page
 {
+    private void ConfigurationHeader_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var narrow = e.NewSize.Width < 850;
+        Grid.SetRow(ConfigurationActions, narrow ? 1 : 0);
+        Grid.SetColumn(ConfigurationActions, narrow ? 0 : 1);
+        Grid.SetColumnSpan(ConfigurationActions, narrow ? 2 : 1);
+    }
+
     private static readonly int[] FpsPresets = [12, 15, 24, 30, 50, 60, 90, 120];
 
     private readonly AppState _state;
@@ -40,7 +48,6 @@ public sealed partial class SettingsPage : Page
         _startup = App.Services.GetRequiredService<StartupService>();
         _diagnostics = App.Services.GetRequiredService<DiagnosticsService>();
         _loggingOptions = App.Services.GetRequiredService<LoggingOptions>();
-        CSIViewer.Presentation.AccentAppearance.Changed += (_, _) => DispatcherQueue.TryEnqueue(SynchronizeAccentSelection);
         Loaded += (_, _) => LoadSettings();
         QualitySlider.ValueChanged += (_, _) =>
         {
@@ -55,10 +62,10 @@ public sealed partial class SettingsPage : Page
         FpsCombo.SelectionChanged += (_, _) => MarkCustomProfile();
     }
 
-    private void LoadSettings()
+    private void LoadSettings(AppSettings? source = null)
     {
         _loading = true;
-        var settings = _state.Settings;
+        var settings = source ?? _state.Settings;
         AccentColorCombo.ItemsSource = AccentPalette.Choices;
         AccentColorCombo.SelectedItem = AccentPalette.Choices.First(x => x.Value == AccentPalette.Normalize(settings.AccentColor));
         ThemeCombo.SelectedIndex = settings.Theme switch
@@ -104,7 +111,7 @@ public sealed partial class SettingsPage : Page
         ReconnectInitialDelayBox.Value = settings.ReconnectInitialDelaySeconds;
         ReconnectMaxDelayBox.Value = settings.ReconnectMaxDelaySeconds;
         ReconnectJitterBox.Value = settings.ReconnectJitterPercent;
-        StartWithWindowsSwitch.IsOn = _startup.IsEnabled;
+        StartWithWindowsSwitch.IsOn = source is null ? _startup.IsEnabled : settings.StartWithWindows;
         NotificationsSwitch.IsOn = settings.NotificationsEnabled;
         AskFilesSwitch.IsOn = settings.AskBeforeReceivingFiles;
         HistorySwitch.IsOn = settings.StoreConnectionHistory;
@@ -172,53 +179,21 @@ public sealed partial class SettingsPage : Page
         _profileChanging = false;
     }
 
-    private async void ThemeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_loading)
-        {
-            return;
-        }
+    private void ThemeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) { }
 
-        var theme = ThemeCombo.SelectedIndex switch
-        {
-            1 => AppTheme.Light,
-            2 => AppTheme.Dark,
-            _ => AppTheme.System
-        };
-        ThemeService.Apply(theme);
-        _state.Settings.Theme = theme;
-        await _settings.SaveAsync(_state.Settings);
+    private void AccentColorCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) { }
+
+    private void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) { }
+
+    private bool _savingConfiguration;
+    private void RestoreSettings_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_savingConfiguration) { LoadSettings(); SettingsStatusBar.IsOpen = false; }
     }
 
-    private void SynchronizeAccentSelection()
+    private void DefaultSettings_Click(object sender, RoutedEventArgs e)
     {
-        var loading = _loading;
-        _loading = true;
-        AccentColorCombo.SelectedItem = AccentPalette.Choices.First(x => x.Value == AccentPalette.Normalize(_state.Settings.AccentColor));
-        _loading = loading;
-    }
-
-    private async void AccentColorCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_loading || AccentColorCombo.SelectedItem is not AccentChoice choice) return;
-        _state.Settings.AccentColor = choice.Value;
-        CSIViewer.Presentation.AccentAppearance.Apply(choice.Value, MainWindow.Instance?.Content as FrameworkElement);
-        try { await _settings.SaveAsync(_state.Settings); }
-        catch (Exception)
-        {
-            SettingsStatusBar.Severity = InfoBarSeverity.Warning;
-            SettingsStatusBar.Message = global::CSIViewer.Core.Localization.Text("El color se ha aplicado, pero no se pudo guardar.");
-            SettingsStatusBar.IsOpen = true;
-        }
-    }
-
-    private async void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_loading || LanguageCombo.SelectedItem is not LanguageChoice choice) return;
-        _state.Settings.Language = choice.Code;
-        if (MainWindow.Instance?.Content is FrameworkElement root) CSIViewer.Presentation.Translate.Apply(root, choice.Code);
-        try { await _settings.SaveAsync(_state.Settings); }
-        catch (Exception) { SettingsStatusBar.Message = Localization.Text("No se pudo guardar el idioma."); SettingsStatusBar.IsOpen = true; }
+        if (!_savingConfiguration) { LoadSettings(new AppSettings()); SettingsStatusBar.IsOpen = false; }
     }
 
     private async void BrowseDownloadFolder_Click(object sender, RoutedEventArgs e)
@@ -238,14 +213,13 @@ public sealed partial class SettingsPage : Page
         await SaveCoreAsync(reconnect: false);
     }
 
-    private async void SaveAndReconnect_Click(object sender, RoutedEventArgs e)
-    {
-        await SaveCoreAsync(reconnect: true);
-    }
-
     private async Task SaveCoreAsync(bool reconnect)
     {
-        var settings = _state.Settings;
+        if (_savingConfiguration) return;
+        var settings = _state.Settings.Clone();
+        settings.Theme = ThemeCombo.SelectedIndex switch { 1 => AppTheme.Light, 2 => AppTheme.Dark, _ => AppTheme.System };
+        settings.AccentColor = (AccentColorCombo.SelectedItem as AccentChoice)?.Value ?? settings.AccentColor;
+        settings.Language = (LanguageCombo.SelectedItem as LanguageChoice)?.Code ?? settings.Language;
         settings.DeviceName = DeviceNameBox.Text.Trim();
         settings.ServerUrl = ServerUrlBox.Text.Trim();
         settings.EnrollmentCode = EnrollmentCodeBox.Text.Trim();
@@ -298,32 +272,38 @@ public sealed partial class SettingsPage : Page
             : (int)ReconnectJitterBox.Value;
         settings.StartWithWindows = StartWithWindowsSwitch.IsOn;
         settings.LogLevel = SelectedLogLevel;
-        _loggingOptions.MinimumLevel = settings.LogLevel.ToMicrosoft();
-        var startupRegistered = _startup.SetEnabled(StartWithWindowsSwitch.IsOn);
-        settings.StartWithWindows = _startup.IsEnabled;
-        StartWithWindowsSwitch.IsOn = settings.StartWithWindows;
         settings.NotificationsEnabled = NotificationsSwitch.IsOn;
         settings.AskBeforeReceivingFiles = AskFilesSwitch.IsOn;
         settings.StoreConnectionHistory = HistorySwitch.IsOn;
         settings.Normalize();
+        if (!Uri.TryCreate(settings.ServerUrl, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            SettingsStatusBar.Severity = InfoBarSeverity.Warning;
+            SettingsStatusBar.Message = Localization.Text("URL no válida");
+            SettingsStatusBar.IsOpen = true;
+            return;
+        }
+        reconnect |= settings.ServerUrl != _state.Settings.ServerUrl || settings.EnrollmentCode != _state.Settings.EnrollmentCode ||
+            settings.AllowInsecureServer != _state.Settings.AllowInsecureServer;
+        _savingConfiguration = true;
+        foreach (var button in ConfigurationActions.Children.OfType<Button>()) button.IsEnabled = false;
+        var previousStartup = _startup.IsEnabled;
+        var persisted = false;
 
         try
         {
-            await _identity.SetDeviceNameAsync(settings.DeviceName);
+            var startupRegistered = _startup.SetEnabled(settings.StartWithWindows);
+            settings.StartWithWindows = _startup.IsEnabled;
             await _settings.SaveAsync(settings);
+            persisted = true;
+            _state.Settings = settings;
+            _state.DeviceName = settings.DeviceName;
+            _loggingOptions.MinimumLevel = settings.LogLevel.ToMicrosoft();
             ThemeService.Apply(settings.Theme);
-            _state.Post(() =>
-            {
-                _state.DeviceName = settings.DeviceName;
-                _state.Settings = settings;
-                _state.StatusMessage = global::CSIViewer.Core.Localization.Text("Configuración guardada.");
-            });
-
-            if (reconnect)
-            {
-                await _client.DisconnectFromServerAsync();
-                await _client.ConnectToServerAsync();
-            }
+            CSIViewer.Presentation.AccentAppearance.Apply(settings.AccentColor, MainWindow.Instance?.Content as FrameworkElement);
+            if (MainWindow.Instance?.Content is FrameworkElement root) CSIViewer.Presentation.Translate.Apply(root, settings.Language);
+            LoadSettings();
 
             SettingsStatusBar.Severity = startupRegistered
                 ? InfoBarSeverity.Success
@@ -332,19 +312,32 @@ public sealed partial class SettingsPage : Page
                 ? global::CSIViewer.Core.Localization.Text("Configuración guardada.")
                 : global::CSIViewer.Core.Localization.Text("Configuración guardada, pero Windows no permitió cambiar el inicio automático.");
             SettingsStatusBar.IsOpen = true;
+            try
+            {
+                await _identity.SetDeviceNameAsync(settings.DeviceName, persistSettings: false);
+                await _client.RestartHostCaptureAsync();
+                if (reconnect) { await _client.DisconnectFromServerAsync(); await _client.ConnectToServerAsync(); }
+            }
+            catch (Exception ex)
+            {
+                SettingsStatusBar.Severity = InfoBarSeverity.Warning;
+                SettingsStatusBar.Message = Localization.Text("Configuración guardada.") + " " + ex.GetBaseException().Message;
+            }
         }
         catch (Exception ex)
         {
+            if (!persisted) _startup.SetEnabled(previousStartup);
             SettingsStatusBar.Severity = InfoBarSeverity.Error;
             SettingsStatusBar.Message = global::CSIViewer.Core.Localization.Text("No se pudo guardar la configuración: ") + ex.Message;
             SettingsStatusBar.IsOpen = true;
         }
+        finally { _savingConfiguration = false; foreach (var button in ConfigurationActions.Children.OfType<Button>()) button.IsEnabled = true; }
     }
 
     private async void TestServer_Click(object sender, RoutedEventArgs e)
     {
         DiagnosticsText.Text = global::CSIViewer.Core.Localization.Text("Comprobando servidor…");
-        DiagnosticsText.Text = await _diagnostics.TestServerAsync();
+        DiagnosticsText.Text = await _diagnostics.TestServerAsync(ServerUrlBox.Text.Trim(), AllowInsecureSwitch.IsOn);
     }
 
     private async void TestStun_Click(object sender, RoutedEventArgs e)
@@ -387,7 +380,6 @@ public sealed partial class SettingsPage : Page
             return;
         }
 
-        _loggingOptions.MinimumLevel = level.ToMicrosoft();
     }
 
     private void ApplyLogLevelSelection(AppLogLevel level)

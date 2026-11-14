@@ -16,6 +16,7 @@ public sealed class IdentityService
     private readonly AppState _state;
     private readonly ILogger<IdentityService> _logger;
     private readonly LoggingOptions _loggingOptions;
+    private readonly HostPasswordVerifier? _hostPasswordVerifier;
     private readonly SemaphoreSlim _initGate = new(1, 1);
     private bool _initialized;
 
@@ -26,7 +27,8 @@ public sealed class IdentityService
         ServerApiClient api,
         AppState state,
         ILogger<IdentityService> logger,
-        LoggingOptions loggingOptions)
+        LoggingOptions loggingOptions,
+        HostPasswordVerifier? hostPasswordVerifier = null)
     {
         _identityStore = identityStore;
         _settingsStore = settingsStore;
@@ -35,6 +37,7 @@ public sealed class IdentityService
         _state = state;
         _logger = logger;
         _loggingOptions = loggingOptions;
+        _hostPasswordVerifier = hostPasswordVerifier;
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -78,8 +81,25 @@ public sealed class IdentityService
             }
             _state.DeviceId = stored.DeviceId ?? "—";
             _state.DeviceName = stored.DeviceName;
-            var customPassword = await _customPasswordStore.LoadAsync(cancellationToken).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(customPassword))
+            var customPassword = _hostPasswordVerifier is null
+                ? await _customPasswordStore.LoadAsync(cancellationToken).ConfigureAwait(false)
+                : null;
+            if (_hostPasswordVerifier is not null)
+            {
+                if (Convert.FromBase64String(_hostPasswordVerifier.Salt).Length != PasswordHasher.SaltSize ||
+                    Convert.FromBase64String(_hostPasswordVerifier.Hash).Length != PasswordHasher.HashSize)
+                    throw new InvalidOperationException("Invalid provisioned host password verifier.");
+                _state.Post(() =>
+                {
+                    _state.TemporaryPasswordRaw = "";
+                    _state.TemporaryPasswordDisplay = "";
+                    _state.TemporaryPasswordSalt = _hostPasswordVerifier.Salt;
+                    _state.TemporaryPasswordHash = _hostPasswordVerifier.Hash;
+                    _state.TemporaryPasswordExpiresUtc = null;
+                    _state.UsesCustomPassword = true;
+                });
+            }
+            else if (string.IsNullOrWhiteSpace(customPassword))
             {
                 await GeneratePasswordCoreAsync(cancellationToken).ConfigureAwait(false);
             }
@@ -218,7 +238,10 @@ public sealed class IdentityService
         });
     }
 
-    public async Task SetDeviceNameAsync(string name, CancellationToken cancellationToken = default)
+    public Task SetDeviceNameAsync(string name, CancellationToken cancellationToken = default) =>
+        SetDeviceNameAsync(name, persistSettings: true, cancellationToken);
+
+    public async Task SetDeviceNameAsync(string name, bool persistSettings, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -227,7 +250,7 @@ public sealed class IdentityService
 
         _state.DeviceName = name.Trim();
         _state.Settings.DeviceName = _state.DeviceName;
-        await _settingsStore.SaveAsync(_state.Settings, cancellationToken).ConfigureAwait(false);
+        if (persistSettings) await _settingsStore.SaveAsync(_state.Settings, cancellationToken).ConfigureAwait(false);
 
         if (_state.Identity is not null)
         {

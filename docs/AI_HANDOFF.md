@@ -1,6 +1,283 @@
 # AI_HANDOFF — CSIViewer
 
+> **CONTINUACIÓN MÁS RECIENTE — PRIORIDAD ACTUAL:** ver `FINAL_AUDIT.md` y docs
+> `45-validacion-manual-release.md` / `46-revision-ui-video.md`. Se continuó desde
+> 315, sin eliminar casos. Última suite completada: **357 correctas, 0 fallidas,
+> 0 omitidas**, Release 0 errores/0 advertencias (TRX final-audit-20261114-224652).
+> Original HKCU Run excluido e intacto; procedimiento solo VM/perfil desechables.
+> Nuevos fixes: ServerHost Dispose/ExplicitUrl/rollback; manager SCM sin temp
+> elevado, query Unknown, rutas absolutas, waits/controladores, secretos solo
+> PBKDF2 con sal en binPath y opciones negativas explícitas; SYSTEM solo binarios
+> protegidos ProgramFiles; quitar concesión ACL recursiva a Users; ownership y
+> rename concurrente de transferencias, `.rdpart` reservado, temporales sidecar
+> aleatorios CreateNew contra hardlinks; fallback pre-sesión solo auth.result,
+> registrar incoming sin reemplazar/limpiar otra recepción; guardas/errores UI
+> contactos/monitores y DataWriter using; liberar dos punteros ABI WGC.
+> Pruebas reales: Kestrel+SQLite loopback, un par de RemoteClient chat Unicode
+> (entrada/captura/notificación/consentimiento simulados), junction/symlink/hardlink,
+> 32 finalizaciones en paralelo. SCM/UAC NO ejecutados. Watchdog/WinUI contratos
+> estáticos o sintéticos NO son validación de captura/render real. VMware sigue
+> NO RESUELTO; no afirmar causa ni que COM/gates lo solucionaron. Sigue NO APTA
+> por TOCTOU local por path, estrés posrevocación/recursos y validaciones reales
+> WinUI/SCM/VMware pendientes. No instaladores nuevos; SHA previos comprobados.
+> Repetir `scripts/test-final-audit.ps1` para restore/build/tests aislados; script
+> no permite ejecutar HKCU. Confirmación final tras Dispose ServiceController:
+> mismo resultado 357/357 y log `artifacts/audit/continuation-final.log`.
+
+> **ACTIVO — AUDITORÍA FINAL:** la última petición autoriza pruebas aisladas y
+> sustituye las antiguas notas «NO tests». Ver `FINAL_AUDIT.md` (en curso,
+> clasificación provisional NO APTA PARA RELEASE). No instalar ni intervenir
+> en tareas, servicios, servidor o datos reales. No commits/pushes/resets.
+> Inventario en `artifacts/audit/`; baseline build 0/0, tests 299/302 correctos.
+> AUD-001 traducciones corregidas (overrides solo claves activas); AUD-002
+> SessionCrypto invalidado/sincronizado tras Dispose; AUD-003 gate de entrada
+> compartido con retirada y release antes del I/O; AUD-004 rechazo de junctions
+> descendientes al abrir/finalizar/sidecars (NO elimina TOCTOU local).
+> Última suite completada: 315 correctas, 0 fallidas; excluir todavía prueba
+> SetEnabled_WritesAndRemovesRunEntry por HKCU Run. AUD-005 orden cifrado/envío
+> ahora con gate por crypto y tres rutas migradas; build Release 0 errores/0
+> advertencias y regresión completa correcta (`ordered-send-release.trx`).
+> Sin nueva distribución: los
+> instaladores existentes siguen siendo el lote anterior, no los cambios de
+> auditoría. Prioridad siguiente: instalación de servidor/secretos/temp elevado,
+> filesystem concurrente, handlers posrevocación restantes, UI/temas/cierre y
+> regresiones del borrado dispositivo/chat. No declarar concluida la auditoría.
+> Incidencia documentada: primera versión de test de entrada usó por error el
+> backend nativo (solo movimientos); corregida ANTES de repeticiones mediante
+> RecordingInput. La reproducción aislada real falló en 4 casos y luego pasó.
+
 Documento de transferencia de contexto para que otro modelo de IA continúe el proyecto sin repetir errores ni romper lo que funciona.
+
+> **ACTIVO — LOGS VMWARE (informe44):** usuario entrega F:\Temp\CSIViewer-diagnostics-
+> 20261114-212000.zip yF:\Temp\csiviewer.host-20261114.log. Leídos SOLO, ZIPenmemoria,
+> noextraer/ejecutar ni copiar logsprivadosalrepo. Últimasesión3a0fad9b-b427-4ffc-baf7-
+> c3c26e7f4aad, visorPID8964 hostPID5612.14trazas emparejadas todas SendInput1/1,
+> error0, permisoscontrolcorrectos. Trasprimerclic cursor observado enhostsequeda
+> 1186,129 pese movimientosdistintos: pistaentrada/escritorio, NOsoloimagenvisor.
+> WGC+H2641920x1080/90FPS/25Mbps. Noerroresvídeo explícitos ni desconexiónúltimasesión.
+> Logs hostterminan21:19:32(+01), solounossegundos. No métricascaptura/envío/render,
+> NOdemuestra causaWGC/H264. Offsetrelojes~3.895sNOlatenciamedida. ErroresH264mañana
+> ylocalhostantesirrelevantes. Siguiente pregunta: ¿WindowsVMresponde manipulando
+> consolaVMwaredirectamente mientrasvisorcongelado? No aplicar cambiosciegos.
+> NOtests/cambiosinstalados/servidor; ningunaentrega nueva, última20:52:46informe43.
+
+> **ACTIVO — ESPACIADO CONFIGURACIÓN (informe43):** usuario muestra hueco vertical
+> entre gridtarjetas ylogin, pide todo cuadrado. Causa2filasAuto vacías (gridtenía4
+> pero ancho usa2) aportan RowSpacing. XAMLahora2; Cards_SizeChanged ajusta2/4filas
+> reales segúnancho en hostyvisor. Gutters8 uniformes; headerajusta1/2filas, elimina
+> columnaAuto vacía4deDownloadFolder para alinearderechaExaminar. Sin cambios
+> funcionales; conserva41capturacandidata y42chatDeviceDelete. BuildRelease limpio/
+> publish5/Inno3raíz TERMINADOS, marcacomún14/11/2026 20:52:46 +01:00, manifiesto
+> FINAL settings-spacing-installers-1.0.1.json.
+> NOtests/aplicaciones/instaladores/servidor; validaciónvisual yVMware/Winlogon usuario.
+
+> **ÚLTIMO DATO USUARIO:** conexión del visor al ordenador físico funciona, al
+> Windows10 invitadoVMware falla. Esto acota entorno, NOdemuestra causaWGC/H264
+> concreta. No deshabilitar optimizaciones masivamente sin evidencia. Recuperación
+> candidata41 ya estáincluida; pedir logs hostVM+visor alrededorfallo para localizar
+> captura/encoder/transporte/decode. No pruebas nuevas ni diagnósticos VMware viejos.
+
+> **ACTIVO — ELIMINAR DISPOSITIVO+CHAT (informe42):** usuario añade quitar frase
+> no seborraenotro al borrarhistorial; hecho diálogo y ayuda. Al borrar dispositivo
+> tambiénchatlocal ydesaparecercombo. Repository.Delete transacción mensajes+device;
+> RemoteClient.DeleteKnownDeviceAsync serializachatGate/versiones, borra caches
+> yeventoKnownDeviceDeleted; selectorfiltra runtimeeliminados inclusoactivos, limpia
+> drafts/archived ynoancla selecciónfantasma. Chatdepeereliminado descartado hasta
+> guardarde nuevo/nuevaconexión. Sesionesno secierran, noborradoremoto, nomigración
+> masiva dehistorialeshuérfanos. UIdeviceconfirmavisa tambiénchat. PersistKnownDevice
+> serializado/versionado contraresurrección. Releasecompiló limpio, catálogos
+> actualizados974clavesbase, publish5/Inno3raíz TERMINADOS marca común
+> 14/11/2026 20:31:05 +01:00; manifiesto FINAL
+> device-chat-cleanup-installers-1.0.1.json. Mantiene informe41, queseempaquetó
+> 14/11/2026 20:19:49 +01:00 ANTES de estasdosúltimaspeticiones. NOtests/instalar/
+> cambiarbasesinstaladas. CapturaVMwareminimizar yWinlogon siguen pendientes reales.
+
+> **ACTIVO — CONGELACIÓN AL MINIMIZAR HOST + MOVER LOGIN (informe41):** usuario
+> aclara que minimizó ventanaCSIViewerHost DENTRO Win10VMware ya conectado desde
+> otroPC; imagen congelada, cursorlocal semueve. SINreproducción/logsVM, no afirmar
+> causa demostrada. Revisión halla WGC fallback soloexcepciones y StopAsyncDispose
+> síncrono hacía inútil timeout. Nuevo RemoteClient.CaptureRecovery.cs con progreso
+> porgeneración y demanda visual(min/ocultar + input válido nomove):8sprimeraimagen,
+> 4sdesde cambio sin imagen; watcher2s. Sinfallback por escritorio meramente quieto.
+> WGC runs aislados(gates/callbacks), limpiezaTask.Run y stopacotado, descartestale;
+> recovGDI deduplicado generacióndentroCaptureGate, conservaH264/calidad/permisos.
+> No arregla por sí solo encoder/red/decoder nativos colgados. NOtests porusuario.
+> Nueva petición durante trabajo: mover WindowsLogin de HostPage a HostSettings
+> antesDownloadFolder, CardStyle ancho completo como Privacidad; hecho conhandler
+> administrativo trasladado, HTTPoptinintacto. Pendiente regenerarcatálogos,
+> buildfinal/publish5/Inno3raízfechacomún, manifiesto
+> capture-recovery-login-settings-installers-1.0.1.json. No tocar instalados/servidor.
+> VMwareminimizar yWinlogon pendientes usuario; no presentarlos como validados.
+
+> **ACTIVO — DETECCIÓN ARRANQUE INSTALADOR (informe40):** nueva captura tras activar
+> en instalador muestra estado noaccesible. COM SOLOLECTURA confirma E_ACCESSDENIED
+> 0x80070005; agente está vivo. CIMNotFound NOdemuestra ausencia (corrige interpretación
+> anterior). No elevación/cambios de tarea real. Registro instalador/gestor UI ahora
+> aplica SetSecurityDescriptor D:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FR;;;BU) SOLO tarea host:
+> usuarios solo lectura0x120089, noexecute/write/delete/WriteDAC. Se verifica ACE.
+> Instalador revisa ExitCode con ssPostInstall, muestra error si falla; actualización
+> sin checkbox repara lectura solo tarea existente del agenteSYSTEM sin habilitarla.
+> Unknown no habilita ningún botón; Ready/Running Activado y soloDesactivar activo.
+> TextWrap con Grid de estado en ambos HostSettings para evitar recorte.
+> Release sin errores/avisos,973clavesbase4idiomas. Publish5/Inno3raíz TERMINADOS fecha
+> común14/11/2026 20:01:30 +01:00, manifiesto FINAL
+> task-read-status-installers-1.0.1.json. NOtests/instalar/reiniciar/
+> tocarservidor. Permisos nuevos no probados realmente por veto pruebas, usuario
+> comprueba al instalar nuevoHost. Winlogon sigue pendiente.
+
+> **ACTIVO — ARRANQUE TRUSTEDINSTALLER (informe39):** usuario confirma instalación
+> ProgramFiles y pide comprobar/arreglar usando host/server instalados. Diagnóstico
+> SOLOLECTURA: raíz/agent/login heredaban FullControl para NT SERVICE\TrustedInstaller,
+> rechazado erróneamente por gestor compartido. Agente existe;229/257descendientes
+> agent/login sin otros propietarios/permisos inesperados. Tarea CSIViewerHost no
+> encontrada por Get-ScheduledTask. Servidor CSIViewerServidor Running/Auto/System,
+> NOtocado. No perfiles/bases/secretos leídos. Política común ProtectedInstallation.cs
+> acepta TrustedInstaller SOLOenbinarios, datos privados siguen SY/BA; omite
+> InheritOnly, no sigue reparse. Cambios en gestor UI, agente, login, scripts,
+> revalidación dentro UAC y errores detallados ruta/motivo. Host.iss ahora admin
+> por defecto (antes seguía lowest). NOpruebas/noreinicio/noinstalar/nocambiarACL.
+> Release compiló sin errores/avisos; cinco payloads y3instaladores raíz TERMINADOS
+> fecha común14/11/2026 18:27:12 +01:00. Manifiesto FINAL
+> trustedinstaller-startup-installers-1.0.1.json. Winlogon y
+> activación efectiva quedan pendientes; no afirmar validación ejecutando tareas.
+
+> **ACTIVO — CONFIGURACIÓN GLOBAL + ARRANQUE (informe38):** última petición amplía
+> a TRES botones: Valores por defecto (solo borrador), Restablecer (último guardado),
+> Guardar configuración (todos los campos de la página). Implementado en Settings
+> visor, HostSettings de ambas apps y servidor. Sin autosaves de apariencia,
+> consentimiento, perfil ni logs; Probar utiliza borrador sin guardar. Servidor
+> Iniciar/Crear servicio usan ajustes guardados; guardar no reinicia red activa.
+> Arranque común tipado en Shared/UnattendedServiceManager, fuentes antiguas
+> excluidas; consulta COM numérica, error no es ausencia, refresco UAC solo lectura,
+> operaciones verificadas sin ficheros temporales elevados. No se toca tarea real.
+> Release compiló sin errores/advertencias; NO pruebas/instalaciones/probes por
+> instrucción usuario. Winlogon real sigue pendiente. Cinco payloads publicados
+> y tres instaladores raíz TERMINADOS, fecha común14/11/2026 16:10:31 +01:00;
+> manifiesto global-settings-installers-1.0.1.json. Informe37 es entrega ANTERIOR.
+> Catálogos es/en/fr/ca actualizados (975 claves base). Host Views/SettingsPage
+> antiguo se conserva; no es navegable en host (App.IsHostMode=true fuerza
+> HostSettingsPage). No confundirlo con las cuatro pantallas activas modificadas.
+
+> **ACTIVO — INSTALADORES LOGIN+HTTP (informe37):** usuario exige3instaladores
+> normales conlogin y NOmáspruebas; autorizaHTTP. Se integra optinAdmin enHost.iss
+> (AllUsers/defaultProgramFiles), accesoInicio/HostPagebotón gestionPS elevada.
+> Mantiene tareaCSIViewerHost->Agent; nuevoLoginBrokerSupervisor verificaACL/path,
+> lanzaRootHost/login brokerSystem conpipeanónimoSTOP yPIDagentevalidado. Runtime
+> produccióncandidata SINguardaVMware, rootProgramDataCSIViewer.Host.Login yIDNUEVO.
+> PerfilAdminACTIVAR + HTTPremoto exige PERMITIR HTTP; FlagAllowInsecureServer
+> persisteypasaAppSettings (cifradoE2E no seelimina, señalización/inscripciónHTTP
+> vulnerables). No cambiarservidorinstalado. NoWindowscredentialsatrest.
+> Nuevohelper configure-windows-login.ps1 administraConfigure/Enable/Disable/Status
+> yrestablecearranqueconscriptoriginal; no autoconfigsinconsentimiento.
+> 974claves4idiomas trasgen. Releasecompiló, warningOwnernullablearreglado;
+> publish5payloads eInno3TERMINADOSraízfecha común14/11/2026 15:34:11 +01:00.
+> NOdotnettest/probes/nativas/instalaciones
+> porinstrucciónusuario.303/6/17sonpruebasANTERIORES noestanueva integración.
+> ManifestFINAL windows-login-http-installers-1.0.1.json; versión1.0.1.0, flag
+> TestsExecutedForThisDelivery=false y WindowsLoginValidated=false. Hashes eninforme37.
+> Winlogonreal sigueSINVALIDAR, sinSAS(CtrlAltSupr), nollamaresto validadoTeamViewer.
+
+> **ACTIVO — IMPLEMENTACIÓN LOGIN (informe36):** usuario insiste «comoTeamViewer».
+> Se ha escrito runtime REAL experimental, NO otro diagnóstico. Proyecto nuevo
+> CSIViewer.Host.Login: brokerSYSTEM/sesión0 -> workerSYSTEM enconsola física con
+> tokenpropio/JobKillOnClose, claveDPAPISYSTEM y verifier PBKDFsoloHash, autenticación
+> cifrada antes de consentimientoViewScreen/ControlInput. SoloVMware+ProgramFiles
+> protegido+configAdmin; IDNUEVO separado usuario. Noarchivos/chat/audio/clipboard.
+> Media IHostInput/IHostCapture defaults preservados; SystemDesktopThread MTA con
+> OpenInputDesktop/SetThreadDesktop poracción y GDI CaptureOnce sinrecursosretenidos.
+> NO ACLdesktop/UAC/SAS bypass. Systemdesktopdenegado falla cerrado, nofallback.
+> Runtime UIdefault soloindicador/revocar; marcadorrevoked persistente. Nuevas
+> opciones/verifier son DIoptin, appnormales no cambian. Script install-login-lab.ps1
+> VMadmin/configInteractiva passCSIViewer(noWindows)/tareaCSIViewerHostLoginLab
+> aparte, no tocaCSIViewerHost. Docs36 pasosinstalar/estado/pruebareal/stop.
+> DebugRelease inicial300/300limpios. Falta buildfinal (CreateProcessAsUserchar[]
+> yGdiSelectObject ajustados después), LoginPolicyProbe6checks, rerunViewerUI,
+> publicarZIP EXPERIMENTAL directoartifacts/installers/ conpayload/hashmanifest.
+> UI último rerun vídeo/controlpero clicfixturetimeout; no afirmaréxito actual
+> (17/17 previos eran antescambios). Añadidoguardia ventanaBajoPuntero. NOinstalar
+> enequipoactual. No probar sobreloginactual ni captar/escribirpasswords reales.
+> SoporteWinlogon de implementación aúnSINVALIDAR; no vendercomoTeamViewercompleto.
+
+> **CIERRE IMPLEMENTACIÓN EXPERIMENTAL:** buildfinal303/303 DebugyRelease limpios;
+> LoginPolicyProbe6/6 (escritorio normal,sinSystem), visorWinUI receptor17/17
+> repetidoúltimoRelease. FixtureesperachatUIestableantesdeinyectar y comprueba
+> HWND bajopuntero. LoginHostProfile creadoACL/owneratómicos y configCreateNew,
+> archivosprivadosSystemAdmins; instalaciónPS copiaACLowneratómicos y hashDESTINO
+> antesdeejecutar. APIsWindowsPowerShell5.1 verificadas, scriptparseOK sininstalar.
+> SystemDesktopStatecompartido exige frame reciente<3s mismodesktop para nuevos
+> eventos; deja releases sinmovimiento para transiciones/cleanup. Purotest3nuevos.
+> BrokerJob corta workerfallido sinreinicioautomático tras exitnonzero; worker
+> reintenta servidor perdido, parada/revocaciónlocal. CLIpublicada rechaza
+> --worker de usuario normal sincrearperfil. Paquete selfcontainedwinx64 creado
+> artifacts/installers/CSIViewer-Login-Lab-Windows10-VMware-1.0.1.zip (raíz,NO
+> subcarpetasentrega). FINAL verificado255payloadfilesdentroZIP, versión1.0.1.0,
+> fecha14/11/2026 13:37:59 +01:00, 59871377bytes; SHA256
+> FF322B5FEB85DAE1E44353FF62CDEA37869A0D054F8F72694BB4DF72A55E77CA.
+> Manifiesto artifacts/diagnostics/login-lab-package-1.0.1.json incluye
+> WindowsLoginValidated=false explícito. Cerrar/AltF4 indicador revoca, no ocultasesión.
+> ProbeLoginPolicy usa peerrechazado separado para no confundir credencialcon
+> limpiezasincrónica/reintento inmediato. Ultimacompilación303/303 ambasconfigs.
+> Comunicar pasos instalarLAB enVM (NO diagnósticoanterior).
+> FunciónWinlogon REAL AÚN NO VALIDADA; no soporteSAS ni producción. IDMÁQUINA
+> NUEVO, claveCSIViewer nueva hasheada (NOpasswordWindows), separadohostusuario.
+> TareaLABCSIViewerHostLoginLab únicamente; noCSIViewerHost ni serviciosinstalados.
+
+> **ACTIVO — LOGIN/VMWARE + VISOR→VISOR (informe35):** usuario autoriza implementar
+> password Windows antes de logon y revisar visor→visor; VM VMware Windows10,
+> faltan nombre/acceso. Login NO IMPLEMENTADO: agente solo lanza UI con
+> WTSQueryUserToken en default y depende perfil/DPAPI usuario. No atajo SYSTEM ni
+> desactivar UAC/UIPI/SAS. Diseño requisitos en informe35; script read-only
+> test-login-vmware.ps1 con guardiaVM y tarea diagnóstica opcional separada, NO
+> ejecutado en equipo actual, sintaxis validada. FeatureProbe --ui-controller-control
+> + ViewerInputFixture para consent/frames/click/text/drag a ventana propia usando
+> visorWinUI receptor real:17/17 aprobados con receptorDebug y repetidos17/17 con
+> receptorRelease (informe actual). Emisor core6/6, NO dosWinUI. Se redacta text en
+> logs receptor y emisor via InputEventDiagnostics.SafeAction +4tests nuevos.
+> Debug y Release finales limpios287/287 en cada uno. Pendientes informesVM.
+> Paquete diagnósticoVM listo en artifacts/diagnostics/CSIViewer-Login-Windows10-
+> VMware-diagnostico.zip, solo script+instrucciones; sintaxis/C# validados sin
+> ejecutar probes/tareas en equipo actual. Pendiente informes VM y desarrollo
+> runtime máquina/broker; NO anunciar login terminado. Instaladores11:49:06 previos.
+
+> **ACTUALIZACIÓN DIAGNÓSTICO VM:** usuario entregó login-probe-20261114-121106-9988
+> Desktop: Windows10Pro19045,42 muestrasDefault y2AccessDenied5; prueba bloqueo ya
+> recogida. Boot no creóJSONL, tarea resultado1 a12:14:14. Política usuarioRemoteSigned
+> NO prueba políticaSYSTEM; causaexacta aún desconocida. Script ahora RepairBootProbe
+> y launcher.cmd con boot-startup.log desde antes dePowerShell y RemoteSigned solo
+> proceso, sin cambiar políticas permanentes/GPO ni usarBypass. Validación de tarea
+> propia/ACL/reparsepoints, no tocar CSIViewerHost ni tareasRunning. Pruebas mock
+> packaging en WindowsPowerShell5.1 8/8 aprobadas (incluye reparación tarea antigua).
+> ZIP mismo nombre actualizado14/11/2026 12:40:43; SHA256
+> 7C192A199696A77CF38DF6011FCDA9EBE445ACC46858AE27526E69C0B481EC5C.
+> Indicar reparar+StartScheduledTask SIN
+> reiniciar para recibir boot-startup.log. Login remoto sigue NOIMPLEMENTADO.
+
+> **ÚLTIMO — REPARACIÓN ACL DIAG:** usuario muestra ACE explícita FullControl
+> WINDOWS10-VM\yuste además SYSTEM/Admins. Guardia corregida para aceptar SOLO
+> usuario adminactual y owner él/Admins; desconocidos siguen rechazados. DACL/owner
+> exactos Admins+System en directorio y script/cmd/log del diagnóstico. RunNow
+> opcional inicia SOLO tarea propia tras reparar. Pruebas14/14 WindowsPowerShell5.1
+> mocks de tareas/ACL; no cambios reales en equipo actual. ZIP actualizado12:46:56
+> SHA2565010F648A3D5C61241B0AFD43ADB4C453ABA316E50B1B374D6C1804B45ADFE13.
+> Pedir copiar/extraerZIP actualizado enVM y ejecutar RepairBootProbe -ConfirmVm
+> -Minutes2 -RunNow comoadmin; esperar2min y enviar boot-startup.log yJSONL.
+
+> **RESULTADO12:48:** recibido boot-startup.log ExitCode0 y JSONL
+> Desktop/login-probe-20261114-124802-8252.jsonl. SYSTEM/sesión0,Win10Pro19045,
+> 60muestras, DesktopUnavailable/Error1 todas; sesión1Active/tokenUserTRUE todas.
+> Ejecución manual con usuario YA iniciado, no prueba prelogon. No inferir fallo
+> permisos ni soporteWinlogon. Pendiente informe de ARRANQUE: reiniciar SOLO VM,
+> esperar30s antes de login, después recoger nuevoJSONL al terminar2min. Tarea ya
+> AtStartup y reparada; NO volver a lanzarRunNow para obtener prueba de arranque.
+
+> **ÚLTIMO INFORME ARRANQUE12:54:** recibido Desktop/login-probe-20261114-125427-
+> 5348.jsonl,53muestras SYSTEM/sesión0,DesktopError1 y sesión1Active/tokenTRUE todas.
+> Cabecera12:54:27, primera muestra12:54:45 (18sdespués). No incluye estadoLock ni
+> prueba inequívoca prelogon; no inferir logincontrol ni tokenTRUE=desbloqueado.
+> NO pedir más reinicios/repeticiones de este script: no prueba un worker en
+> sesióninteractiva. Bloque pendiente es desarrollar runtime máquina/broker/worker
+> con autenticación/ACL/consentimiento y validar enVM, NOIMPLEMENTADO aún. No nuevo
+> instalador con login; instalaciones intactas. Visor receptor ya17/17 y287tests.
 
 > **ACTIVO — CREDENCIALES/RÓTULO (informe34):** Contactos descartaba contraseña
 > con PendingPassword=null. Visor/host ahora Unprotect con misma entropía que
@@ -8,8 +285,9 @@ Documento de transferencia de contexto para que otro modelo de IA continúe el p
 > secreto previo al recibir destino nuevo sin contraseña recuperable. Usuario
 > aclara COLOR EN RÓTULO, NO BOTÓN: etiqueta «Equipos vinculados» con texto/fondo
 > verdes temáticos; botones normales, espaciado conservado. Debug/Release limpios
-> 283/283 cadauno; UIRelease21/21 y capturaDark revisada. Falta empaquetado3 DIRECTO
-> artifacts/installers/ en ejecución, manifiesto previsto
+> 283/283 cadauno; UIRelease21/21 y capturaDark revisada. Empaquetado3 TERMINADO
+> DIRECTO artifacts/installers/, versión1.0.1.0, fecha común14/11/2026 11:49:06 +01:00,
+> hashes/fechas reverificados. Manifiesto final
 > contacts-label-credentials-installers-1.0.1.json. Autenticación real desde
 > Contactos con credenciales del usuario pendiente de confirmación.
 > No instalar nada, no tocar servidor instalado ni exponer contraseñas.

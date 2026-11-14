@@ -38,6 +38,10 @@
     <Content Include="Assets\Appicon.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Shared task-based implementation supersedes the retained legacy source. -->
+    <Compile Remove="Services\UnattendedServiceManager.cs" />
+    <Compile Include="..\Shared\UnattendedServiceManager.cs" Link="Services\UnattendedServiceManager.cs" />
+    <Compile Include="..\Shared\ProtectedInstallation.cs" Link="Security\ProtectedInstallation.cs" />
     <ProjectReference Include="..\CSIViewer.Core\CSIViewer.Core.csproj" />
     <Compile Include="..\Shared\AccentAppearance.cs" Link="Presentation\AccentAppearance.cs" />
     <Compile Include="..\Shared\Translate.cs" Link="Presentation\Translate.cs" />

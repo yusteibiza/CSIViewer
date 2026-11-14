@@ -29,10 +29,12 @@ internal static class Program
             try
             {
                 if (args.Length > 2 && args[2] == "--ui-controller") await RunUiControllerAsync(form, args[0], args[1]);
+                else if (args.Length > 2 && args[2] == "--ui-controller-control") await RunUiControllerAsync(form, args[0], args[1], exerciseControl: true);
                 else if (args.Length > 2 && args[2] == "--ui-host") await RunUiHostAsync(form, args[0], args[1]);
                 else if (args.Length > 2 && args[2] == "--ui-host-delayed") await RunUiHostAsync(form, args[0], args[1], delayedConsent: true);
                 else if (args.Length > 2 && args[2] == "--video-session") await RunVideoSessionAsync(form, args[0]);
                 else if (args.Length > 2 && args[2] == "--control-lease") await RunControlLeaseAsync(form, args[0]);
+                else if (args.Length > 2 && args[2] == "--login-policy") await RunLoginPolicyAsync(form, args[0]);
                 else await RunAsync(form, args[0]);
             }
             catch (Exception ex) { Results.Add(new { Test = "exception", Passed = false, Error = ex.ToString() }); Environment.ExitCode = 1; }
@@ -45,7 +47,7 @@ internal static class Program
         System.Windows.Forms.Application.Run(form);
     }
 
-    private static async Task RunUiControllerAsync(Form form, string url, string output)
+    private static async Task RunUiControllerAsync(Form form, string url, string output, bool exerciseControl = false)
     {
         await using var provider = await NewPeerAsync(form, url, false);
         var client = provider.GetRequiredService<RemoteClient>();
@@ -59,10 +61,27 @@ internal static class Program
         try { password = System.Text.Encoding.UTF8.GetString(bytes); }
         finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(bytes); }
         var id = target.GetProperty("Id").GetString()!;
-        var result = await client.ConnectToPeerAsync(id, password, SessionPermissions.Chat, true);
+        var frames = 0;
+        client.VideoFrameReceived += (_, _) => Interlocked.Increment(ref frames);
+        var permissions = exerciseControl
+            ? SessionPermissions.ViewScreen | SessionPermissions.ControlInput | SessionPermissions.Chat
+            : SessionPermissions.Chat;
+        var result = await client.ConnectToPeerAsync(id, password, permissions, !exerciseControl);
         if (!result.IsSuccess) throw new InvalidOperationException("Diagnostic incoming connection failed");
+        if (exerciseControl)
+        {
+            Check("receiving-viewer-grants-control", client.CanControlRemote);
+            await WaitAsync(() => Volatile.Read(ref frames) >= 2);
+            Check("receiving-viewer-produces-video", true);
+        }
         await client.SendChatToDeviceAsync(id, "QA temporary incoming 😊");
         await File.WriteAllTextAsync(output + ".connected", "ready");
+        if (exerciseControl)
+        {
+            await WaitAsync(() => File.Exists(output + ".exercise"));
+            await ViewerInputFixture.ExerciseAsync(form, client, Check);
+            await File.WriteAllTextAsync(output + ".input-complete", "ready");
+        }
         for (var i = 0; i < 1800 && state.IsSessionActive && !File.Exists(output + ".stop"); i++) await Task.Delay(100);
         await client.EndCurrentSessionsAsync("diagnostic viewer ends");
         await File.WriteAllTextAsync(output + ".ended", "done");
@@ -129,7 +148,7 @@ internal static class Program
         if (!ready()) throw new TimeoutException("Feature diagnostic condition timed out");
     }
 
-    private static async Task<ServiceProvider> NewPeerAsync(Form form, string url, bool host, bool temporaryChat = false, int videoFps = 12, IConsentService? consent = null)
+    private static async Task<ServiceProvider> NewPeerAsync(Form form, string url, bool host, bool temporaryChat = false, int videoFps = 12, IConsentService? consent = null, HostPasswordVerifier? verifier = null)
     {
         var data = Path.Combine(Path.GetTempPath(), "opencode", "csiviewer-feature-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(data);
@@ -147,6 +166,7 @@ internal static class Program
         services.AddCSIViewerClient();
         services.AddSingleton(new ChatHistoryOptions { RetainHistory = !temporaryChat });
         services.AddSingleton<IConsentService>(consent ?? new TestConsent());
+        if (verifier is not null) services.AddSingleton(verifier);
         services.AddSingleton<INotificationService, QuietNotifications>();
         var provider = services.BuildServiceProvider();
         var state = provider.GetRequiredService<AppState>();
@@ -200,6 +220,49 @@ internal static class Program
     {
         var method = typeof(RemoteClient).GetMethods(PrivateInstance).Single(x => x.Name == "SendEncryptedAsync" && x.GetParameters().Length == 5);
         return (Task)method.Invoke(client, [session, kind, payload, 10, CancellationToken.None])!;
+    }
+
+    private static async Task RunLoginPolicyAsync(Form form, string url)
+    {
+        const string synthetic = "Synthetic-only-login-lab-1234";
+        var hash = CSIViewer.Security.PasswordHasher.Hash(synthetic, out var salt);
+        await using var hostProvider = await NewPeerAsync(form, url, true, consent: new LoginPolicyConsent(),
+            verifier: new HostPasswordVerifier(salt, hash));
+        var hostState = hostProvider.GetRequiredService<AppState>();
+        Check("login-host-does-not-retain-recoverable-password", hostState.TemporaryPasswordRaw.Length == 0 && hostState.UsesCustomPassword);
+        // Separate identities avoid conflating password verification with the
+        // asynchronous teardown/cooldown of a previous rejected connection.
+        await using (var rejectedProvider = await NewPeerAsync(form, url, false))
+        {
+            var rejected = rejectedProvider.GetRequiredService<RemoteClient>();
+            var failed = await rejected.ConnectToPeerAsync(hostState.DeviceId, "wrong-password", SessionPermissions.All, false);
+            Check("login-host-rejects-wrong-password", !failed.IsSuccess);
+        }
+        await using var viewerProvider = await NewPeerAsync(form, url, false);
+        var viewerState = viewerProvider.GetRequiredService<AppState>();
+        var viewer = viewerProvider.GetRequiredService<RemoteClient>();
+        var result = await viewer.ConnectToPeerAsync(hostState.DeviceId, synthetic, SessionPermissions.All, false);
+        if (!result.IsSuccess) throw new InvalidOperationException($"Synthetic verifier connection failed: {result.Error?.Code}");
+        Check("login-host-verifier-authenticates-encrypted-session", result.IsSuccess);
+        await WaitAsync(() => viewerState.IsSessionActive && hostState.IsSessionActive);
+        Check("login-host-strips-files-chat-audio-clipboard", viewerState.ActivePermissions == LoginHostPolicy.AllowedPermissions);
+        Check("login-host-grants-explicit-control", viewer.CanControlRemote);
+        await viewer.EndSessionAsync();
+        await WaitAsync(() => !hostState.IsSessionActive);
+        Check("login-host-ends-cleanly", true);
+        // Normal desktop, unprivileged process: authentication/policy test only.
+        // This is NOT a test of Winlogon capture/input or boot support.
+    }
+
+    private sealed class LoginPolicyConsent : IConsentService
+    {
+        public Task<ConsentDecision> RequestConsentAsync(ConsentRequest request, CancellationToken cancellationToken = default)
+        {
+            var granted = LoginHostPolicy.Grant(request.RequestedPermissions, request.ChatOnly, !cancellationToken.IsCancellationRequested, true, 1, 1);
+            return Task.FromResult(new ConsentDecision(granted != SessionPermissions.None, granted));
+        }
+        public Task<FileReceiveDecision> RequestFileReceiveAsync(string fromName, string fileName, long size, bool destinationExists, bool willOverwrite, CancellationToken cancellationToken = default)
+            => Task.FromResult(FileReceiveDecision.Reject);
     }
 
     private static async Task RunControlLeaseAsync(Form form, string url)

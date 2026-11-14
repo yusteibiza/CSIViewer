@@ -587,6 +587,7 @@ public sealed partial class RemoteClient
             return;
         }
 
+        IncomingFile? registeredIncoming = null;
         try
         {
             var root = ResolveFileDestination(session, offer.DestinationToken);
@@ -641,7 +642,7 @@ public sealed partial class RemoteClient
                 }
             }
 
-            if (session is not null && (session.State != ConnectionState.Connected ||
+            if (session is not null && (!IsLiveSession(session) ||
                 !SessionPermissionPolicy.CanReceiveFiles(session.IsController, session.Permissions)))
                 throw new IOException(global::CSIViewer.Core.Localization.Text("La sesión ha finalizado o se retiró el permiso."));
             if (offer.DestinationToken is not null)
@@ -689,7 +690,17 @@ public sealed partial class RemoteClient
                 LastProgressTicks = Environment.TickCount64,
                 LastProgressBytes = opened.ResumeOffset
             };
-            _incomingFiles[offer.TransferId] = incoming;
+            bool registered;
+            lock (session?.InputGate ?? _gate)
+            {
+                registered = (session is null || IsLiveSession(session)) && _incomingFiles.TryAdd(offer.TransferId, incoming);
+                if (registered) registeredIncoming = incoming;
+            }
+            if (!registered)
+            {
+                await opened.Transfer.DisposeAsync().ConfigureAwait(false);
+                throw new IOException(global::CSIViewer.Core.Localization.Text("La sesión ha finalizado o se retiró el permiso."));
+            }
 
             var stale = _transferItems.Values.FirstOrDefault(x =>
                 x.Direction == TransferDirection.Receive &&
@@ -725,12 +736,13 @@ public sealed partial class RemoteClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Could not accept incoming file");
-            if (_incomingFiles.TryRemove(offer.TransferId, out var failed))
+            if (registeredIncoming is not null &&
+                ((ICollection<KeyValuePair<string, IncomingFile>>)_incomingFiles).Remove(new(offer.TransferId, registeredIncoming)))
             {
                 try
                 {
-                    await failed.Storage.AbortAsync(deletePartial: false).ConfigureAwait(false);
-                    await failed.Storage.DisposeAsync().ConfigureAwait(false);
+                    await registeredIncoming.Storage.AbortAsync(deletePartial: false).ConfigureAwait(false);
+                    await registeredIncoming.Storage.DisposeAsync().ConfigureAwait(false);
                 }
                 catch
                 {
@@ -1058,6 +1070,7 @@ public sealed partial class RemoteClient
             var root = ResolveFileDestination(session, directory.DestinationToken);
             Directory.CreateDirectory(root);
             var path = PathValidator.GetSafeDestinationPath(root, directory.RelativePath);
+            PathValidator.EnsureSafeTransferDestination(root, path);
             if (directory.DestinationToken is not null) ValidateBrowserWritePath(root, path);
             Directory.CreateDirectory(path);
             if (session is not null && directory.RequestId is not null)

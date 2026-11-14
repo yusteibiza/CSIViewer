@@ -11,6 +11,7 @@ public sealed class HostLauncherService : BackgroundService
     private DateTimeOffset _lastUiLookupUtc = DateTimeOffset.MinValue;
     private string? _resolvedUi;
     private bool _missingUiLogged;
+    private readonly LoginBrokerSupervisor _login = new();
 
     public HostLauncherService(HostLauncherOptions options, IHostApplicationLifetime lifetime)
     {
@@ -20,6 +21,7 @@ public sealed class HostLauncherService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var loginLifetime = _login;
         ServiceLog.Write($"CSIViewerHost iniciado. UI={_options.UiExecutable}");
         if (_options.RunOnce)
         {
@@ -55,6 +57,7 @@ public sealed class HostLauncherService : BackgroundService
 
     private void TryLaunch()
     {
+        if (!_options.RunOnce) _login.Ensure();
         var ui = ResolveUi();
         if (string.IsNullOrWhiteSpace(ui))
         {

@@ -54,6 +54,16 @@
                 </Grid>
 
                 <InfoBar x:Name="StatusBar" IsOpen="False" IsClosable="True" loc:Translate.Title="" loc:Translate.Message="" />
+                <Grid ColumnSpacing="12" RowSpacing="8" SizeChanged="ConfigurationHeader_SizeChanged">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <TextBlock Text="Configuración" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" loc:Translate.Text="Configuración" />
+                    <loc:WrapPanel x:Name="ConfigurationActions" Grid.Column="1" Spacing="8" HorizontalAlignment="Right" MaxWidth="490">
+                        <Button Content="Valores por defecto" Click="DefaultSettings_Click" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Valores por defecto" />
+                        <Button Content="Restablecer" Click="RestoreSettings_Click" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Restablecer" />
+                        <Button x:Name="SaveButton" Content="Guardar configuración" Click="SaveSettings_Click" Style="{StaticResource AccentButtonStyle}" AutomationProperties.AutomationId="ServerSaveButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar configuración" />
+                    </loc:WrapPanel>
+                </Grid>
 
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
                     <Grid ColumnSpacing="16">
@@ -117,7 +127,6 @@
 
                 <Border x:Name="ConfigPanel" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="20">
                     <StackPanel x:Name="ConfigContent" Spacing="14">
-                        <TextBlock Text="Configuración" Style="{StaticResource SubtitleTextBlockStyle}" loc:Translate.Text="Configuración" />
 
                         <Grid ColumnSpacing="20" RowSpacing="12">
                             <Grid.ColumnDefinitions>
@@ -286,8 +295,7 @@
                         </loc:WrapPanel>
 
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                            <Button x:Name="SaveButton" Content="Guardar configuración" Click="SaveSettings_Click" Style="{StaticResource DefaultButtonStyle}" AutomationProperties.AutomationId="ServerSaveButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar configuración" />
-                            <TextBlock x:Name="SaveHint" VerticalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="SaveHint" Text="Iniciar servidor y Crear servicio utilizan la configuración guardada." loc:Translate.Text="Iniciar servidor y Crear servicio utilizan la configuración guardada." TextWrapping="Wrap" VerticalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

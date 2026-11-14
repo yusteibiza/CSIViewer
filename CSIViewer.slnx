@@ -10,6 +10,7 @@
     <Project Path="src/CSIViewer.Server/CSIViewer.Server.csproj" />
     <Project Path="src/CSIViewer.Host/CSIViewer.Host.csproj" />
     <Project Path="src/CSIViewer.Host.Agent/CSIViewer.Host.Agent.csproj" />
+    <Project Path="src/CSIViewer.Host.Login/CSIViewer.Host.Login.csproj" />
     <Project Path="src/CSIViewer.Services/CSIViewer.Services.csproj" />
     <Project Path="src/CSIViewer/CSIViewer.csproj" />
   </Folder>

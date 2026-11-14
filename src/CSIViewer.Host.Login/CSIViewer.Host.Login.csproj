@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AssemblyName>CSIViewer.Host.Login</AssemblyName>
+    <Description>CSIViewer experimental machine login endpoint</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Shared\ProtectedInstallation.cs" Link="Security\ProtectedInstallation.cs" />
+    <ProjectReference Include="../CSIViewer.Services/CSIViewer.Services.csproj" />
+  </ItemGroup>
+</Project>

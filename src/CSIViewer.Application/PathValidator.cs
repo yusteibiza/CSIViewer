@@ -87,6 +87,44 @@ public static class PathValidator
     }
 
     /// <summary>
+    /// Rejects filesystem redirections below the explicitly authorized root.
+    /// The configured root itself may be a redirected user folder.
+    /// This is a point-in-time check, not a substitute for handle-relative I/O
+    /// against a hostile local process concurrently replacing directories.
+    /// </summary>
+    public static void EnsureSafeTransferDestination(string root, string fullPath)
+    {
+        var candidate = EnsureInsideRoot(root, fullPath);
+        var temporary = Path.Combine(Path.GetFullPath(root), ".rdpart");
+        if (string.Equals(candidate, temporary, StringComparison.OrdinalIgnoreCase) ||
+            candidate.StartsWith(temporary + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("Ruta de archivo no permitida."));
+        EnsureNoReparsePoints(root, candidate);
+    }
+
+    public static void EnsureNoReparsePoints(string root, string fullPath)
+    {
+        var candidate = EnsureInsideRoot(root, fullPath);
+        var fullRoot = Path.GetFullPath(root);
+        var relative = Path.GetRelativePath(fullRoot, candidate);
+        if (relative == ".") return;
+        var current = fullRoot;
+        foreach (var part in relative.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries))
+        {
+            current = Path.Combine(current, part);
+            try
+            {
+                if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                {
+                    throw new InvalidOperationException(global::CSIViewer.Core.Localization.Text("Ruta de archivo no permitida."));
+                }
+            }
+            catch (FileNotFoundException) { break; }
+            catch (DirectoryNotFoundException) { break; }
+        }
+    }
+
+    /// <summary>
     /// True when the relative path can be used as a file or directory name
     /// without escaping the configured root.
     /// </summary>

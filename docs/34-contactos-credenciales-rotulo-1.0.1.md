@@ -19,7 +19,9 @@ hover y ausencia de franja azul. Captura Dark revisada. Informe
 `artifacts/diagnostics/contacts-label-credentials-viewer-release.json`.
 La prueba UI visual no valida autenticación desde Contactos contra un host real;
 queda pendiente confirmar ese flujo con credenciales guardadas del usuario.
-Publicación/empaquetado3 en curso. Manifiesto previsto
+Publicación/empaquetado3 terminado directamente en `artifacts/installers/`.
+Versión1.0.1.0 y marca común **14/11/2026 11:49:06 +01:00**. Los tres hashes y
+fechas se verificaron después de generar los archivos. Manifiesto final
 `artifacts/diagnostics/contacts-label-credentials-installers-1.0.1.json`.
 Los instaladores deben quedar directamente en artifacts/installers/, nunca
 entregarse en subcarpetas. No ejecutar instaladores ni tocar servidor instalado.

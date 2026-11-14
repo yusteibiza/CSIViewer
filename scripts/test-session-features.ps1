@@ -1,4 +1,4 @@
-param([string]$Configuration='Release',[string]$UiExe,[string]$HostUiExe,[string]$ViewerConsentExe,[switch]$VideoSession,[switch]$ControlLease,[switch]$ConnectionWaitUi,[string]$UiHarness=(Join-Path $env:LOCALAPPDATA 'Temp/opencode/test-accent-help.ps1'))
+param([string]$Configuration='Release',[string]$UiExe,[string]$HostUiExe,[string]$ViewerConsentExe,[switch]$ViewerControl,[switch]$VideoSession,[switch]$ControlLease,[switch]$LoginPolicy,[switch]$ConnectionWaitUi,[string]$UiHarness=(Join-Path $env:LOCALAPPDATA 'Temp/opencode/test-accent-help.ps1'))
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot
 $data=Join-Path $env:LOCALAPPDATA ('Temp/opencode/feature-server-'+[Guid]::NewGuid().ToString('N'))
@@ -22,7 +22,12 @@ try {
   if($ready){break};Start-Sleep -Milliseconds 200
  }
  if(-not $ready){throw "Isolated server unavailable; see $data"}
-  if($ControlLease){
+  if($LoginPolicy){
+    $output=Join-Path $root "artifacts/diagnostics/login-policy-$($Configuration.ToLowerInvariant()).json"
+    & $probe $url $output --login-policy
+    if($LASTEXITCODE-ne 0){throw "Login policy diagnostic failed; see $output"}
+    Get-Content -LiteralPath $output -Raw
+  }elseif($ControlLease){
     $output=Join-Path $root "artifacts/diagnostics/control-lease-$($Configuration.ToLowerInvariant()).json"
     & $probe $url $output --control-lease
     if($LASTEXITCODE-ne 0){throw "Control lease diagnostic failed; see $output"}
@@ -32,10 +37,15 @@ try {
    & $probe $url $output --video-session
    if($LASTEXITCODE-ne 0){throw "Video diagnostic failed; see $output"}
    Get-Content -LiteralPath $output -Raw
- }elseif($ViewerConsentExe){
-   $uiOutput=Join-Path $root "artifacts/diagnostics/viewer-incoming-consent-$($Configuration.ToLowerInvariant()).json"
-   @{Url=$url}|ConvertTo-Json|Set-Content ($peerOutput+'.url.json') -Encoding utf8
-   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $UiHarness -Exe $ViewerConsentExe -Kind viewer -ViewerConsentUi -ControllerProbe $probe -ChatPeerFile ($peerOutput+'.url.json') -OutputFile $uiOutput
+  }elseif($ViewerConsentExe){
+    $uiName=if($ViewerControl){'viewer-incoming-control'}else{'viewer-incoming-consent'}
+    $uiOutput=Join-Path $root "artifacts/diagnostics/$uiName-$($Configuration.ToLowerInvariant()).json"
+    @{Url=$url}|ConvertTo-Json|Set-Content ($peerOutput+'.url.json') -Encoding utf8
+    if($ViewerControl){
+      & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $UiHarness -Exe $ViewerConsentExe -Kind viewer -ViewerConsentUi -ViewerControlUi -ControllerProbe $probe -ChatPeerFile ($peerOutput+'.url.json') -OutputFile $uiOutput
+    }else{
+      & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $UiHarness -Exe $ViewerConsentExe -Kind viewer -ViewerConsentUi -ControllerProbe $probe -ChatPeerFile ($peerOutput+'.url.json') -OutputFile $uiOutput
+    }
    if($LASTEXITCODE-ne 0 -or -not (Test-Path -LiteralPath $uiOutput)){throw 'Viewer consent diagnostic did not complete'}
    $checks=@(Get-Content -LiteralPath $uiOutput -Raw|ConvertFrom-Json)
    if(-not $checks.Count -or @($checks|Where-Object {-not $_.Passed}).Count){throw "Viewer consent diagnostic failed; see $uiOutput"}

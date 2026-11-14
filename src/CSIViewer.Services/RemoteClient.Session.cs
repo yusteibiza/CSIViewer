@@ -1358,7 +1358,7 @@ public sealed partial class RemoteClient
         await StartHostCaptureAsync(_activeCaptureMonitor?.Index ?? 0).ConfigureAwait(false);
     }
 
-    private async Task StartHostCaptureAsync(int monitorIndex)
+    private async Task StartHostCaptureAsync(int monitorIndex, int? expectedGeneration = null)
     {
         if (!await _captureGate.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false))
         {
@@ -1368,12 +1368,17 @@ public sealed partial class RemoteClient
 
         try
         {
+            if (expectedGeneration.HasValue && expectedGeneration.Value != Volatile.Read(ref _hostCaptureGeneration)) return;
             if (Volatile.Read(ref _captureViewerCount) == 0)
             {
                 return;
             }
 
             _captureRunning = false;
+            _usingModernCapture = false;
+            var captureGeneration = Interlocked.Increment(ref _hostCaptureGeneration);
+            Volatile.Write(ref _lastHostCaptureFrameTicks, 0);
+            Volatile.Write(ref _hostVisualDemandTicks, 0);
             var monitors = MonitorService.GetMonitors();
             var monitor = monitors.FirstOrDefault(x => x.Index == monitorIndex)
                 ?? monitors.FirstOrDefault(x => x.IsPrimary)
@@ -1420,40 +1425,17 @@ public sealed partial class RemoteClient
 
             var encodeJpeg = !_state.Settings.PreferH264;
 
-            if (_state.Settings.PreferModernCapture &&
-                !_modernCaptureDisabled &&
+            _usingModernCapture = !_systemLoginDesktop && _state.Settings.PreferModernCapture && !_modernCaptureDisabled;
+            Volatile.Write(ref _hostCaptureStartedTicks, Stopwatch.GetTimestamp());
+            if (_usingModernCapture &&
                 _modernCapture.TryStart(
                     monitor,
                     _state.Settings.Fps,
                     _state.Settings.ImageQuality,
                     _state.Settings.MaxWidth,
                     encodeJpeg,
-                    frame => _ = SendVideoFrameAsync(frame),
-                    ex =>
-                    {
-                        _logger.LogWarning(ex, "Windows.Graphics.Capture error; falling back to GDI");
-                        _modernCaptureDisabled = true;
-                        _state.Post(() => _state.LastError =
-                            global::CSIViewer.Core.Localization.Text("Error de captura moderna; usando captura GDI."));
-                        if (Interlocked.Exchange(ref _modernCaptureFallbackScheduled, 1) == 0)
-                        {
-                            _ = Task.Run(async () =>
-                            {
-                                try
-                                {
-                                    await Task.Delay(250, _lifetimeCts.Token).ConfigureAwait(false);
-                                    await StartHostCaptureAsync(monitor.Index).ConfigureAwait(false);
-                                }
-                                catch (OperationCanceledException)
-                                {
-                                }
-                                finally
-                                {
-                                    Volatile.Write(ref _modernCaptureFallbackScheduled, 0);
-                                }
-                            });
-                        }
-                    }))
+                    frame => OnHostCaptureFrame(frame, captureGeneration),
+                    ex => ScheduleModernCaptureFallback(monitor.Index, captureGeneration, "Capture API reported an error", ex)))
             {
                 _logger.LogInformation("Using Windows.Graphics.Capture for monitor {Monitor}", monitor.Index);
                 _captureRunning = true;
@@ -1462,13 +1444,14 @@ public sealed partial class RemoteClient
             }
 
             _logger.LogInformation("Using GDI capture fallback for monitor {Monitor}", monitor.Index);
+            _usingModernCapture = false;
             _capture.Start(
                 monitor,
                 _state.Settings.Fps,
                 _state.Settings.MaxWidth,
                 _state.Settings.ImageQuality,
                 encodeJpeg,
-                frame => _ = SendVideoFrameAsync(frame),
+                frame => OnHostCaptureFrame(frame, captureGeneration),
                 ex =>
                 {
                     _logger.LogWarning(ex, "Capture error");
@@ -1518,6 +1501,7 @@ public sealed partial class RemoteClient
                 }
 
                 var monitors = MonitorService.GetMonitors();
+                CheckHostCaptureProgress();
                 var previous = _activeCaptureMonitor;
                 var current = monitors.FirstOrDefault(x => x.Index == (previous?.Index ?? 0))
                     ?? monitors.FirstOrDefault(x => x.IsPrimary)
@@ -1998,6 +1982,7 @@ public sealed partial class RemoteClient
 
         if (_sessions.TryGetValue(sessionGuid, out var session))
         {
+            if (!IsLiveSession(session)) return;
             if (!session.Crypto.TryDecrypt(data, out var kind, out var plaintext))
             {
                 if (headerKind == SessionFrameKind.Input &&
@@ -2046,6 +2031,15 @@ public sealed partial class RemoteClient
         SessionPermissions permissions,
         RemoteSession? session = null)
     {
+        if (session is null)
+        {
+            // The only pre-session message is the outgoing authentication
+            // result. Cached aliases must never authorize legacy file/control
+            // operations after removal of the real session.
+            if (_pendingConnect is null || kind != SessionFrameKind.Control ||
+                !ControlJson.TryRead(plaintext, out var authentication) || authentication?.Type != "auth.result") return;
+        }
+        else if (!IsLiveSession(session)) return;
         switch (kind)
         {
             case SessionFrameKind.Control:
@@ -2073,20 +2067,8 @@ public sealed partial class RemoteClient
                 break;
 
             case SessionFrameKind.Input:
-                if (!_isController)
-                {
-                    var input = System.Text.Json.JsonSerializer.Deserialize<InputEventPayload>(
-                        plaintext, ProtocolJson.Options);
-                    if (input is not null && MessageValidation.IsValidInput(input))
-                    {
-                        var monitor = _activeCaptureMonitor;
-                        var bounds = monitor is null
-                            ? (MonitorBounds?)null
-                            : new MonitorBounds(monitor.X, monitor.Y, monitor.Width, monitor.Height);
-                        _input.Send(input, bounds);
-                    }
-                }
-
+                // Controller/authentication fallback frames never authorize
+                // local input. Only a live host session may inject it.
                 break;
 
             case SessionFrameKind.FileChunk:
@@ -2104,6 +2086,7 @@ public sealed partial class RemoteClient
         SessionFrameKind kind,
         byte[] plaintext)
     {
+        if (!IsLiveSession(session)) return;
         switch (kind)
         {
             case SessionFrameKind.Control:
@@ -2113,6 +2096,7 @@ public sealed partial class RemoteClient
             case SessionFrameKind.Input:
                 var input = System.Text.Json.JsonSerializer.Deserialize<InputEventPayload>(
                     plaintext, ProtocolJson.Options);
+                var loggedAction = InputEventDiagnostics.SafeAction(input);
                 var traceInput = input is not null && input.Kind == "mouse" && (input.Action != "move" || input.TraceSampled);
                 if (traceInput)
                 {
@@ -2138,7 +2122,22 @@ public sealed partial class RemoteClient
                     var bounds = monitor is null
                         ? (MonitorBounds?)null
                         : new MonitorBounds(monitor.X, monitor.Y, monitor.Width, monitor.Height);
-                    var sent = _input.Send(input, bounds, out var diagnostics);
+                    bool sent;
+                    InputInjectionDiagnostics? diagnostics;
+                    lock (session.InputGate)
+                    {
+                        // Recheck at the native side effect, not just when the
+                        // receive loop first obtained the session reference.
+                        if (_revokingAccess || session.State != ConnectionState.Connected ||
+                            !session.ControlOwner || !SessionPermissionPolicy.CanControl(session.Permissions) ||
+                            !_sessions.TryGetValue(session.Id, out var current) || !ReferenceEquals(current, session))
+                        {
+                            break;
+                        }
+
+                        sent = _input.Send(input, bounds, out diagnostics);
+                    }
+                    if (sent && input.Action != "move") MarkHostVisualChange();
                     if (traceInput || !sent)
                     {
                         _logger.LogInformation("Input injection result. Trace={TraceId} Session={SessionId} Success={Success} Monitor={Monitor} Diagnostics={Diagnostics}",
@@ -2148,7 +2147,7 @@ public sealed partial class RemoteClient
                     {
                         _logger.LogWarning(
                             "Input injection failed. Action={Action} x={X} y={Y} Monitor={Monitor} Session={SessionId} ControlOwner={ControlOwner} Permissions={Permissions}",
-                            input.Action, input.X, input.Y,
+                            loggedAction, input.X, input.Y,
                             monitor is null ? "virtual" : $"{monitor.Index}:{monitor.X},{monitor.Y} {monitor.Width}x{monitor.Height}",
                             session.SessionId,
                             session.ControlOwner,
@@ -2159,7 +2158,7 @@ public sealed partial class RemoteClient
                     {
                         _logger.LogInformation(
                             "Input injected. Action={Action} x={X} y={Y} Monitor={Monitor} Session={SessionId}",
-                            input.Action, input.X, input.Y,
+                            loggedAction, input.X, input.Y,
                             monitor is null ? "virtual" : $"{monitor.Index}:{monitor.X},{monitor.Y} {monitor.Width}x{monitor.Height}",
                             session.SessionId);
                     }
@@ -2213,7 +2212,7 @@ public sealed partial class RemoteClient
             return;
         }
 
-        if (session is null)
+        if (session is null || !IsLiveSession(session))
         {
             return;
         }
@@ -2513,7 +2512,7 @@ public sealed partial class RemoteClient
     public async Task SendInputAsync(InputEventPayload input, CancellationToken cancellationToken = default)
     {
         var traceInput = input.Kind == "mouse" && (input.Action != "move" || input.TraceSampled);
-        var loggedAction = input.Kind == "text" ? "[redacted text]" : input.Action;
+        var loggedAction = InputEventDiagnostics.SafeAction(input);
         var session = _sessions.Values.FirstOrDefault(x => x.IsController);
         if (session is null ||
             session.State != ConnectionState.Connected ||
@@ -2585,55 +2584,58 @@ public sealed partial class RemoteClient
             return;
         }
 
-        var frame = crypto.Encrypt(kind, plaintext);
+        await crypto.EncryptAndSendAsync(kind, plaintext, SendFrameAsync, cancellationToken).ConfigureAwait(false);
 
-        if (direct is not null)
+        async Task SendFrameAsync(byte[] frame, CancellationToken sendCancellationToken)
         {
-            try
+            if (direct is not null)
             {
-                using var directTimeout = CreateTimeoutToken(TimeSpan.FromSeconds(10), cancellationToken);
-                await _directSendLock.WaitAsync(directTimeout.Token).ConfigureAwait(false);
                 try
                 {
-                    await FrameProtocol.WriteFrameAsync(direct, frame, directTimeout.Token)
-                        .ConfigureAwait(false);
-                    return;
+                    using var directTimeout = CreateTimeoutToken(TimeSpan.FromSeconds(10), sendCancellationToken);
+                    await _directSendLock.WaitAsync(directTimeout.Token).ConfigureAwait(false);
+                    try
+                    {
+                        await FrameProtocol.WriteFrameAsync(direct, frame, directTimeout.Token)
+                            .ConfigureAwait(false);
+                        return;
+                    }
+                    finally
+                    {
+                        _directSendLock.Release();
+                    }
                 }
-                finally
+                catch (OperationCanceledException) when (sendCancellationToken.IsCancellationRequested)
                 {
-                    _directSendLock.Release();
+                    throw;
+                }
+                catch (Exception ex) when (ex is IOException or SocketException or ObjectDisposedException
+                                               or OperationCanceledException)
+                {
+                    _logger.LogDebug(ex, "Direct LAN send failed; falling back to relay");
+                    DetachDirect(direct);
                 }
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+
+            if (signal is null || !signal.IsConnected)
+            {
+                return;
+            }
+
+            try
+            {
+                using var relayTimeout = CreateTimeoutToken(TimeSpan.FromSeconds(10), sendCancellationToken);
+                await signal.SendBinaryAsync(frame, relayTimeout.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (sendCancellationToken.IsCancellationRequested)
             {
                 throw;
             }
-            catch (Exception ex) when (ex is IOException or SocketException or ObjectDisposedException
-                                           or OperationCanceledException)
+            catch (Exception ex) when (ex is IOException or System.Net.WebSockets.WebSocketException
+                                           or ObjectDisposedException or OperationCanceledException)
             {
-                _logger.LogDebug(ex, "Direct LAN send failed; falling back to relay");
-                DetachDirect(direct);
+                _logger.LogDebug(ex, "Signaling send failed");
             }
-        }
-
-        if (signal is null || !signal.IsConnected)
-        {
-            return;
-        }
-
-        try
-        {
-            using var relayTimeout = CreateTimeoutToken(TimeSpan.FromSeconds(10), cancellationToken);
-            await signal.SendBinaryAsync(frame, relayTimeout.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception ex) when (ex is IOException or System.Net.WebSockets.WebSocketException
-                                       or ObjectDisposedException or OperationCanceledException)
-        {
-            _logger.LogDebug(ex, "Signaling send failed");
         }
     }
 

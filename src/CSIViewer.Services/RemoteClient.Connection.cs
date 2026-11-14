@@ -817,6 +817,7 @@ public sealed partial class RemoteClient
             await StopDisplayWatcherAsync().ConfigureAwait(false);
             await _modernCapture.DisposeAsync().ConfigureAwait(false);
             await _capture.DisposeAsync().ConfigureAwait(false);
+            (_input as IDisposable)?.Dispose();
             _h264Encoder?.Dispose();
             _h264Encoder = null;
             _h264Decoder?.Dispose();

@@ -46,12 +46,10 @@ public sealed class KnownDeviceRepository : IKnownDeviceRepository
     public async Task DeleteAsync(string deviceId, CancellationToken cancellationToken = default)
     {
         await using var db = await _factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
-        var entity = await db.KnownDevices.FindAsync([deviceId], cancellationToken).ConfigureAwait(false);
-        if (entity is not null)
-        {
-            db.KnownDevices.Remove(entity);
-            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        }
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await db.ChatMessages.Where(x => x.PeerDeviceId == deviceId).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        await db.KnownDevices.Where(x => x.DeviceId == deviceId).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<KnownDevice> RecordConnectionAsync(string deviceId, string remoteName,

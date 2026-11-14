@@ -1,21 +1,28 @@
 ﻿<?xml version="1.0" encoding="utf-8"?><Page x:Class="CSIViewer.Host.Views.HostSettingsPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="{ThemeResource PageBackgroundBrush}" xmlns:loc="using:CSIViewer.Presentation">
     <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled" HorizontalContentAlignment="Stretch" VerticalScrollBarVisibility="Auto">
-        <StackPanel Padding="20,10" MaxWidth="740" Spacing="8" HorizontalAlignment="Center">
+        <StackPanel Padding="20,10" MaxWidth="1100" Spacing="8" HorizontalAlignment="Stretch">
+            <Grid ColumnSpacing="12" RowSpacing="8" SizeChanged="ConfigurationHeader_SizeChanged">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
             <StackPanel Spacing="1">
                 <TextBlock Text="Configuración del host" Style="{StaticResource PageTitleStyle}" FontSize="22" loc:Translate.Text="Configuración del host" />
                 <TextBlock Text="Tema, servidor, calidad de imagen y modo desatendido." Style="{StaticResource MutedTextStyle}" FontSize="12" loc:Translate.Text="Tema, servidor, calidad de imagen y modo desatendido." />
             </StackPanel>
+                <loc:WrapPanel x:Name="ConfigurationActions" Grid.Column="1" Spacing="8" HorizontalAlignment="Right" MaxWidth="490">
+                    <Button Content="Valores por defecto" Click="DefaultSettings_Click" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Valores por defecto" />
+                    <Button Content="Restablecer" Click="RestoreSettings_Click" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Restablecer" />
+                    <Button Content="Guardar configuración" Click="SaveConfiguration_Click" Style="{StaticResource PrimaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar configuración" />
+                </loc:WrapPanel>
+            </Grid>
 
             <InfoBar x:Name="StatusBar" IsOpen="False" IsClosable="True" />
 
-            <Grid ColumnSpacing="10" RowSpacing="10" SizeChanged="Cards_SizeChanged">
+            <Grid ColumnSpacing="8" RowSpacing="8" SizeChanged="Cards_SizeChanged">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
@@ -52,7 +59,6 @@
                         <TextBlock Text="Servidor" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Servidor" />
                         <TextBox x:Name="ServerUrlBox" PlaceholderText="URL del servidor (http://localhost:5080)" AutomationProperties.AutomationId="HostServerUrlBox" loc:Translate.PlaceholderText="URL del servidor (http://localhost:5080)" />
                         <loc:WrapPanel Spacing="8">
-                            <Button Content="Guardar" Click="SaveServer_Click" Style="{StaticResource PrimaryButtonStyle}" AutomationProperties.AutomationId="HostSaveServerButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar" />
                             <Button Content="Probar" Click="TestServer_Click" Style="{StaticResource SecondaryButtonStyle}" AutomationProperties.AutomationId="HostTestServerButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Probar" />
                         </loc:WrapPanel>
                         <TextBlock x:Name="ServerStatusText" Text="" Style="{StaticResource MutedTextStyle}" FontSize="12" TextTrimming="CharacterEllipsis" loc:Translate.Text="" />
@@ -68,7 +74,6 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Calidad de imagen" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center" loc:Translate.Text="Calidad de imagen" />
-                            <Button Grid.Column="1" Content="Guardar" Click="SaveQuality_Click" Style="{StaticResource PrimaryButtonStyle}" AutomationProperties.AutomationId="HostSaveQualityButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar" />
                         </Grid>
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
@@ -127,11 +132,12 @@
                 <Border x:Name="UnattendedCard" Grid.Row="1" Grid.Column="1" Style="{StaticResource CardStyle}" Padding="12">
                     <StackPanel Spacing="8">
                         <TextBlock Text="Modo desatendido" Style="{StaticResource SectionTitleStyle}" loc:Translate.Text="Modo desatendido" />
-                        <TextBlock Text="Arranca con Windows mediante una tarea programada. No instala un servicio; UAC solo al activarlo." Style="{StaticResource MutedTextStyle}" FontSize="12" loc:Translate.Text="Arranca con Windows mediante una tarea programada. No instala un servicio; UAC solo al activarlo." />
-                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="Arranca con Windows mediante una tarea programada. Consultar el estado no requiere UAC; cambiar el inicio requiere administración." Style="{StaticResource MutedTextStyle}" FontSize="12" loc:Translate.Text="Arranca con Windows mediante una tarea programada. Consultar el estado no requiere UAC; cambiar el inicio requiere administración." />
+                        <Grid ColumnSpacing="8" VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <ProgressRing x:Name="UnattendedBusyRing" Width="18" Height="18" IsActive="False" Visibility="Collapsed" />
-                            <TextBlock x:Name="UnattendedStatusText" Text="Comprobando." FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.AutomationId="HostUnattendedStatus" loc:Translate.Text="Comprobando." />
-                        </StackPanel>
+                            <TextBlock x:Name="UnattendedStatusText" Grid.Column="1" Text="Comprobando." TextWrapping="Wrap" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.AutomationId="HostUnattendedStatus" loc:Translate.Text="Comprobando." />
+                        </Grid>
                         <ComboBox x:Name="ConsentModeCombo" Header="Solicitudes de conexión" HorizontalAlignment="Stretch" SelectionChanged="ConsentMode_SelectionChanged" ToolTipService.ToolTip="Aceptar automáticamente concede los permisos solicitados. La contraseña sigue siendo obligatoria." AutomationProperties.AutomationId="HostConsentModeCombo" HeaderTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Header="Solicitudes de conexión" loc:Translate.ToolTip="Aceptar automáticamente concede los permisos solicitados. La contraseña sigue siendo obligatoria.">
                             <ComboBoxItem Content="Preguntar siempre" Tag="Ask" loc:Translate.Content="Preguntar siempre" />
                             <ComboBoxItem Content="Aceptar automáticamente" Tag="Accept" loc:Translate.Content="Aceptar automáticamente" />
@@ -154,17 +160,22 @@
                 </Border>
             </Grid>
 
+            <Border Style="{StaticResource CardStyle}" HorizontalAlignment="Stretch">
+                <StackPanel Spacing="8">
+                    <Button Content="Acceso al inicio de Windows" Click="WindowsLogin_Click" Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Left" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Acceso al inicio de Windows" />
+                    <TextBlock Text="Requiere administración y un ID de equipo distinto. HTTP remoto solo con autorización explícita." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" loc:Translate.Text="Requiere administración y un ID de equipo distinto. HTTP remoto solo con autorización explícita." />
+                </StackPanel>
+            </Border>
+
             <Grid ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Carpeta de descargas" VerticalAlignment="Center" loc:Translate.Text="Carpeta de descargas" />
                 <TextBox x:Name="DownloadFolderBox" Grid.Column="1" PlaceholderText="C:\Users\...\Downloads\CSIViewer" AutomationProperties.AutomationId="HostDownloadFolderBox" loc:Translate.PlaceholderText="C:\Users\...\Downloads\CSIViewer" />
                 <Button Grid.Column="2" Content="Examinar" Click="BrowseDownloadFolder_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Examinar" />
-                <Button Grid.Column="3" Content="Guardar carpeta" Click="SaveDownloadFolder_Click" Style="{StaticResource PrimaryButtonStyle}" AutomationProperties.AutomationId="HostSaveDownloadFolderButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar carpeta" />
             </Grid>
 
             <Border Style="{StaticResource CardStyle}">

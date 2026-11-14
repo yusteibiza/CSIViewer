@@ -23,6 +23,9 @@ public sealed class SessionCrypto : IDisposable
     private readonly byte[] _receiveKey;
     private readonly Guid _sessionId;
     private readonly object _receiveGate = new();
+    private readonly object _sendGate = new();
+    private readonly SemaphoreSlim _orderedSendGate = new(1, 1);
+    private bool _disposed;
     private long _sendCounter;
     private long _receiveCounter;
 
@@ -37,20 +40,45 @@ public sealed class SessionCrypto : IDisposable
 
     public byte[] Encrypt(SessionFrameKind kind, ReadOnlySpan<byte> plaintext)
     {
-        // Encrypt can be called concurrently (video, control, files, chat).
-        // Atomic increment guarantees a unique nonce counter per frame; a
-        // repeated GCM nonce would be catastrophic.
-        var counter = Interlocked.Increment(ref _sendCounter) - 1;
-        var nonce = new byte[SessionFrame.NonceLength];
-        _sendKey.AsSpan(0, 4).CopyTo(nonce);
-        BinaryPrimitives.WriteInt64BigEndian(nonce.AsSpan(4), counter);
+        lock (_sendGate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            // Serialize key use with disposal as well as nonce allocation.
+            var counter = Interlocked.Increment(ref _sendCounter) - 1;
+            var nonce = new byte[SessionFrame.NonceLength];
+            _sendKey.AsSpan(0, 4).CopyTo(nonce);
+            BinaryPrimitives.WriteInt64BigEndian(nonce.AsSpan(4), counter);
 
-        var ciphertext = new byte[plaintext.Length + SessionFrame.TagLength];
-        var aad = BuildAad(kind);
-        using var aes = new AesGcm(_sendKey, SessionFrame.TagLength);
-        aes.Encrypt(nonce, plaintext, ciphertext.AsSpan(0, plaintext.Length), ciphertext.AsSpan(plaintext.Length), aad);
+            var ciphertext = new byte[plaintext.Length + SessionFrame.TagLength];
+            var aad = BuildAad(kind);
+            using var aes = new AesGcm(_sendKey, SessionFrame.TagLength);
+            aes.Encrypt(nonce, plaintext, ciphertext.AsSpan(0, plaintext.Length), ciphertext.AsSpan(plaintext.Length), aad);
 
-        return SessionFrame.Create(_sessionId, kind, nonce, ciphertext);
+            return SessionFrame.Create(_sessionId, kind, nonce, ciphertext);
+        }
+    }
+
+    /// <summary>
+    /// Keeps nonce allocation and transport submission in the same order.
+    /// All concurrent send paths sharing this crypto instance must use it.
+    /// </summary>
+    public async Task EncryptAndSendAsync(
+        SessionFrameKind kind,
+        ReadOnlyMemory<byte> plaintext,
+        Func<byte[], CancellationToken, Task> sendAsync,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(sendAsync);
+        await _orderedSendGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var frame = Encrypt(kind, plaintext.Span);
+            await sendAsync(frame, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _orderedSendGate.Release();
+        }
     }
 
     public bool TryDecrypt(ReadOnlySpan<byte> frame, out SessionFrameKind kind, out byte[] plaintext)
@@ -76,7 +104,7 @@ public sealed class SessionCrypto : IDisposable
         // if direct and relay paths ever run concurrently.
         lock (_receiveGate)
         {
-            if (counter < _receiveCounter)
+            if (_disposed || counter < _receiveCounter)
             {
                 return false;
             }
@@ -113,7 +141,15 @@ public sealed class SessionCrypto : IDisposable
 
     public void Dispose()
     {
-        CryptographicOperations.ZeroMemory(_sendKey);
-        CryptographicOperations.ZeroMemory(_receiveKey);
+        lock (_sendGate)
+        lock (_receiveGate)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            CryptographicOperations.ZeroMemory(_sendKey);
+            CryptographicOperations.ZeroMemory(_receiveKey);
+            // Do not dispose the managed send semaphore while queued/in-flight
+            // senders still need to acquire/release it. It owns no WaitHandle.
+        }
     }
 }

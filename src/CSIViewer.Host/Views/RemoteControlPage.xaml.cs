@@ -107,7 +107,7 @@ public sealed partial class RemoteControlPage : Page
 
             if (_state.IsSessionActive && _state.IsController)
             {
-                _ = _client.RequestMonitorsAsync();
+                _ = RequestMonitorsSafelyAsync();
             }
         };
         Unloaded += (_, _) =>
@@ -145,7 +145,7 @@ public sealed partial class RemoteControlPage : Page
             UpdateSessionUi();
             StatusBar.IsOpen = false;
             ShowControlRestrictionNotice();
-            await _client.RequestMonitorsAsync();
+            await RequestMonitorsSafelyAsync();
         });
     }
 
@@ -172,7 +172,22 @@ public sealed partial class RemoteControlPage : Page
             return;
         }
 
-        await _client.SelectMonitorAsync(monitor.Index);
+        try { await _client.SelectMonitorAsync(monitor.Index); }
+        catch (Exception ex) { ShowRemoteOperationError(ex); }
+    }
+
+    private async Task RequestMonitorsSafelyAsync()
+    {
+        try { await _client.RequestMonitorsAsync(); }
+        catch (Exception ex) { ShowRemoteOperationError(ex); }
+    }
+
+    private void ShowRemoteOperationError(Exception error)
+    {
+        _logger.LogWarning(error, "Remote monitor operation failed");
+        StatusBar.Severity = InfoBarSeverity.Error;
+        StatusBar.Message = Localization.Text("No se pudo completar la operación: ") + error.GetBaseException().Message;
+        StatusBar.IsOpen = true;
     }
 
     private void Client_SessionEnded(object? sender, string reason)
@@ -293,11 +308,10 @@ public sealed partial class RemoteControlPage : Page
             else
             {
                 using var stream = new InMemoryRandomAccessStream();
-                var writer = new DataWriter(stream);
+                using var writer = new DataWriter(stream);
                 writer.WriteBytes(frame.Data);
                 await writer.StoreAsync();
                 writer.DetachStream();
-                writer.Dispose();
 
                 stream.Seek(0);
                 var bitmap = new BitmapImage();

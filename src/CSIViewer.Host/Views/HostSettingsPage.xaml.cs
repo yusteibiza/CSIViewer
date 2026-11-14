@@ -15,6 +15,12 @@ public sealed partial class HostSettingsPage : Page
     private void Cards_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         var narrow = e.NewSize.Width < 560;
+        if (sender is Grid grid)
+        {
+            var rows = narrow ? 4 : 2;
+            while (grid.RowDefinitions.Count < rows) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            while (grid.RowDefinitions.Count > rows) grid.RowDefinitions.RemoveAt(grid.RowDefinitions.Count - 1);
+        }
         var cards = new[] { AppearanceCard, ServerCard, QualityCard, UnattendedCard };
         for (var i = 0; i < cards.Length; i++)
         {
@@ -34,6 +40,9 @@ public sealed partial class HostSettingsPage : Page
     private readonly UnattendedServiceManager _unattended = new();
     private bool _loading;
     private bool _unattendedBusy;
+    private bool _unattendedChecking;
+    private int _unattendedStatusRequest;
+    private HostStartupStatus _unattendedStatus = new(HostStartupState.Unknown);
     private bool _profileChanging;
 
     public HostSettingsPage()
@@ -64,11 +73,11 @@ public sealed partial class HostSettingsPage : Page
         };
     }
 
-    private void LoadSettings()
+    private void LoadSettings(AppSettings? source = null)
     {
         _loading = true;
-        var settings = _state.Settings;
-        SynchronizeAccentSelection();
+        var settings = source ?? _state.Settings;
+        SynchronizeAccentSelection(settings);
         ThemeCombo.SelectedIndex = settings.Theme switch
         {
             AppTheme.Light => 1,
@@ -129,7 +138,7 @@ public sealed partial class HostSettingsPage : Page
         _profileChanging = false;
     }
 
-    private async void QualityProfile_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void QualityProfile_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_loading || _profileChanging ||
             QualityProfileCombo.SelectedItem is not ComboBoxItem { Tag: string tag } ||
@@ -155,80 +164,14 @@ public sealed partial class HostSettingsPage : Page
         FpsCombo.SelectedItem = fps;
         MaxWidthSlider.Value = width;
         _profileChanging = false;
-        await SaveQualityAsync();
     }
 
-    private async void ThemeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_loading)
-        {
-            return;
-        }
-
-        var theme = ThemeCombo.SelectedIndex switch
-        {
-            1 => AppTheme.Light,
-            2 => AppTheme.Dark,
-            _ => AppTheme.System
-        };
-        ThemeService.Apply(theme);
-        _state.Settings.Theme = theme;
-        await _settings.SaveAsync(_state.Settings);
-    }
-
-    private async void SaveServer_Click(object sender, RoutedEventArgs e)
-    {
-        await SaveServerAsync(reconnect: true);
-    }
+    private void ThemeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) { }
 
     private async void TestServer_Click(object sender, RoutedEventArgs e)
     {
-        if (!await SaveServerAsync(reconnect: false))
-        {
-            return;
-        }
-
         ServerStatusText.Text = global::CSIViewer.Core.Localization.Text("Comprobando servidor…");
-        ServerStatusText.Text = await _diagnostics.TestServerAsync();
-    }
-
-    private async Task<bool> SaveServerAsync(bool reconnect)
-    {
-        var url = ServerUrlBox.Text.Trim();
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-        {
-            ShowStatus(InfoBarSeverity.Warning, global::CSIViewer.Core.Localization.Text("URL no válida"),
-                global::CSIViewer.Core.Localization.Text("Escribe una dirección http:// o https:// completa, por ejemplo http://localhost:5080."));
-            return false;
-        }
-
-        var previous = _state.Settings.ServerUrl;
-        _state.Settings.ServerUrl = url;
-        _state.Settings.AllowInsecureServer = AllowInsecureSwitch.IsOn;
-        _state.Settings.Normalize();
-
-        try
-        {
-            await _settings.SaveAsync(_state.Settings);
-            ServerStatusText.Text = _state.Settings.ServerUrl;
-            if (reconnect &&
-                !string.Equals(previous, _state.Settings.ServerUrl, StringComparison.OrdinalIgnoreCase))
-            {
-                await _client.DisconnectFromServerAsync();
-                await _client.ConnectToServerAsync();
-            }
-
-            ShowStatus(InfoBarSeverity.Success, global::CSIViewer.Core.Localization.Text("Servidor"),
-                reconnect ? global::CSIViewer.Core.Localization.Text("Servidor guardado. Reconectando…") : global::CSIViewer.Core.Localization.Text("Servidor guardado."));
-            return true;
-        }
-        catch (Exception ex)
-        {
-            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Servidor"),
-                global::CSIViewer.Core.Localization.Text("No se pudo guardar el servidor: ") + ex.GetBaseException().Message);
-            return false;
-        }
+        ServerStatusText.Text = await _diagnostics.TestServerAsync(ServerUrlBox.Text.Trim(), AllowInsecureSwitch.IsOn);
     }
 
     private async void BrowseDownloadFolder_Click(object sender, RoutedEventArgs e)
@@ -245,84 +188,32 @@ public sealed partial class HostSettingsPage : Page
         }
     }
 
-    private async void SaveDownloadFolder_Click(object sender, RoutedEventArgs e)
+    private void ConsentMode_SelectionChanged(object sender, SelectionChangedEventArgs e) { }
+
+    private async void WindowsLogin_Click(object sender, RoutedEventArgs e)
     {
-        _state.Settings.DownloadFolder = DownloadFolderBox.Text.Trim();
-        _state.Settings.Normalize();
         try
         {
-            await _settings.SaveAsync(_state.Settings);
-            DownloadFolderBox.Text = _state.Settings.DownloadFolder;
-            ShowStatus(InfoBarSeverity.Success, global::CSIViewer.Core.Localization.Text("Archivos"), global::CSIViewer.Core.Localization.Text("Carpeta de descargas guardada."));
+            var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "CSIViewer Host");
+            var script = Path.Combine(root, "configure-windows-login.ps1");
+            if (!string.Equals(Path.GetFullPath(AppContext.BaseDirectory).TrimEnd(Path.DirectorySeparatorChar), root, StringComparison.OrdinalIgnoreCase) || !File.Exists(script))
+                throw new InvalidOperationException();
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe"),
+                Arguments = $"-NoProfile -ExecutionPolicy RemoteSigned -File \"{script}\" -Mode Manage",
+                UseShellExecute = true, Verb = "runas", WorkingDirectory = root
+            });
         }
-        catch (Exception ex)
+        catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223) { }
+        catch
         {
-            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Archivos"),
-                global::CSIViewer.Core.Localization.Text("No se pudo guardar la carpeta: ") + ex.GetBaseException().Message);
-        }
-    }
-
-    private async void ConsentMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_loading)
-        {
-            return;
-        }
-
-        _state.Settings.HostConsentMode = ConsentModeCombo.SelectedIndex switch
-        {
-            1 => HostConsentMode.AcceptAutomatically,
-            2 => HostConsentMode.RejectAutomatically,
-            _ => HostConsentMode.Ask
-        };
-
-        try
-        {
-            await _settings.SaveAsync(_state.Settings);
-            ShowStatus(InfoBarSeverity.Success, global::CSIViewer.Core.Localization.Text("Solicitudes de conexión"),
-                _state.Settings.HostConsentMode switch
-                {
-                    HostConsentMode.AcceptAutomatically => global::CSIViewer.Core.Localization.Text("Las próximas solicitudes se aceptarán automáticamente con los permisos solicitados."),
-                    HostConsentMode.RejectAutomatically => global::CSIViewer.Core.Localization.Text("Las próximas solicitudes se rechazarán automáticamente."),
-                    _ => global::CSIViewer.Core.Localization.Text("Se preguntará antes de aceptar cada conexión.")
-                });
-        }
-        catch (Exception ex)
-        {
-            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Solicitudes de conexión"),
-                global::CSIViewer.Core.Localization.Text("No se pudo guardar la política: ") + ex.GetBaseException().Message);
-        }
-    }
-
-    private async void SaveQuality_Click(object sender, RoutedEventArgs e)
-    {
-        await SaveQualityAsync();
-    }
-
-    private async Task SaveQualityAsync()
-    {
-        var settings = _state.Settings;
-        settings.ImageQuality = (int)QualitySlider.Value;
-        settings.Fps = FpsCombo.SelectedItem is int fps ? fps : settings.Fps;
-        settings.MaxWidth = (int)MaxWidthSlider.Value;
-        settings.PreferH264 = H264Switch.IsOn;
-        settings.PreferModernCapture = ModernCaptureSwitch.IsOn;
-        settings.Normalize();
-
-        try
-        {
-            await _settings.SaveAsync(settings);
-            var applied = _client.IsHostCapturing;
-            await _client.RestartHostCaptureAsync();
-            ShowStatus(InfoBarSeverity.Success, global::CSIViewer.Core.Localization.Text("Calidad de imagen"),
-                applied
-                    ? global::CSIViewer.Core.Localization.Text("Calidad aplicada a la sesión actual.")
-                    : global::CSIViewer.Core.Localization.Text("Calidad guardada. Se aplicará al iniciar la próxima sesión."));
-        }
-        catch (Exception ex)
-        {
-            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Calidad de imagen"),
-                global::CSIViewer.Core.Localization.Text("No se pudo guardar la calidad: ") + ex.GetBaseException().Message);
+            await new ContentDialog
+            {
+                XamlRoot = XamlRoot, Title = global::CSIViewer.Core.Localization.Text("Acceso al inicio de Windows"),
+                Content = global::CSIViewer.Core.Localization.Text("Instala CSIViewer Host para todos los usuarios en la ruta predeterminada para configurar esta función."),
+                CloseButtonText = global::CSIViewer.Core.Localization.Text("Aceptar"), RequestedTheme = ThemeService.Current
+            }.ShowAsync();
         }
     }
 
@@ -337,7 +228,8 @@ public sealed partial class HostSettingsPage : Page
         try
         {
             var result = await _unattended.InstallAsync();
-            var success = result.StartsWith("Operación completada", StringComparison.Ordinal);
+            var success = _unattended.LastOperationSucceeded;
+            if (_unattended.LastConfirmedStatus is { } verified) _unattendedStatus = verified;
             ShowStatus(success ? InfoBarSeverity.Success : InfoBarSeverity.Error,
                 global::CSIViewer.Core.Localization.Text("Modo desatendido"), result);
         }
@@ -359,7 +251,8 @@ public sealed partial class HostSettingsPage : Page
         try
         {
             var result = await _unattended.UninstallAsync();
-            ShowStatus(result.StartsWith("Operación completada", StringComparison.Ordinal)
+            if (_unattended.LastConfirmedStatus is { } verified) _unattendedStatus = verified;
+            ShowStatus(_unattended.LastOperationSucceeded
                     ? InfoBarSeverity.Success
                     : InfoBarSeverity.Error,
                 global::CSIViewer.Core.Localization.Text("Modo desatendido"), result);
@@ -375,35 +268,51 @@ public sealed partial class HostSettingsPage : Page
     {
         if (!_unattendedBusy)
         {
-            await RefreshUnattendedStatusAsync();
+            await RefreshUnattendedStatusAsync(allowElevation: true);
         }
     }
 
-    private async Task RefreshUnattendedStatusAsync()
+    private async Task RefreshUnattendedStatusAsync(bool allowElevation = false)
     {
+        var request = ++_unattendedStatusRequest;
+        _unattendedChecking = true;
+        ApplyUnattendedButtons();
         try
         {
             UnattendedStatusText.Text = global::CSIViewer.Core.Localization.Text("Comprobando.");
-            var status = await _unattended.GetStatusAsync();
-            UnattendedStatusText.Text = status;
-            InstallUnattendedButton.IsEnabled = !_unattendedBusy && status == "No instalado";
-            UninstallUnattendedButton.IsEnabled = !_unattendedBusy && status != "No instalado";
+            var status = await _unattended.GetStatusDetailsAsync(allowElevation);
+            if (request != _unattendedStatusRequest) return;
+            _unattendedStatus = status;
+            UnattendedStatusText.Text = status.Text;
         }
         catch (Exception ex)
         {
+            if (request != _unattendedStatusRequest) return;
+            _unattendedStatus = new(HostStartupState.Unknown);
             UnattendedStatusText.Text = global::CSIViewer.Core.Localization.Text("No se pudo consultar");
             ShowStatus(InfoBarSeverity.Warning, global::CSIViewer.Core.Localization.Text("Modo desatendido"),
                 global::CSIViewer.Core.Localization.Text("No se pudo consultar el servicio: ") + ex.GetBaseException().Message);
+        }
+        finally
+        {
+            if (request == _unattendedStatusRequest) { _unattendedChecking = false; ApplyUnattendedButtons(); }
         }
     }
 
     private void SetUnattendedBusy(bool busy)
     {
         _unattendedBusy = busy;
+        if (busy) { ++_unattendedStatusRequest; _unattendedChecking = false; }
+        ApplyUnattendedButtons();
+    }
+
+    private void ApplyUnattendedButtons()
+    {
+        var busy = _unattendedBusy || _unattendedChecking;
         UnattendedBusyRing.IsActive = busy;
         UnattendedBusyRing.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
-        InstallUnattendedButton.IsEnabled = !busy;
-        UninstallUnattendedButton.IsEnabled = !busy;
+        InstallUnattendedButton.IsEnabled = !busy && _unattendedStatus.CanActivate;
+        UninstallUnattendedButton.IsEnabled = !busy && _unattendedStatus.CanDeactivate;
     }
 
     private async void ClearHistory_Click(object sender, RoutedEventArgs e)

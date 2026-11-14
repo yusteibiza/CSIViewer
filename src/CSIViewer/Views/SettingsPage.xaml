@@ -13,10 +13,19 @@
     <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled" HorizontalContentAlignment="Stretch" VerticalScrollBarVisibility="Auto">
         <Grid Padding="{StaticResource PagePadding}" HorizontalAlignment="Stretch">
         <StackPanel Spacing="16">
+            <Grid ColumnSpacing="12" RowSpacing="8" SizeChanged="ConfigurationHeader_SizeChanged">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
             <StackPanel Spacing="4">
                 <TextBlock Text="Configuración" Style="{StaticResource PageTitleStyle}" loc:Translate.Text="Configuración" />
                 <TextBlock Text="Apariencia, servidor, calidad de imagen, archivos y privacidad." Style="{StaticResource MutedTextStyle}" loc:Translate.Text="Apariencia, servidor, calidad de imagen, archivos y privacidad." />
             </StackPanel>
+                <loc:WrapPanel x:Name="ConfigurationActions" Grid.Column="1" Spacing="8" HorizontalAlignment="Right" MaxWidth="490">
+                    <Button Content="Valores por defecto" Click="DefaultSettings_Click" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Valores por defecto" />
+                    <Button Content="Restablecer" Click="RestoreSettings_Click" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Restablecer" />
+                    <Button Content="Guardar configuración" Click="Save_Click" Style="{StaticResource PrimaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar configuración" />
+                </loc:WrapPanel>
+            </Grid>
 
             <InfoBar x:Name="SettingsStatusBar" IsOpen="False" Severity="Informational" IsClosable="True" />
 
@@ -74,7 +83,6 @@
                         <TextBox x:Name="EnrollmentCodeBox" PlaceholderText="DEV-1234" MaxLength="128" loc:Translate.PlaceholderText="DEV-1234" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Button Content="Guardar y reconectar" Click="SaveAndReconnect_Click" Style="{StaticResource PrimaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar y reconectar" />
                         <TextBlock x:Name="ServerHintText" VerticalAlignment="Center" Style="{StaticResource MutedTextStyle}" loc:Translate.Text="Sin conexión" />
                     </StackPanel>
                 </StackPanel>
@@ -325,7 +333,6 @@
             </Border>
 
             <loc:WrapPanel Spacing="10">
-                <Button Content="Guardar configuración" Click="Save_Click" Style="{StaticResource PrimaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Guardar configuración" />
                 <Button Content="Revocar todo el acceso" Click="RevokeAll_Click" Style="{StaticResource DangerButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Revocar todo el acceso" />
                 <Button Content="Abrir carpeta de logs" Click="OpenLogs_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Abrir carpeta de logs" />
             </loc:WrapPanel>

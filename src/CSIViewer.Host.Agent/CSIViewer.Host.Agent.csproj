@@ -18,6 +18,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Shared\ProtectedInstallation.cs" Link="Security\ProtectedInstallation.cs" />
     <Content Include="Assets\Appicon.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

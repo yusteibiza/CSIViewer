@@ -20,23 +20,26 @@ public sealed class DiagnosticsService
         _logger = logger;
     }
 
-    public async Task<string> TestServerAsync(CancellationToken cancellationToken = default)
+    public Task<string> TestServerAsync(CancellationToken cancellationToken = default) =>
+        TestServerAsync(_state.Settings.ServerUrl, _state.Settings.AllowInsecureServer, cancellationToken);
+
+    public async Task<string> TestServerAsync(string serverUrl, bool allowInsecureServer, CancellationToken cancellationToken = default)
     {
         try
         {
             ServerEndpointSecurity.EnsureAllowed(
-                _state.Settings.ServerUrl,
-                _state.Settings.AllowInsecureServer);
+                serverUrl,
+                allowInsecureServer);
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex) when (ex is InvalidOperationException or UriFormatException or ArgumentException)
         {
             return ex.Message;
         }
 
-        var ok = await _api.CheckHealthAsync(_state.Settings.ServerUrl, cancellationToken).ConfigureAwait(false);
+        var ok = await _api.CheckHealthAsync(serverUrl, cancellationToken).ConfigureAwait(false);
         return ok
-            ? global::CSIViewer.Core.Localization.Format("Servidor accesible: {0}",_state.Settings.ServerUrl)
-            : global::CSIViewer.Core.Localization.Format("No se pudo contactar con {0}",_state.Settings.ServerUrl);
+            ? global::CSIViewer.Core.Localization.Format("Servidor accesible: {0}",serverUrl)
+            : global::CSIViewer.Core.Localization.Format("No se pudo contactar con {0}",serverUrl);
     }
 
     public async Task<string> TestStunAsync(CancellationToken cancellationToken = default)

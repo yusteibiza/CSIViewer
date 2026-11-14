@@ -28,7 +28,7 @@ UninstallDisplayName=CSIViewer Host
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
-PrivilegesRequired=lowest
+PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
 UsePreviousPrivileges=no
 ArchitecturesAllowed=x64compatible
@@ -50,20 +50,25 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "host_service"; Description: "Iniciar CSIViewer Host al arrancar Windows (tarea programada, todos los usuarios)"; GroupDescription: "Inicio automático"; Check: IsAdminInstallMode
+Name: "windows_login"; Description: "Configurar acceso al inicio de Windows (candidato, requiere administrador y clave de equipo)"; GroupDescription: "Acceso desatendido al login"; Flags: unchecked; Check: IsAdminInstallMode
 
 [Files]
 Source: "..\artifacts\installers\payload\host\ui\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\artifacts\installers\payload\host\agent\*"; DestDir: "{app}\agent"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\scripts\install-host-autostart.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\artifacts\installers\payload\host\login\*"; DestDir: "{app}\login"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsAdminInstallMode
+Source: "..\scripts\configure-windows-login.ps1"; DestDir: "{app}"; Flags: ignoreversion; Check: IsAdminInstallMode
 
 [Icons]
 Name: "{autoprograms}\CSIViewer\CSIViewer Host"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Comment: "Ventana de anfitrión de CSIViewer"
 Name: "{autodesktop}\CSIViewer Host"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{autoprograms}\CSIViewer\Acceso al inicio de Windows"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy RemoteSigned -File ""{app}\configure-windows-login.ps1"" -Mode Manage"; WorkingDir: "{app}"; IconFilename: "{app}\{#MyAppExeName}"; Check: IsAdminInstallMode
 
 [Run]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\install-host-autostart.ps1"" -ServiceExe ""{app}\agent\CSIViewer.Host.Agent.exe"""; StatusMsg: "Instalando el inicio automático de CSIViewer Host..."; Flags: runhidden waituntilterminated; Tasks: host_service; Check: IsAdminInstallMode
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy RemoteSigned -File ""{app}\configure-windows-login.ps1"" -Mode Configure"; StatusMsg: "Configurando el acceso al inicio de Windows..."; Flags: waituntilterminated; Tasks: windows_login; Check: IsAdminInstallMode
 
 [UninstallRun]
+Filename: "{app}\login\CSIViewer.Host.Login.exe"; Parameters: "--disable"; Flags: runhidden waituntilterminated; RunOnceId: "DisableWindowsLogin"; Check: IsAdmin
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\install-host-autostart.ps1"" -Uninstall"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveHostService"; Check: IsAdmin
 
 [Code]
@@ -74,7 +79,9 @@ begin
   // Stop the service first so it releases the service binaries.
   Exec('sc.exe', 'stop CSIViewerHost', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   Exec('schtasks.exe', '/End /TN CSIViewerHost', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Sleep(1200);
+  Sleep(8500);
+  Exec('taskkill.exe', '/IM "CSIViewer.Host.Login.exe" /F', '', SW_HIDE,
+       ewWaitUntilTerminated, ResultCode);
   // The UI can be minimized to the notification area; close it explicitly.
   Exec('taskkill.exe', '/IM "CSIViewer.Host.exe" /F', '', SW_HIDE,
        ewWaitUntilTerminated, ResultCode);
@@ -102,7 +109,23 @@ begin
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+  Arguments: String;
+  Started: Boolean;
 begin
-  // El inicio automático es opcional: puede activarse después desde
-  // Configuración > Modo desatendido, así que no se muestra ningún aviso.
+  if (CurStep <> ssPostInstall) or (not IsAdminInstallMode) then Exit;
+  Arguments := '-NoProfile -ExecutionPolicy Bypass -File "' +
+    ExpandConstant('{app}\install-host-autostart.ps1') + '" -ServiceExe "' +
+    ExpandConstant('{app}\agent\CSIViewer.Host.Agent.exe') + '"';
+  if not WizardIsTaskSelected('host_service') then
+    Arguments := Arguments + ' -RepairReadAccess';
+  ResultCode := -1;
+  Started := Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+    Arguments, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if (not Started) or (ResultCode <> 0) then
+  begin
+    Log(Format('No se pudo confirmar el inicio automatico o su lectura. Codigo %d.', [ResultCode]));
+    MsgBox(Format('No se ha podido confirmar el inicio automático o el permiso para consultar su estado (código %d). La aplicación se ha instalado, pero revisa Configuración > Modo desatendido. No se dará la activación por completada.', [ResultCode]), mbError, MB_OK);
+  end;
 end;

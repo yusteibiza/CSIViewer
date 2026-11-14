@@ -390,6 +390,7 @@ public sealed partial class DevicesPage : Page
         try
         {
             await _repository.UpsertAsync(device);
+            App.Services.GetRequiredService<RemoteClient>().RestoreChatForSavedDevice(device.DeviceId);
             if (existing is null)
             {
                 _state.KnownDevices.Add(device);
@@ -428,7 +429,7 @@ public sealed partial class DevicesPage : Page
             RequestedTheme = ThemeService.Current,
             XamlRoot = MainWindow.Instance?.Content?.XamlRoot,
             Title = "Eliminar dispositivo",
-            Content = global::CSIViewer.Core.Localization.Format("¿Quieres quitar «{0}» ({1}) de tus dispositivos guardados?\n\nNo se desinstala nada en el equipo remoto.",row.Alias,row.DeviceId),
+            Content = global::CSIViewer.Core.Localization.Format("¿Quieres eliminar «{0}» ({1}) de tus dispositivos guardados? También se borrará su historial de chat.",row.Alias,row.DeviceId),
             PrimaryButtonText = global::CSIViewer.Core.Localization.Text("Eliminar"),
             CloseButtonText = global::CSIViewer.Core.Localization.Text("Cancelar"),
             DefaultButton = ContentDialogButton.Close
@@ -441,7 +442,7 @@ public sealed partial class DevicesPage : Page
 
         try
         {
-            await _repository.DeleteAsync(row.Device.DeviceId);
+            await App.Services.GetRequiredService<RemoteClient>().DeleteKnownDeviceAsync(row.Device.DeviceId);
             _state.KnownDevices.Remove(row.Device);
             ApplyFilter();
         }

@@ -32,6 +32,9 @@ public sealed class ServerHost : IAsyncDisposable
     private readonly List<string> _upnpMessages = [];
     private WebApplication? _app;
     private LoggingOptions? _loggingOptions;
+    private readonly object _disposeGate = new();
+    private Task? _disposeTask;
+    private int _disposed;
 
     public bool IsRunning => _app is not null;
     public string? ActiveUrl { get; private set; }
@@ -78,6 +81,7 @@ public sealed class ServerHost : IAsyncDisposable
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
             if (_app is not null)
             {
                 return;
@@ -141,14 +145,11 @@ public sealed class ServerHost : IAsyncDisposable
             {
                 url = settings.ExplicitUrl;
             }
-            else if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
-            {
-                builder.WebHost.UseUrls(url);
-            }
-            else
+            else if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
             {
                 url = Environment.GetEnvironmentVariable("ASPNETCORE_URLS")!;
             }
+            builder.WebHost.UseUrls(url);
 
             builder.Services.AddDbContextFactory<ServerDbContext>(options =>
                 options.UseSqlite($"Data Source={settings.DatabasePath}"));
@@ -158,6 +159,7 @@ public sealed class ServerHost : IAsyncDisposable
             builder.Services.AddSingleton(new ServerOptions
             {
                 EnrollmentCode = settings.EnrollmentCode,
+                EnrollmentVerifier = settings.EnrollmentVerifier,
                 ServerName = settings.ServerName,
                 MaxSessionsPerHost = settings.MaxSessionsPerHost
             });
@@ -193,7 +195,7 @@ public sealed class ServerHost : IAsyncDisposable
                         // WAL is an optimization.
                     }
                 }
-            if (settings.EnrollmentCode is "DEV-1234" or { Length: < 12 })
+            if (string.IsNullOrWhiteSpace(settings.EnrollmentVerifier) && settings.EnrollmentCode is ("DEV-1234" or { Length: < 12 }))
             {
                 app.Logger.LogWarning(
                     "El código de inscripción es débil o el valor por defecto. " +
@@ -258,7 +260,7 @@ public sealed class ServerHost : IAsyncDisposable
                     return Results.BadRequest(new { error = "invalid_public_key" });
                 }
 
-                if (string.IsNullOrWhiteSpace(options.EnrollmentCode))
+                if (string.IsNullOrWhiteSpace(options.EnrollmentCode) && string.IsNullOrWhiteSpace(options.EnrollmentVerifier))
                 {
                     await registry.AuditAsync(
                         "device.registration_denied",
@@ -275,7 +277,7 @@ public sealed class ServerHost : IAsyncDisposable
                 }
 
                 if (!MessageValidation.IsValidSecret(request.EnrollmentCode) ||
-                    !FixedTimeEquals(request.EnrollmentCode, options.EnrollmentCode))
+                    !VerifyEnrollment(request.EnrollmentCode, options))
                 {
                     await registry.AuditAsync(
                         "device.registration_denied",
@@ -919,8 +921,6 @@ public sealed class ServerHost : IAsyncDisposable
             });
 
                 await app.StartAsync(cancellationToken).ConfigureAwait(false);
-                _app = app;
-                ActiveUrl = url;
 
                 _upnpMessages.Clear();
                 UpnpFailed = false;
@@ -963,12 +963,24 @@ public sealed class ServerHost : IAsyncDisposable
                         }
                     }
                 }
+                ActiveUrl = app.Urls.FirstOrDefault() ?? url;
+                _app = app;
             }
             catch
             {
-                if (app is not null)
+                try
                 {
-                    await app.DisposeAsync().ConfigureAwait(false);
+                    using var cleanupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    await _upnpTcp.UnmapAsync(cleanupTimeout.Token).ConfigureAwait(false);
+                    await _upnpStun.UnmapAsync(cleanupTimeout.Token).ConfigureAwait(false);
+                }
+                catch { /* Best effort rollback of any mapping created before startup failed. */ }
+                finally
+                {
+                    _app = null;
+                    ActiveUrl = null;
+                    _loggingOptions = null;
+                    if (app is not null) await app.DisposeAsync().ConfigureAwait(false);
                 }
 
                 throw;
@@ -1031,12 +1043,25 @@ public sealed class ServerHost : IAsyncDisposable
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        await StopAsync().ConfigureAwait(false);
-        _upnpTcp.Dispose();
-        _upnpStun.Dispose();
-        _gate.Dispose();
+        lock (_disposeGate)
+        {
+            return new ValueTask(_disposeTask ??= DisposeCoreAsync());
+        }
+    }
+
+    private async Task DisposeCoreAsync()
+    {
+        Interlocked.Exchange(ref _disposed, 1);
+        try { await StopAsync().ConfigureAwait(false); }
+        finally
+        {
+            _upnpTcp.Dispose();
+            _upnpStun.Dispose();
+            // Queued Start/Stop callers may still use this managed semaphore.
+            // No WaitHandle is created, so leave its collection to the GC.
+        }
     }
     private static X509Certificate2? FindCertificate(string thumbprint)
     {
@@ -1154,12 +1179,23 @@ public sealed class ServerHost : IAsyncDisposable
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(options.EnrollmentCode))
+        if (string.IsNullOrWhiteSpace(options.EnrollmentCode) && string.IsNullOrWhiteSpace(options.EnrollmentVerifier))
         {
             return false;
         }
 
         var provided = context.Request.Headers["X-Enrollment-Code"].ToString();
+        return VerifyEnrollment(provided, options);
+    }
+
+    internal static bool VerifyEnrollment(string? provided, ServerOptions options)
+    {
+        if (!string.IsNullOrWhiteSpace(options.EnrollmentVerifier))
+        {
+            var parts = options.EnrollmentVerifier.Split(':');
+            if (parts.Length != 2 || parts[0].Length != 24 || parts[1].Length != 44 || string.IsNullOrEmpty(provided)) return false;
+            return PasswordHasher.Verify(provided, parts[0], parts[1]);
+        }
         return FixedTimeEquals(provided, options.EnrollmentCode);
     }
 

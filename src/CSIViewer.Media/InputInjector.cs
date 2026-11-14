@@ -9,7 +9,7 @@ public sealed record InputInjectionDiagnostics(
     uint Flags, uint Requested, uint Inserted, int LastError,
     int? CursorX, int? CursorY, int DpiAwareness);
 
-public sealed class InputInjector
+public sealed class InputInjector : IHostInput
 {
     private readonly PressedInputState _pressed = new();
 

@@ -16,6 +16,9 @@ public sealed class ServerRuntimeSettings
     public bool ListenOnAllInterfaces { get; set; }
     public string EnrollmentCode { get; set; } = global::CSIViewer.Core.Localization.Text("DEV-1234");
     public string ProtectedEnrollmentCode { get; set; } = "";
+    // Service command lines contain only a salted PBKDF2 verifier, never the code.
+    [JsonIgnore]
+    public string EnrollmentVerifier { get; set; } = "";
     public string ServerName { get; set; } = global::CSIViewer.Core.Localization.Text("CSIViewer Servidor");
     public string DatabasePath { get; set; } = GetDefaultDatabasePath();
     public bool AutoStartWithUi { get; set; }

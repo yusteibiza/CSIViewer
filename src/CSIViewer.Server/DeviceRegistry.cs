@@ -8,6 +8,7 @@ namespace CSIViewer.Server;
 public sealed class ServerOptions
 {
     public string EnrollmentCode { get; set; } = global::CSIViewer.Core.Localization.Text("DEV-1234");
+    public string EnrollmentVerifier { get; set; } = "";
     public string ServerName { get; set; } = global::CSIViewer.Core.Localization.Text("CSIViewer Servidor");
     public int MaxSessionsPerHost { get; set; } = 10;
 }

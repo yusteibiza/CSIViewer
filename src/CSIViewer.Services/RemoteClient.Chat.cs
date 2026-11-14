@@ -10,8 +10,38 @@ public sealed partial class RemoteClient
     private readonly SemaphoreSlim _chatHistoryGate = new(1, 1);
     private readonly bool _retainChatHistory;
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, long> _chatHistoryVersions = new(StringComparer.Ordinal);
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> _removedChatDevices = new(StringComparer.Ordinal);
+    public event EventHandler<string>? KnownDeviceDeleted;
 
-    public bool CanChatWithDevice(string peerDeviceId) => FindChatSession(peerDeviceId) is not null;
+    public bool IsChatDeviceRemoved(string deviceId) => _removedChatDevices.ContainsKey(deviceId);
+
+    public void RestoreChatForSavedDevice(string deviceId) => _removedChatDevices.TryRemove(deviceId, out _);
+
+    public async Task DeleteKnownDeviceAsync(string deviceId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(deviceId);
+        await _chatHistoryGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Repository deletes device + stored thread in one transaction.
+            // Serialize against chat loads/saves so old queued work cannot revive it.
+            await _knownDevices.DeleteAsync(deviceId, cancellationToken).ConfigureAwait(false);
+            _removedChatDevices[deviceId] = 0;
+            var deletionVersion = _chatHistoryVersions.AddOrUpdate(deviceId, 1, (_, version) => version + 1);
+            _state.Post(() =>
+            {
+                if (!IsChatDeviceRemoved(deviceId) || _chatHistoryVersions.GetOrAdd(deviceId, 0) != deletionVersion) return;
+                for (var i = _state.ChatMessages.Count - 1; i >= 0; i--)
+                    if (_state.ChatMessages[i].PeerDeviceId == deviceId) _state.ChatMessages.RemoveAt(i);
+                for (var i = _state.KnownDevices.Count - 1; i >= 0; i--)
+                    if (_state.KnownDevices[i].DeviceId == deviceId) _state.KnownDevices.RemoveAt(i);
+                KnownDeviceDeleted?.Invoke(this, deviceId);
+            });
+        }
+        finally { _chatHistoryGate.Release(); }
+    }
+
+    public bool CanChatWithDevice(string peerDeviceId) => !IsChatDeviceRemoved(peerDeviceId) && FindChatSession(peerDeviceId) is not null;
 
     private RemoteSession? FindChatSession(string peerDeviceId) => _sessions.Values.FirstOrDefault(x =>
         x.RemoteDeviceId == peerDeviceId && x.State == ConnectionState.Connected && x.Permissions.HasFlag(SessionPermissions.Chat));
@@ -21,6 +51,7 @@ public sealed partial class RemoteClient
 
     public async Task<ChatMessage?> SendChatToDeviceAsync(string peerDeviceId, string text, CancellationToken cancellationToken = default)
     {
+        if (IsChatDeviceRemoved(peerDeviceId)) return null;
         var session = FindChatSession(peerDeviceId);
         if (session is null)
         {
@@ -75,6 +106,7 @@ public sealed partial class RemoteClient
 
     private async Task HandleIncomingChatCoreAsync(byte[] payload, string peerId, string? peerName, Guid? sessionId = null)
     {
+        if (IsChatDeviceRemoved(peerId)) return;
         ChatPayload? chat;
         try
         {
@@ -111,6 +143,7 @@ public sealed partial class RemoteClient
             ChatDeliveryState.Received);
 
         await StoreChatMessageAsync(message, sessionId: sessionId).ConfigureAwait(false);
+        if (IsChatDeviceRemoved(peerId)) return;
 
         if (_state.Settings.NotificationsEnabled)
         {
@@ -127,6 +160,7 @@ public sealed partial class RemoteClient
         await _chatHistoryGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (IsChatDeviceRemoved(peerDeviceId)) return;
             var messages = await _chatRepository.GetThreadAsync(peerDeviceId, 500, cancellationToken)
                 .ConfigureAwait(false);
             var version = _chatHistoryVersions.GetOrAdd(peerDeviceId, 0);
@@ -182,6 +216,7 @@ public sealed partial class RemoteClient
         await _chatHistoryGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (IsChatDeviceRemoved(message.PeerDeviceId)) return;
             if (!_retainChatHistory && (sessionId is not { } id || !_sessions.ContainsKey(id))) return;
             try { if (_retainChatHistory) await _chatRepository.AddAsync(message, cancellationToken).ConfigureAwait(false); }
             catch (Exception ex) { _logger.LogDebug(ex, "Could not persist chat message"); }

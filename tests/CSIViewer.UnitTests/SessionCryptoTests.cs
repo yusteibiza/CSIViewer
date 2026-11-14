@@ -90,6 +90,98 @@ public sealed class SessionCryptoTests
     }
 
     [TestMethod]
+    public void DisposedReceiver_RejectsFramesUsingClearedKey()
+    {
+        var sessionId = Guid.NewGuid();
+        using var receiver = new SessionCrypto(sessionId, isController: false, CreateKeys());
+        receiver.Dispose();
+        using var sender = new SessionCrypto(sessionId, isController: true,
+            new SessionKeys(new byte[32], new byte[32], new byte[32]));
+        var forged = sender.Encrypt(SessionFrameKind.Input, "delayed"u8);
+
+        Assert.IsFalse(receiver.TryDecrypt(forged, out _, out var plaintext));
+        Assert.IsEmpty(plaintext);
+    }
+
+    [TestMethod]
+    public void DisposedSender_RejectsEncryption()
+    {
+        using var sender = new SessionCrypto(Guid.NewGuid(), isController: true, CreateKeys());
+        sender.Dispose();
+
+        Assert.ThrowsExactly<ObjectDisposedException>(() =>
+            sender.Encrypt(SessionFrameKind.Chat, "late"u8));
+    }
+
+    [TestMethod]
+    public async Task OrderedSend_PreventsTransportOvertakingAcrossFrameKinds()
+    {
+        var sessionId = Guid.NewGuid();
+        var keys = CreateKeys();
+        using var sender = new SessionCrypto(sessionId, true, keys);
+        using var receiver = new SessionCrypto(sessionId, false, keys);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var frames = new List<byte[]>();
+        var secondEntered = false;
+        var first = sender.EncryptAndSendAsync(SessionFrameKind.Video, new byte[] { 1 }, async (frame, token) =>
+        {
+            entered.TrySetResult();
+            await release.Task.WaitAsync(token);
+            frames.Add(frame);
+        });
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        var second = sender.EncryptAndSendAsync(SessionFrameKind.Input, new byte[] { 2 }, (frame, _) =>
+        {
+            secondEntered = true;
+            frames.Add(frame);
+            return Task.CompletedTask;
+        });
+        try
+        {
+            Assert.IsFalse(secondEntered, "A later nonce must not overtake a blocked transport submission.");
+            Assert.IsFalse(second.IsCompleted);
+        }
+        finally
+        {
+            release.TrySetResult();
+            await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(3));
+        }
+        Assert.HasCount(2, frames);
+        Assert.IsTrue(receiver.TryDecrypt(frames[0], out var firstKind, out _));
+        Assert.IsTrue(receiver.TryDecrypt(frames[1], out var secondKind, out _));
+        Assert.AreEqual(SessionFrameKind.Video, firstKind);
+        Assert.AreEqual(SessionFrameKind.Input, secondKind);
+    }
+
+    [TestMethod]
+    public async Task OrderedSend_CancellationAndTransportFailureReleaseQueue()
+    {
+        using var sender = new SessionCrypto(Guid.NewGuid(), true, CreateKeys());
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var first = sender.EncryptAndSendAsync(SessionFrameKind.Chat, new byte[] { 1 }, async (_, token) =>
+        {
+            entered.TrySetResult();
+            await release.Task.WaitAsync(token);
+            throw new IOException("synthetic transport failure");
+        });
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        using var cancellation = new CancellationTokenSource();
+        var canceled = sender.EncryptAndSendAsync(SessionFrameKind.Chat, new byte[] { 2 },
+            (_, _) => throw new AssertFailedException("Canceled queued frame must not reach transport."), cancellation.Token);
+        cancellation.Cancel();
+        try
+        {
+            await Assert.ThrowsExactlyAsync<OperationCanceledException>(() => canceled);
+        }
+        finally { release.TrySetResult(); }
+        await Assert.ThrowsExactlyAsync<IOException>(() => first);
+        await sender.EncryptAndSendAsync(SessionFrameKind.Chat, new byte[] { 3 }, (_, _) => Task.CompletedTask)
+            .WaitAsync(TimeSpan.FromSeconds(3));
+    }
+
+    [TestMethod]
     public void WrongSessionId_IsRejected()
     {
         var keys = CreateKeys();

@@ -26,9 +26,10 @@ public sealed partial class RemoteClient : IAsyncDisposable
     private readonly IConsentService _consent;
     private readonly INotificationService _notifications;
     private readonly ILogger<RemoteClient> _logger;
-    private readonly GdiScreenCapture _capture = new();
+    private readonly IHostCapture _capture;
     private readonly WindowsGraphicsCapture _modernCapture = new();
-    private readonly InputInjector _input = new();
+    private readonly IHostInput _input;
+    private readonly bool _systemLoginDesktop;
     private H264Encoder? _h264Encoder;
     private H264Decoder? _h264Decoder;
     private int _h264Width;
@@ -73,9 +74,14 @@ public sealed partial class RemoteClient : IAsyncDisposable
         IConsentService consent,
         INotificationService notifications,
         ILogger<RemoteClient> logger,
-        ChatHistoryOptions? chatHistoryOptions = null)
+        ChatHistoryOptions? chatHistoryOptions = null,
+        HostDesktopOptions? desktopOptions = null)
     {
         _state = state;
+        _systemLoginDesktop = desktopOptions?.SystemLoginDesktop == true;
+        var desktopState = _systemLoginDesktop ? new SystemDesktopState() : null;
+        _capture = _systemLoginDesktop ? new SystemDesktopCapture(desktopState) : new GdiScreenCapture();
+        _input = _systemLoginDesktop ? new SystemDesktopInput(desktopState) : new InputInjector();
         _identity = identity;
         _settingsStore = settingsStore;
         _knownDevices = knownDevices;

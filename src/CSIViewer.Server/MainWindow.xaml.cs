@@ -22,13 +22,20 @@ namespace CSIViewer.Server;
 
 public sealed partial class MainWindow : Window
 {
-    private readonly ServerRuntimeSettings _settings;
+    private void ConfigurationHeader_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var narrow = e.NewSize.Width < 850;
+        Grid.SetRow(ConfigurationActions, narrow ? 1 : 0);
+        Grid.SetColumn(ConfigurationActions, narrow ? 0 : 1);
+        Grid.SetColumnSpan(ConfigurationActions, narrow ? 2 : 1);
+    }
+
+    private ServerRuntimeSettings _settings;
     private readonly ServerHost _host = new();
     private readonly DispatcherQueueTimer _placementSaveTimer;
     private ServerTrayIcon? _tray;
     private bool _busy;
     private bool _loaded;
-    private bool _suppressThemeChange;
     private bool _exitRequested;
     private bool _hasNormalRect;
     private RectInt32 _lastNormalRect;
@@ -36,6 +43,7 @@ public sealed partial class MainWindow : Window
     private readonly ServerServiceManager _serviceManager = new();
     private ServerServiceStatus? _serviceStatus;
     private bool _serviceBusy;
+    private bool _confirming;
 
     public MainWindow(ServerCommandLine commandLine)
     {
@@ -108,7 +116,6 @@ public sealed partial class MainWindow : Window
         AutoStartSwitch.IsOn = _settings.AutoStartWithUi;
         ApplyLogLevelSelection(_settings.LogLevel);
 
-        _suppressThemeChange = true;
         AccentColorCombo.ItemsSource = CSIViewer.Core.AccentPalette.Choices;
         LanguageCombo.ItemsSource = CSIViewer.Core.Localization.Languages;
         LanguageCombo.SelectedItem = CSIViewer.Core.Localization.Languages.First(x => x.Code == _settings.Language);
@@ -119,7 +126,6 @@ public sealed partial class MainWindow : Window
             ServerTheme.Dark => 2,
             _ => 0
         };
-        _suppressThemeChange = false;
         ApplyTheme(_settings.Theme);
         UpdateStatus();
         var serviceStatus = await RefreshServiceStatusAsync();
@@ -376,50 +382,14 @@ public sealed partial class MainWindow : Window
     }
 
     private void ThemeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_suppressThemeChange || !_loaded)
-        {
-            return;
-        }
-
-        var tag = (ThemeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-        _settings.Theme = tag switch
-        {
-            "Light" => ServerTheme.Light,
-            "Dark" => ServerTheme.Dark,
-            _ => ServerTheme.System
-        };
-        ApplyTheme(_settings.Theme);
-        SaveAppearance();
-    }
+    { }
 
     private void AccentColorCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_suppressThemeChange || !_loaded || AccentColorCombo.SelectedItem is not CSIViewer.Core.AccentChoice choice) return;
-        _settings.AccentColor = choice.Value;
-        CSIViewer.Presentation.AccentAppearance.Apply(choice.Value, RootGrid);
-        SaveAppearance();
-    }
+    { }
 
-    private void SaveAppearance()
-    {
-        try
-        {
-            // Appearance never rewrites startup registration or applies pending
-            // port/network/service edits from the rest of the window.
-            ServerSettingsStore.Save(_settings);
-            SaveHint.Text = global::CSIViewer.Core.Localization.Format("Apariencia guardada a las {0:HH:mm}",DateTime.Now);
-        }
-        catch (Exception ex) { ShowStatus(InfoBarSeverity.Warning, global::CSIViewer.Core.Localization.Text("Apariencia"), global::CSIViewer.Core.Localization.Text("No se pudo guardar: ") + ex.Message); }
-    }
 
     private void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_suppressThemeChange || !_loaded || LanguageCombo.SelectedItem is not CSIViewer.Core.LanguageChoice choice) return;
-        _settings.Language = choice.Code;
-        CSIViewer.Presentation.Translate.Apply(RootGrid, choice.Code);
-        SaveAppearance();
-    }
+    { }
 
     private async void StartServer_Click(object sender, RoutedEventArgs e)
     {
@@ -428,7 +398,7 @@ public sealed partial class MainWindow : Window
 
     private async Task StartServerAsync()
     {
-        if (_busy || _host.IsRunning)
+        if (_busy || _serviceBusy || _confirming || _host.IsRunning)
         {
             return;
         }
@@ -443,17 +413,10 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        if (!ReadSettingsFromUi(out var validationError))
-        {
-            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Configuración no válida"), validationError);
-            return;
-        }
-
         _busy = true;
         UpdateStatus();
         try
         {
-            ServerSettingsStore.Save(_settings);
             await _host.StartAsync(_settings);
 
             var upnpMessage = string.Join(" ", _host.UpnpMessages);
@@ -521,13 +484,13 @@ public sealed partial class MainWindow : Window
         _serviceStatus = status;
         ServiceRunningDot.Visibility = status.Running ? Visibility.Visible : Visibility.Collapsed;
         ServiceStoppedDot.Visibility = status.Running ? Visibility.Collapsed : Visibility.Visible;
-        ServiceStatusText.Text = status.Installed
+        ServiceStatusText.Text = !status.IsKnown ? status.Description : status.Installed
             ? $"Servicio instalado: {status.Description.ToLowerInvariant()}"
             : global::CSIViewer.Core.Localization.Text("Servicio no instalado. El servidor solo se ejecuta desde esta ventana.");
-        CreateServiceButton.IsEnabled = !_serviceBusy && !status.Installed;
-        DeleteServiceButton.IsEnabled = !_serviceBusy && status.Installed;
-        StartServiceButton.IsEnabled = !_serviceBusy && status.Installed && !status.Running;
-        StopServiceButton.IsEnabled = !_serviceBusy && status.Installed && status.Running;
+        CreateServiceButton.IsEnabled = !_serviceBusy && status.IsKnown && !status.Installed;
+        DeleteServiceButton.IsEnabled = !_serviceBusy && status.IsKnown && status.Installed;
+        StartServiceButton.IsEnabled = !_serviceBusy && status.IsKnown && status.Installed && !status.Running;
+        StopServiceButton.IsEnabled = !_serviceBusy && status.IsKnown && status.Installed && status.Running;
         RefreshServiceButton.IsEnabled = !_serviceBusy;
         UpdateStatus();
         return status;
@@ -538,11 +501,13 @@ public sealed partial class MainWindow : Window
         _serviceBusy = busy;
         ServiceBusyRing.IsActive = busy;
         ServiceBusyRing.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
-        CreateServiceButton.IsEnabled = !busy && _serviceStatus?.Installed != true;
-        DeleteServiceButton.IsEnabled = !busy && _serviceStatus?.Installed == true;
-        StartServiceButton.IsEnabled = !busy && _serviceStatus?.Installed == true && _serviceStatus?.Running != true;
-        StopServiceButton.IsEnabled = !busy && _serviceStatus?.Installed == true && _serviceStatus?.Running == true;
+        var known = _serviceStatus?.IsKnown == true;
+        CreateServiceButton.IsEnabled = !busy && known && _serviceStatus?.Installed != true;
+        DeleteServiceButton.IsEnabled = !busy && known && _serviceStatus?.Installed == true;
+        StartServiceButton.IsEnabled = !busy && known && _serviceStatus?.Installed == true && _serviceStatus?.Running != true;
+        StopServiceButton.IsEnabled = !busy && known && _serviceStatus?.Installed == true && _serviceStatus?.Running == true;
         RefreshServiceButton.IsEnabled = !busy;
+        UpdateStatus();
     }
 
     private async void RefreshService_Click(object sender, RoutedEventArgs e) =>
@@ -550,14 +515,8 @@ public sealed partial class MainWindow : Window
 
     private async void CreateService_Click(object sender, RoutedEventArgs e)
     {
-        if (_serviceBusy)
+        if (_busy || _serviceBusy || _serviceStatus?.IsKnown != true)
         {
-            return;
-        }
-
-        if (!ReadSettingsFromUi(out var validationError))
-        {
-            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Configuración no válida"), validationError);
             return;
         }
 
@@ -610,7 +569,7 @@ public sealed partial class MainWindow : Window
 
     private async void DeleteService_Click(object sender, RoutedEventArgs e)
     {
-        if (_serviceBusy)
+        if (_busy || _serviceBusy || _serviceStatus?.IsKnown != true)
         {
             return;
         }
@@ -642,7 +601,7 @@ public sealed partial class MainWindow : Window
 
     private async void StartService_Click(object sender, RoutedEventArgs e)
     {
-        if (_serviceBusy || _serviceStatus?.Installed != true)
+        if (_busy || _serviceBusy || _serviceStatus?.IsKnown != true || _serviceStatus?.Installed != true)
         {
             return;
         }
@@ -679,7 +638,7 @@ public sealed partial class MainWindow : Window
 
     private async void StopService_Click(object sender, RoutedEventArgs e)
     {
-        if (_serviceBusy || _serviceStatus?.Installed != true)
+        if (_busy || _serviceBusy || _serviceStatus?.IsKnown != true || _serviceStatus?.Installed != true)
         {
             return;
         }
@@ -711,6 +670,10 @@ public sealed partial class MainWindow : Window
 
     private async Task<bool> ConfirmAsync(string title, string message)
     {
+        if (_confirming) return false;
+        _confirming = true;
+        try
+        {
         var dialog = new ContentDialog
         {
             RequestedTheme = RootGrid.ActualTheme,
@@ -722,6 +685,13 @@ public sealed partial class MainWindow : Window
             DefaultButton = ContentDialogButton.Close
         };
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        }
+        catch (Exception ex)
+        {
+            ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("No se pudo completar la operación: "), ex.Message);
+            return false;
+        }
+        finally { _confirming = false; }
     }
 
     private async void ClearHistory_Click(object sender, RoutedEventArgs e)
@@ -764,21 +734,69 @@ public sealed partial class MainWindow : Window
 
     private void SaveSettings_Click(object sender, RoutedEventArgs e)
     {
+        if (_busy || _serviceBusy) return;
+        var previous = _settings;
+        _settings = previous.Clone();
         if (!ReadSettingsFromUi(out var validationError))
         {
+            _settings = previous;
             ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("Configuración no válida"), validationError);
             return;
         }
 
         if (SaveSettings(silent: false))
         {
+            PopulateSettings(_settings);
+            ApplyTheme(_settings.Theme);
+            if (_host.LoggingOptions is not null) _host.LoggingOptions.MinimumLevel = _settings.LogLevel.ToMicrosoft();
             ShowStatus(InfoBarSeverity.Success, global::CSIViewer.Core.Localization.Text("Configuración guardada"),
                 global::CSIViewer.Core.Localization.Text("El modo consola usará estos mismos valores."));
         }
+        else _settings = previous;
+    }
+
+    private void RestoreSettings_Click(object sender, RoutedEventArgs e)
+    {
+        if (_busy || _serviceBusy) return;
+        PopulateSettings(_settings);
+        StatusBar.IsOpen = false;
+    }
+
+    private void DefaultSettings_Click(object sender, RoutedEventArgs e)
+    {
+        if (_busy || _serviceBusy) return;
+        PopulateSettings(new ServerRuntimeSettings());
+        StatusBar.IsOpen = false;
+    }
+
+    private void PopulateSettings(ServerRuntimeSettings source)
+    {
+        var loaded = _loaded;
+        _loaded = false;
+        PortBox.Value = source.Port;
+        AllInterfacesSwitch.IsOn = source.ListenOnAllInterfaces;
+        EnrollmentCodeBox.Text = source.EnrollmentCode;
+        ServerNameBox.Text = source.ServerName;
+        DatabasePathBox.Text = source.DatabasePath;
+        UpnpSwitch.IsOn = source.EnableUpnp;
+        UpnpExternalPortBox.Value = source.UpnpExternalPort;
+        HttpsSwitch.IsOn = source.UseHttps;
+        CertificateThumbprintBox.Text = source.CertificateThumbprint;
+        StunSwitch.IsOn = source.EnableStunServer;
+        StunPortBox.Value = source.StunPort;
+        MaxSessionsPerHostBox.Value = source.MaxSessionsPerHost;
+        StartWithWindowsSwitch.IsOn = source.StartWithWindows;
+        AutoStartSwitch.IsOn = source.AutoStartWithUi;
+        ApplyLogLevelSelection(source.LogLevel);
+        ThemeCombo.SelectedIndex = source.Theme switch { ServerTheme.Light => 1, ServerTheme.Dark => 2, _ => 0 };
+        AccentColorCombo.SelectedItem = CSIViewer.Core.AccentPalette.Choices.First(x => x.Value == source.AccentColor);
+        LanguageCombo.SelectedItem = CSIViewer.Core.Localization.Languages.First(x => x.Code == source.Language);
+        _loaded = loaded;
     }
 
     private bool SaveSettings(bool silent)
     {
+        var previousStartup = ServerStartup.IsEnabled;
         try
         {
             if (!ServerStartup.SetEnabled(_settings.StartWithWindows))
@@ -799,6 +817,7 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            ServerStartup.SetEnabled(previousStartup);
             ShowStatus(InfoBarSeverity.Error, global::CSIViewer.Core.Localization.Text("No se pudo guardar la configuración"),
                 ex.GetBaseException().Message);
             return false;
@@ -838,11 +857,6 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        _settings.LogLevel = level;
-        if (_host.LoggingOptions is not null)
-        {
-            _host.LoggingOptions.MinimumLevel = level.ToMicrosoft();
-        }
     }
 
     private void ApplyLogLevelSelection(AppLogLevel level)
@@ -1014,6 +1028,9 @@ public sealed partial class MainWindow : Window
             : (int)MaxSessionsPerHostBox.Value;
         _settings.AutoStartWithUi = AutoStartSwitch.IsOn;
         _settings.StartWithWindows = StartWithWindowsSwitch.IsOn;
+        _settings.Theme = ThemeCombo.SelectedIndex switch { 1 => ServerTheme.Light, 2 => ServerTheme.Dark, _ => ServerTheme.System };
+        _settings.AccentColor = (AccentColorCombo.SelectedItem as CSIViewer.Core.AccentChoice)?.Value ?? _settings.AccentColor;
+        _settings.Language = (LanguageCombo.SelectedItem as CSIViewer.Core.LanguageChoice)?.Code ?? _settings.Language;
         _settings.LogLevel = SelectedLogLevel;
         _settings.Normalize();
         error = "";
@@ -1053,10 +1070,17 @@ public sealed partial class MainWindow : Window
         }
 
         BusyRing.IsActive = _busy;
+        var serviceActionsEnabled = !_busy && !_serviceBusy && _serviceStatus?.IsKnown == true;
+        CreateServiceButton.IsEnabled = serviceActionsEnabled && _serviceStatus?.Installed != true;
+        DeleteServiceButton.IsEnabled = serviceActionsEnabled && _serviceStatus?.Installed == true;
+        StartServiceButton.IsEnabled = serviceActionsEnabled && _serviceStatus?.Installed == true && _serviceStatus?.Running != true;
+        StopServiceButton.IsEnabled = serviceActionsEnabled && _serviceStatus?.Installed == true && _serviceStatus?.Running == true;
+        RefreshServiceButton.IsEnabled = !_busy && !_serviceBusy;
+        foreach (var button in ConfigurationActions.Children.OfType<Button>()) button.IsEnabled = !_busy && !_serviceBusy;
         BusyRing.Visibility = _busy ? Visibility.Visible : Visibility.Collapsed;
-        StartButton.IsEnabled = !_busy && !running;
-        StopButton.IsEnabled = !_busy && localRunning;
-        var configurationEnabled = !_busy && !running;
+        StartButton.IsEnabled = !_busy && !_serviceBusy && !running;
+        StopButton.IsEnabled = !_busy && !_serviceBusy && localRunning;
+        var configurationEnabled = !_busy && !_serviceBusy && !running;
         ConfigContent.IsHitTestVisible = configurationEnabled;
         ConfigContent.Opacity = configurationEnabled ? 1 : 0.6;
         _tray?.SetRunning(running);

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Windows.Foundation;
 using Windows.Graphics;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX;
@@ -17,18 +18,30 @@ namespace CSIViewer.Media;
 /// </summary>
 public sealed class WindowsGraphicsCapture : IAsyncDisposable
 {
-    private readonly SemaphoreSlim _frameGate = new(1, 1);
-    private Direct3D11CaptureFramePool? _framePool;
-    private GraphicsCaptureSession? _session;
-    private IDirect3DDevice? _device;
-    private GraphicsCaptureItem? _item;
-    private Action<CaptureFrame>? _onFrame;
-    private Action<Exception>? _onError;
-    private TimeSpan _interval;
-    private long _lastFrameTicks;
-    private int _quality;
-    private int _maxWidth;
-    private bool _encodeJpeg;
+    // A GPU copy from a retired run may never finish. It must not hold the gate
+    // or callbacks of a replacement run (or publish stale frames into GDI).
+    private sealed class CaptureRun(int fps, int quality, int maxWidth, bool encodeJpeg,
+        Action<CaptureFrame> onFrame, Action<Exception> onError)
+    {
+        public readonly SemaphoreSlim FrameGate = new(1, 1);
+        public readonly TimeSpan Interval = TimeSpan.FromMilliseconds(1000.0 / Math.Clamp(fps, 1, 120));
+        public readonly int Quality = quality;
+        public readonly int MaxWidth = Math.Clamp(maxWidth, 640, 2560);
+        public readonly bool EncodeJpeg = encodeJpeg;
+        public readonly Action<CaptureFrame> OnFrame = onFrame;
+        public readonly Action<Exception> OnError = onError;
+        public Direct3D11CaptureFramePool? Pool;
+        public GraphicsCaptureSession? Session;
+        public IDirect3DDevice? Device;
+        public GraphicsCaptureItem? Item;
+        public TypedEventHandler<Direct3D11CaptureFramePool, object>? Handler;
+        public long LastFrameTicks;
+        public int Stopped;
+    }
+
+    private CaptureRun? _run;
+    private readonly object _lifecycleGate = new();
+    private Task _cleanupTask = Task.CompletedTask;
 
     public bool TryStart(
         MonitorInfo monitor,
@@ -39,49 +52,51 @@ public sealed class WindowsGraphicsCapture : IAsyncDisposable
         Action<CaptureFrame> onFrame,
         Action<Exception> onError)
     {
-        StopAsync().GetAwaiter().GetResult();
+        // RemoteClient awaits normal shutdown with a deadline before TryStart.
+        // If native GPU cleanup is stuck, decline WGC and let GDI take over.
+        var run = new CaptureRun(fps, quality, maxWidth, encodeJpeg, onFrame, onError);
+        lock (_lifecycleGate)
+        {
+            if (!StopAsync().IsCompletedSuccessfully) return false;
+            _run = run;
+        }
         try
         {
-            _onFrame = onFrame;
-            _onError = onError;
-            _quality = quality;
-            _maxWidth = Math.Clamp(maxWidth, 640, 2560);
-            _encodeJpeg = encodeJpeg;
-            _interval = TimeSpan.FromMilliseconds(1000.0 / Math.Clamp(fps, 1, 120));
-            _device = CreateDevice();
-            _item = CreateItem(monitor);
-            _framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
-                _device,
+            run.Device = CreateDevice();
+            run.Item = CreateItem(monitor);
+            run.Pool = Direct3D11CaptureFramePool.CreateFreeThreaded(
+                run.Device,
                 DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 2,
-                _item.Size);
-            _session = _framePool.CreateCaptureSession(_item);
+                run.Item.Size);
+            run.Session = run.Pool.CreateCaptureSession(run.Item);
             try
             {
                 // The controller already has a local pointer that maps 1:1 to
                 // the host position. Capturing the host cursor as well would
                 // draw a second, delayed pointer inside the streamed image.
-                _session.IsCursorCaptureEnabled = false;
+                run.Session.IsCursorCaptureEnabled = false;
             }
             catch
             {
                 // Older builds may not expose cursor capture; not fatal.
             }
 
-            _framePool.FrameArrived += OnFrameArrived;
-            _session.StartCapture();
+            run.Handler = (sender, _) => OnFrameArrived(run, sender);
+            run.Pool.FrameArrived += run.Handler;
+            run.Session.StartCapture();
             return true;
         }
         catch
         {
-            StopAsync().GetAwaiter().GetResult();
+            _ = StopAsync();
             return false;
         }
     }
 
-    private async void OnFrameArrived(Direct3D11CaptureFramePool sender, object args)
+    private async void OnFrameArrived(CaptureRun run, Direct3D11CaptureFramePool sender)
     {
-        if (!await _frameGate.WaitAsync(0).ConfigureAwait(false))
+        if (Volatile.Read(ref run.Stopped) != 0 || !await run.FrameGate.WaitAsync(0).ConfigureAwait(false))
         {
             return;
         }
@@ -89,73 +104,69 @@ public sealed class WindowsGraphicsCapture : IAsyncDisposable
         try
         {
             using var frame = sender.TryGetNextFrame();
+            if (frame is null || Volatile.Read(ref run.Stopped) != 0) return;
             var now = Stopwatch.GetTimestamp();
-            if (_lastFrameTicks != 0 && Stopwatch.GetElapsedTime(_lastFrameTicks, now) < _interval)
+            if (run.LastFrameTicks != 0 && Stopwatch.GetElapsedTime(run.LastFrameTicks, now) < run.Interval)
             {
                 return;
             }
 
-            _lastFrameTicks = now;
-            using var bitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(frame.Surface);
-            if (_encodeJpeg)
+            run.LastFrameTicks = now;
+            using var bitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(frame.Surface).AsTask().ConfigureAwait(false);
+            if (Volatile.Read(ref run.Stopped) != 0) return;
+            if (run.EncodeJpeg)
             {
-                var bytes = await JpegEncoder.EncodeAsync(bitmap, _quality, _maxWidth)
+                var bytes = await JpegEncoder.EncodeAsync(bitmap, run.Quality, run.MaxWidth)
                     .ConfigureAwait(false);
-                if (bytes.Length > 0)
+                if (bytes.Length > 0 && Volatile.Read(ref run.Stopped) == 0)
                 {
-                    _onFrame?.Invoke(new CaptureFrame([], 0, 0, bytes));
+                    run.OnFrame(new CaptureFrame([], 0, 0, bytes));
                 }
             }
             else
             {
-                var raw = JpegEncoder.GetBgra(bitmap, _maxWidth);
-                if (raw.Bgra.Length > 0)
+                var raw = JpegEncoder.GetBgra(bitmap, run.MaxWidth);
+                if (raw.Bgra.Length > 0 && Volatile.Read(ref run.Stopped) == 0)
                 {
-                    _onFrame?.Invoke(new CaptureFrame(raw.Bgra, raw.Width, raw.Height));
+                    run.OnFrame(new CaptureFrame(raw.Bgra, raw.Width, raw.Height));
                 }
             }
         }
         catch (Exception ex)
         {
-            _onError?.Invoke(ex);
+            if (Volatile.Read(ref run.Stopped) == 0) run.OnError(ex);
         }
         finally
         {
-            _frameGate.Release();
+            run.FrameGate.Release();
         }
     }
 
     public Task StopAsync()
     {
-        try
+        lock (_lifecycleGate)
         {
-            if (_framePool is not null)
+            var run = Interlocked.Exchange(ref _run, null);
+            if (run is null) return _cleanupTask;
+            Volatile.Write(ref run.Stopped, 1);
+            // Dispose can block inside a virtual graphics driver. Move it off the
+            // caller so RemoteClient's shutdown deadline actually has an effect.
+            _cleanupTask = Task.Run(() =>
             {
-                _framePool.FrameArrived -= OnFrameArrived;
-            }
-
-            _session?.Dispose();
-            _framePool?.Dispose();
-            (_device as IDisposable)?.Dispose();
-            _item = null;
-            _device = null;
+                try { if (run.Pool is not null && run.Handler is not null) run.Pool.FrameArrived -= run.Handler; } catch { }
+                try { run.Session?.Dispose(); } catch { }
+                try { run.Pool?.Dispose(); } catch { }
+                try { (run.Device as IDisposable)?.Dispose(); } catch { }
+            });
+            return _cleanupTask;
         }
-        catch
-        {
-            // Disposal is best effort.
-        }
-        finally
-        {
-            _onFrame = null;
-            _onError = null;
-            _session = null;
-            _framePool = null;
-        }
-
-        return Task.CompletedTask;
     }
 
-    public async ValueTask DisposeAsync() => await StopAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync()
+    {
+        try { await StopAsync().WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false); }
+        catch (TimeoutException) { /* Do not hang app shutdown on a virtual GPU. */ }
+    }
 
     private static IDirect3DDevice CreateDevice()
     {
@@ -191,6 +202,7 @@ public sealed class WindowsGraphicsCapture : IAsyncDisposable
         finally
         {
             levelsHandle.Free();
+            if (inspectablePtr != IntPtr.Zero) Marshal.Release(inspectablePtr);
             if (dxgiPtr != IntPtr.Zero) Marshal.Release(dxgiPtr);
             if (contextPtr != IntPtr.Zero) Marshal.Release(contextPtr);
             if (devicePtr != IntPtr.Zero) Marshal.Release(devicePtr);
@@ -224,6 +236,7 @@ public sealed class WindowsGraphicsCapture : IAsyncDisposable
         finally
         {
             WindowsDeleteString(hstring);
+            if (itemPtr != IntPtr.Zero) Marshal.Release(itemPtr);
             if (factoryPtr != IntPtr.Zero) Marshal.Release(factoryPtr);
         }
     }

@@ -30,6 +30,7 @@ public sealed partial class ContactsPage : Page
     private readonly IContactRepository _repository;
     private readonly ObservableCollection<ContactRow> _rows = [];
     private int _refreshQueued;
+    private bool _contactBusy;
 
     public ContactsPage()
     {
@@ -79,33 +80,53 @@ public sealed partial class ContactsPage : Page
 
     private async Task EditContactAsync(Contact? existing)
     {
-        var contact = await ContactEditorDialog.ShowAsync(existing, _state.KnownDevices, XamlRoot, ThemeService.Current);
-        if (contact is null) return;
-
-        await _repository.UpsertAsync(contact);
-        var index = _state.Contacts.ToList().FindIndex(x => x.Id == contact.Id);
-        if (index >= 0)
+        if (_contactBusy) return;
+        _contactBusy = true;
+        try
         {
-            _state.Contacts[index] = contact;
-        }
-        else
-        {
-            _state.Contacts.Add(contact);
-        }
+            var contact = await ContactEditorDialog.ShowAsync(existing, _state.KnownDevices, XamlRoot, ThemeService.Current);
+            if (contact is null) return;
 
-        RefreshRows();
+            await _repository.UpsertAsync(contact);
+            var index = _state.Contacts.ToList().FindIndex(x => x.Id == contact.Id);
+            if (index >= 0)
+            {
+                _state.Contacts[index] = contact;
+            }
+            else
+            {
+                _state.Contacts.Add(contact);
+            }
+
+            RefreshRows();
+        }
+        catch (Exception ex) { ShowContactError(ex); }
+        finally { _contactBusy = false; }
     }
 
     private async void Delete_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button { DataContext: ContactRow row })
+        if (_contactBusy || sender is not Button { DataContext: ContactRow row })
         {
             return;
         }
 
-        await _repository.DeleteAsync(row.Contact.Id);
-        _state.Contacts.Remove(row.Contact);
-        RefreshRows();
+        _contactBusy = true;
+        try
+        {
+            await _repository.DeleteAsync(row.Contact.Id);
+            _state.Contacts.Remove(row.Contact);
+            RefreshRows();
+        }
+        catch (Exception ex) { ShowContactError(ex); }
+        finally { _contactBusy = false; }
+    }
+
+    private void ShowContactError(Exception error)
+    {
+        ContactsStatusBar.Severity = InfoBarSeverity.Error;
+        ContactsStatusBar.Message = Localization.Text("No se pudo completar la operación: ") + error.GetBaseException().Message;
+        ContactsStatusBar.IsOpen = true;
     }
 
     private void ConnectDevice_Click(object sender, RoutedEventArgs e)
