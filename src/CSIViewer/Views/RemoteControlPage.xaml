@@ -48,10 +48,11 @@
         <Border x:Name="SessionCard" Grid.Row="2" Style="{StaticResource CardStyle}" Padding="0">
                 <Grid>
                     <Grid x:Name="EmptyState" Background="{ThemeResource CardBackgroundBrush}">
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-                            <FontIcon Glyph="" FontSize="36" Foreground="{ThemeResource MutedTextBrush}" />
-                            <TextBlock Text="No hay ninguna sesión activa" FontSize="16" FontWeight="SemiBold" loc:Translate.Text="No hay ninguna sesión activa" />
-                            <TextBlock Text="Cuando se conecte un equipo, la pantalla remota aparecerá aquí." Style="{StaticResource MutedTextStyle}" HorizontalAlignment="Center" loc:Translate.Text="Cuando se conecte un equipo, la pantalla remota aparecerá aquí." />
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" Margin="24" MaxWidth="560" AutomationProperties.AutomationId="ConnectionEmptyState">
+                            <FontIcon Glyph="" FontSize="36" Foreground="{ThemeResource MutedTextBrush}" HorizontalAlignment="Center" />
+                            <ProgressRing x:Name="ConnectionProgressRing" Width="28" Height="28" IsActive="False" Visibility="Collapsed" HorizontalAlignment="Center" AutomationProperties.AutomationId="ConnectionProgressRing" AutomationProperties.Name="Conexión en curso" loc:Translate.AutomationName="Conexión en curso" />
+                            <TextBlock x:Name="EmptyStateTitle" Text="Listo para conectar" FontSize="16" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Center" AutomationProperties.AutomationId="ConnectionStateTitle" AutomationProperties.LiveSetting="Polite" loc:Translate.Text="Listo para conectar" />
+                            <TextBlock x:Name="EmptyStateDetails" Text="Introduce el ID, revisa los permisos y pulsa Conectar." Style="{StaticResource MutedTextStyle}" TextAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Center" AutomationProperties.AutomationId="ConnectionStateDetails" loc:Translate.Text="Introduce el ID, revisa los permisos y pulsa Conectar." />
                         </StackPanel>
                     </Grid>
 
@@ -95,8 +96,8 @@
                                 <ComboBox x:Name="MonitorCombo" Width="210" PlaceholderText="Monitor" SelectionChanged="MonitorCombo_SelectionChanged" Visibility="Collapsed" loc:Translate.PlaceholderText="Monitor" />
                                 <Button Content="Chat" Click="Chat_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Chat" />
                                 <Button Content="Archivos" Click="Files_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Archivos" />
-                                <CheckBox x:Name="SessionAudioBox" Content="Audio" Click="SessionFeatures_Click" AutomationProperties.AutomationId="SessionAudioBox" loc:Translate.Content="Audio" />
-                                <CheckBox x:Name="SessionClipboardBox" Content="Portapapeles" Click="SessionFeatures_Click" AutomationProperties.AutomationId="SessionClipboardBox" loc:Translate.Content="Portapapeles" />
+                                <CheckBox x:Name="SessionAudioBox" Content="Audio" MinWidth="0" Padding="8,0,0,0" VerticalAlignment="Center" VerticalContentAlignment="Center" Click="SessionFeatures_Click" AutomationProperties.AutomationId="SessionAudioBox" loc:Translate.Content="Audio" />
+                                <CheckBox x:Name="SessionClipboardBox" Content="Portapapeles" MinWidth="0" Padding="8,0,0,0" VerticalAlignment="Center" VerticalContentAlignment="Center" Click="SessionFeatures_Click" AutomationProperties.AutomationId="SessionClipboardBox" loc:Translate.Content="Portapapeles" />
                                 <Button x:Name="FullScreenButton" Content="Pantalla completa" Click="FullScreen_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Pantalla completa" />
                                 <ToggleButton x:Name="PinToolbarButton" Visibility="Collapsed" Checked="PinToolbar_Changed" Unchecked="PinToolbar_Changed" ToolTipService.ToolTip="Fijar barra: activado permanece visible; desactivado se oculta automáticamente" AutomationProperties.Name="Fijar barra de control" AutomationProperties.AutomationId="PinToolbarButton" loc:Translate.ToolTip="Fijar barra: activado permanece visible; desactivado se oculta automáticamente" loc:Translate.AutomationName="Fijar barra de control">
                                     <FontIcon Glyph="" FontSize="16" />

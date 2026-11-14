@@ -52,8 +52,10 @@ public interface IHistoryRepository
 
 public interface IChatRepository
 {
+    Task<IReadOnlyList<string>> GetPeerDeviceIdsAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ChatMessage>> GetThreadAsync(string peerDeviceId, int limit = 500, CancellationToken cancellationToken = default);
     Task AddAsync(ChatMessage message, CancellationToken cancellationToken = default);
+    Task DeleteThreadAsync(string peerDeviceId, CancellationToken cancellationToken = default);
 }
 
 public interface ITransferRepository

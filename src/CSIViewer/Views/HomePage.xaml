@@ -39,7 +39,7 @@
                         <StackPanel Spacing="6">
                             <TextBlock Text="ID DE ESTE EQUIPO" Style="{StaticResource FieldLabelStyle}" loc:Translate.Text="ID DE ESTE EQUIPO" />
                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                <TextBlock x:Name="DeviceIdText" Text="—" FontSize="34" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center" />
+                                <TextBlock x:Name="DeviceIdText" Text="—" FontSize="34" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center" AutomationProperties.AutomationId="ViewerDeviceId" />
                                 <Button x:Name="CopyIdButton" Click="CopyId_Click" ToolTipService.ToolTip="Copiar ID" Style="{StaticResource SecondaryButtonStyle}" loc:Translate.ToolTip="Copiar ID">
                                     <FontIcon Glyph="" />
                                 </Button>
@@ -48,7 +48,7 @@
 
                         <StackPanel Spacing="6">
                             <TextBlock Text="CONTRASEÑA TEMPORAL" Style="{StaticResource FieldLabelStyle}" loc:Translate.Text="CONTRASEÑA TEMPORAL" />
-                            <TextBlock x:Name="PasswordText" Text="—" FontSize="26" FontWeight="SemiBold" FontFamily="Consolas" TextWrapping="Wrap" />
+                            <TextBlock x:Name="PasswordText" Text="—" FontSize="26" FontWeight="SemiBold" FontFamily="Consolas" TextWrapping="Wrap" AutomationProperties.AutomationId="ViewerPassword" />
                             <loc:WrapPanel Spacing="6">
                                 <Button x:Name="RevealPasswordButton" Click="RevealPassword_Click" ToolTipService.ToolTip="Mostrar u ocultar" Style="{StaticResource SecondaryButtonStyle}" loc:Translate.ToolTip="Mostrar u ocultar">
                                     <FontIcon Glyph="" FontSize="14" />

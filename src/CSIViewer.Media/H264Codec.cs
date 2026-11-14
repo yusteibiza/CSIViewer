@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using Windows.Graphics.Imaging;
 using Windows.Security.Cryptography;
 using Windows.Storage.Streams;
@@ -369,6 +370,13 @@ public sealed class H264Decoder : IDisposable
     private readonly int _quality;
     private long _sampleIndex;
     private bool _disposed;
+    private IMFMediaBuffer? _outputBuffer;
+    private IMFSample? _outputSample;
+    private (int Stride, int PlaneHeight)? _outputLayout;
+
+    public double LastTransformMilliseconds { get; private set; }
+    public double LastConversionMilliseconds { get; private set; }
+    internal int OutputBufferAllocations { get; private set; }
 
     public unsafe H264Decoder(int width, int height, int fps, int quality)
     {
@@ -442,7 +450,10 @@ public sealed class H264Decoder : IDisposable
             return Task.FromResult<IReadOnlyList<CSIViewer.Core.VideoFrame>>([]);
         }
 
+        var started = Stopwatch.GetTimestamp();
         var nv12Frames = DecodeNv12Frames(annexB);
+        LastTransformMilliseconds = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+        started = Stopwatch.GetTimestamp();
         var frames = new List<CSIViewer.Core.VideoFrame>(nv12Frames.Count);
         foreach (var nv12 in nv12Frames)
         {
@@ -454,6 +465,7 @@ public sealed class H264Decoder : IDisposable
                 CSIViewer.Core.VideoPixelFormat.Bgra));
         }
 
+        LastConversionMilliseconds = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
         return Task.FromResult<IReadOnlyList<CSIViewer.Core.VideoFrame>>(frames);
     }
 
@@ -467,6 +479,9 @@ public sealed class H264Decoder : IDisposable
                 H264Guids.MtFrameRate,
                 ((ulong)_fps << 32) | 1UL);
             _transform.SetOutputType(0, type, 0);
+            _outputBuffer = null;
+            _outputSample = null;
+            _outputLayout = null;
             return true;
         }
         catch
@@ -525,10 +540,21 @@ public sealed class H264Decoder : IDisposable
         {
             for (var attempt = 0; attempt < max; attempt++)
             {
-                PInvoke.MFCreateMemoryBuffer(
-                    (uint)Math.Max(_width * _height * 2, 1_048_576), out var outBuffer);
-                PInvoke.MFCreateSample(out var outSample);
-                outSample.AddBuffer(outBuffer);
+                // Synchronous MFT: once ProcessOutput returns and its bytes are
+                // copied, the same caller-owned sample can serve the next drain.
+                // In particular, NEED_MORE_INPUT must not allocate another 7+ MiB.
+                if (_outputSample is null)
+                {
+                    _transform.GetOutputStreamInfo(0, out var info);
+                    var capacity = Math.Max(checked(_width * _height * 2), 1_048_576);
+                    capacity = Math.Max(capacity, checked((int)info.cbSize));
+                    PInvoke.MFCreateMemoryBuffer((uint)capacity, out _outputBuffer);
+                    PInvoke.MFCreateSample(out _outputSample);
+                    _outputSample.AddBuffer(_outputBuffer);
+                    OutputBufferAllocations++;
+                }
+                _outputBuffer!.SetCurrentLength(0);
+                var outSample = _outputSample;
                 var buffers = new MFT_OUTPUT_DATA_BUFFER[1];
                 buffers[0].dwStreamID = 0;
                 buffers[0].pSample = outSample;
@@ -538,11 +564,14 @@ public sealed class H264Decoder : IDisposable
                     var produced = buffers[0].pSample ?? outSample;
                     produced.ConvertToContiguousBuffer(out var contiguous);
                     contiguous.Lock(out var outPtr, out _, out var length);
-                    var nv12 = new byte[length];
-                    Marshal.Copy((IntPtr)outPtr, nv12, 0, nv12.Length);
-                    contiguous.Unlock();
-                    var layout = GetOutputLayout();
-                    frames.Add((nv12, layout.Stride, layout.PlaneHeight));
+                    try
+                    {
+                        var nv12 = GC.AllocateUninitializedArray<byte>(checked((int)length));
+                        Marshal.Copy((IntPtr)outPtr, nv12, 0, nv12.Length);
+                        var layout = _outputLayout ??= GetOutputLayout();
+                        frames.Add((nv12, layout.Stride, layout.PlaneHeight));
+                    }
+                    finally { contiguous.Unlock(); }
                 }
                 catch (COMException ex)
                 {
@@ -620,48 +649,7 @@ public sealed class H264Decoder : IDisposable
         => type.SetGUID(&key, &value);
 
     internal static byte[] Nv12ToBgra(byte[] nv12, int width, int height, int stride, int planeHeight = 0)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
-        if ((width & 1) != 0 || (height & 1) != 0)
-        {
-            throw new ArgumentException("NV12 dimensions must be even.");
-        }
-        var rowStride = Math.Max(width, stride);
-        var codedHeight = planeHeight == 0 ? height : planeHeight;
-        ArgumentOutOfRangeException.ThrowIfLessThan(codedHeight, height, nameof(planeHeight));
-        var uvPlane = checked(rowStride * codedHeight);
-        var required = checked(uvPlane + (height / 2 - 1) * rowStride + width);
-        if (nv12.Length < required)
-        {
-            throw new ArgumentException("Truncated NV12 buffer.", nameof(nv12));
-        }
-        var bgra = new byte[checked(width * height * 4)];
-        Parallel.For(0, height, y =>
-        {
-            for (var x = 0; x < width; x++)
-            {
-                var yValue = nv12[y * rowStride + x] - 16;
-                var uvIndex = uvPlane + (y / 2) * rowStride + (x / 2) * 2;
-                var uValue = nv12[uvIndex] - 128;
-                var vValue = nv12[uvIndex + 1] - 128;
-
-                var c = 1.164 * yValue;
-                var r = Clamp(c + 1.596 * vValue);
-                var g = Clamp(c - 0.392 * uValue - 0.813 * vValue);
-                var b = Clamp(c + 2.017 * uValue);
-                var index = (y * width + x) * 4;
-                bgra[index] = b;
-                bgra[index + 1] = g;
-                bgra[index + 2] = r;
-                bgra[index + 3] = 255;
-            }
-        });
-
-        return bgra;
-
-        static byte Clamp(double value) => (byte)Math.Clamp((int)value, 0, 255);
-    }
+        => Nv12PixelConverter.Convert(nv12, width, height, stride, planeHeight);
 }
 
 public static class JpegDecoder

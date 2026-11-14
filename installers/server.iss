@@ -52,7 +52,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "server_service"; Description: "Instalar CSIViewer Servidor como servicio de Windows (solo todos los usuarios)"; GroupDescription: "Servicio"; Flags: unchecked; Check: IsAdminInstallMode
 
 [Files]
-Source: "..\artifacts\installers\payload\server\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\artifacts\installers\payload\server\*"; DestDir: "{app}"; Excludes: "*.pdb,data,logs,*.log,*.db,*.db-shm,*.db-wal,serversettings.json,settings.json"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\scripts\install-server-service.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\scripts\prepare-server-data.ps1"; DestDir: "{app}"; Flags: ignoreversion
 

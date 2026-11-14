@@ -2,6 +2,202 @@
 
 Documento de transferencia de contexto para que otro modelo de IA continúe el proyecto sin repetir errores ni romper lo que funciona.
 
+> **ACTIVO — CREDENCIALES/RÓTULO (informe34):** Contactos descartaba contraseña
+> con PendingPassword=null. Visor/host ahora Unprotect con misma entropía que
+> Dispositivos y precarga, sin conexión automática. RemoteControl.Loaded limpia
+> secreto previo al recibir destino nuevo sin contraseña recuperable. Usuario
+> aclara COLOR EN RÓTULO, NO BOTÓN: etiqueta «Equipos vinculados» con texto/fondo
+> verdes temáticos; botones normales, espaciado conservado. Debug/Release limpios
+> 283/283 cadauno; UIRelease21/21 y capturaDark revisada. Falta empaquetado3 DIRECTO
+> artifacts/installers/ en ejecución, manifiesto previsto
+> contacts-label-credentials-installers-1.0.1.json. Autenticación real desde
+> Contactos con credenciales del usuario pendiente de confirmación.
+> No instalar nada, no tocar servidor instalado ni exponer contraseñas.
+
+> **ACTIVO — ESPACIADO CONTACTOS (informe33):** usuario rechaza fila demasiado
+> apretada y rótulo pegado al botón; quiere color/fondo distintivo y quitar franja
+> azul bajo cabecera. Visor/host padding10/columnas16/datosSpacing4, rótuloMargin
+> 0,6,0,4, chips min32/font13/padding12,5 y verde temático con HC sistema. Acciones
+> separación8/mismoancho. RootGrid PageBackgroundBrush tapa hueco Mica del banner
+> cerrado. Debug/Release limpios281/281 cadauno; UIRelease19/19, capturas revisadas.
+> Fila157/156px y píxeles franja/menú claro243/oscuro32 neutrales. Publicando4 y
+> TRES instaladores TERMINADOS y copiados/verificados directamente en
+> artifacts/installers/; usuario EXIGE conservar ubicación habitual, NO entregar
+> en subcarpetas. Versión1.0.1.0, fecha común14/11/2026 11:40:22 +01:00.
+> Manifiesto final contacts-spacing-installers-1.0.1.json. No se instaló nada.
+
+> **ACTIVO — CONTROL/TEMA (informe32):** PUESTO3 conectó sin ControlInput mientras
+> otra sesión conservaba control. No parche especulativo de inyección. Nueva causa
+> ControlRestriction propagada en ambos auth.result; aviso de control ocupado/no
+> concedido y título de vista sin control en visor/host; no promoción automática.
+> Dark pane opaco #202020 visor/host; Light/Default/HighContrast preservados.
+> 970 claves/idioma. Debug/Release inicial limpios279/279. FeatureProbe control-lease
+> 7/7; UIRelease15/15 con píxeles Light243,243,243 y Dark32,32,32. Build final tras
+> ajuste aviso directo Localization.Text limpio279/279 ambos. Empaquetado raíz
+> falló host Error32 (archivo bloqueado); visor raíz nuevo, NO entregar raíz como
+> lote coherente. Lote FINAL3 en artifacts/installers/control-theme-20261114-112843/
+> versión1.0.1.0 y mismamarca14/11/2026 11:31:37 +01:00; hashes/fechas reverificados.
+> Manifiesto final control-theme-installers-1.0.1.json. Pendiente
+> confirmación física usuario; NO instalar ni tocar servidor en ejecución.
+
+> **ACTIVO — FILAS CONTACTOS (informe31):** usuario pide etiqueta encima de los
+> botones PUESTO2/Pruebas y menos altura. Son equipos, no listas: etiqueta
+> «Equipos vinculados». Contactos visor/host ahora una fila/3columnas, datos/chips
+> en columna1 y acciones columna2, avatar32, padding6 y botones min28. Notas y
+> detalles máx2líneas con tooltip; nombre1línea; chips conservanWrapPanel.
+> Editar/Eliminar mismoancho yhover preservados. Debuglimpio271/271; UI13/13
+> Light/Dark con etiqueta/altura/hover; capturarevisada, filaQA123/124px connotas.
+> Catálogos965/idioma. Release limpio271/271 y UIRelease13/13 también aprobados.
+> Publish4 e InnoTRES terminados, mismamarca14/11/2026 11:10:42 +01:00; hashes
+> verificados. Manifiesto final `artifacts/diagnostics/contacts-compact-installers-1.0.1.json`.
+> Instaladores10:57:01 son anteriores y NO contienen este último ajuste visual.
+
+> **ACTIVO — FICHA CONTACTOS (informe30):** usuario pide Editar/Eliminar mismo
+> ancho, más datos y selector de vinculados tipo combo con mejor apariencia.
+> Añadidos Company/Email/Phone/IsFavorite opcionales al record Contact y entidad;
+> migraciónSQLite transaccional idempotente, repo roundtrip/orden favorito.
+> Shared/ContactEditorDialog.cs compila en visor/host; tarjetas, scroll/ancho
+> adaptativo, validación nombre/email, favorito, DropDownButton multiselección
+> con búsqueda/limpiar y conservación de vínculos a dispositivos eliminados.
+> Cancelar no persiste. ContactRow muestra detalles/estrella; botones stretch96.
+> Debug/Release limpios269/269; CA1826 test corregido; catálogos964, ayuda visor
+> actualizada. PrimerUI22/22 guardado/cancelación/filtros/validación/reinicio.
+> UI final28/28 Debug y28/28 Release, Dark/640px; capturas finales revisadas.
+> HoverRelease9/9. Fallo previo harness $Error reservado corregido y flyout
+> capturado tras animación300ms; no cambiar estilo por ese primer artefacto.
+> Validación se limpia solo al corregir campo; lista refresca
+> cargas asíncronas con colaUI para evitar vacío al navegar antes de bootstrap.
+> Chips de vinculados ahora WrapPanel. Publicación/paquetes TRES terminados,
+> mismafecha14/11/2026 10:57:01 +01:00, hashes y payloads limpios verificados.
+> Manifiesto `artifacts/diagnostics/contact-details-installers-1.0.1.json`.
+> No tocar instalaciones; ZIP1.0.0 hashverificado intacto. Sin commit/push.
+> Instaladores09:00:41 son anteriores y NO contienen esta ficha ampliada.
+
+> **ACTIVO — CONTACTOS/ESPERA (informe29):** usuario pide hover completo en
+> Contactos como Dispositivos y placeholder centrado con monitor existente,
+> spinner y texto claro durante conexión/aceptación. Aplicado en visor/host:
+> Contacts ListViewItem stretch + RowHover; RemoteControl _connecting local,
+> escucha IsAwaitingPeerAuthorization (separado del estado del servidor), ProgressRing
+> y Translate.SetText según fase. RemoteClient establece fase al auth.request y
+> la limpia en finally, con guard para publicaciones tardías de PendingConnect.
+> No cambia protocolos, consentimiento, vídeo ni tiempo de espera. Cuatro tests
+> XAML nuevos (esperados267), seis nuevas traducciones y dos claves retiradas.
+> Primer testfalló por catálogoen/fr/ca con clavesantiguas; generate-translations
+> corregido para podar incluso sin lotes pendientes. Debug/UI en ejecución.
+> FeatureProbe --ui-host-delayed + harness -ConnectionWaitUi prueba rechazo/aceptación;
+> -ContactsUi usa contacto sintético añadido al seed y prueba hover Light/Dark.
+> Debug/Release limpios267/267; catálogo946/idioma. DebugUI hover9/9 Light/Dark,
+> espera19/19 rechazo/aceptación con peer real y guard fase dedicadaconfirmado.
+> UI Release igual: hover9/9 y espera19/19. Publish/paquetesTRES terminados,
+> mismafecha14/11/2026 09:00:41 +01:00, hashes verificados. Manifiesto final
+> `artifacts/diagnostics/contacts-connection-wait-installers-1.0.1.json`.
+> Paquetes01:07:01 son anteriores y NO contienen esta última presentación.
+
+> **ACTIVO — VÍDEO (informe 28):** usuario pide mejorar ~20 FPS a 2560×1440,
+> dec47,5ms. Aplicados Nv12PixelConverter AVX2 con fallback escalar, 2 filas/chroma,
+> bandas32 y máximo4 workers; reutilización de salida MFT y caché de layout.
+> Debug/Release 263/263 limpios y 15/15 con AVX2 desactivado. Medición local
+> 1440p conversión7,66→2,04ms; decode completo11,27→7,44ms (no garantía WAN).
+> A/B misma ejecución1440p conversión7,73→1,61ms; decode optimizado5,72ms.
+> Prueba cifrada --video-session: 4/4, 1440p decode mediana6,38ms/p95 12,57ms,
+> escritorio estático solo15cuadros: NO afirmar60FPS ni prueba de render WinUI/WAN.
+> Sesión audio/clipboard/chat31/31. TeamViewer queda abierto para trabajo; no
+> cerrar sin acceso seguro. Publish/instaladores TRES terminados, mismafecha
+> 14/11/2026 01:07:01 +01:00. Hashes y Media.dll de payloads verificados, sin datos
+> de ejecución en visor/host. Manifiesto final
+> `artifacts/diagnostics/video-optimized-installers-1.0.1.json`.
+> Tanda00:51:35 ya anterior: NO incluye esta optimización.
+
+> **ENTREGA FINAL — 14/11/2026 00:51:35:** los TRES instaladores 1.0.1 ya están
+> regenerados con la misma LastWriteTime, hashes verificados en
+> `artifacts/diagnostics/installers-complete-batch-1.0.1.json`. Esta tanda SÍ
+> incluye chat temporal host, historial visor, ayuda host, consentimiento con
+> restauración tanto host como visor y casillas centradas/separadas. Informe 27.
+> Debug/Release 255/255 sin avisos; UI Release host 26/26, consentimiento entrante
+> visor 8/8, barra/emoji visor 8/8 e historial visor 25/25 tras repetir el picker.
+> Publicación server tuvo reintentos por servidor QA aislado concurrente y terminó
+> correctamente; no se detuvo ni modificó el servidor instalado. No instalar nada.
+> Payload visor/host limpio; server.iss excluye data/logs/settings/DB de ejecución.
+> ZIP 1.0.0 intacto. Sin commit/push. Bloques siguientes son cronología previa:
+> cualquier mención a empaquetado o pruebas «en ejecución» está superada.
+
+> **CAMBIO POSTERIOR — informe 27 (activo):** usuario confirma chat TEMPORAL en
+> host y CONSERVADO en visor. Host oculta selector/exportación/borrado y bloquea
+> abrir chat offline. DI host configura ChatHistoryOptions.RetainHistory=false;
+> no escribe mensajes, descarta publicaciones tardías, limpia memoria al cortar
+> cualquiera de los extremos y elimina historial host heredado al inicializar.
+> ChatViewController sessionOnly borra borradores y sigue solo peer activo.
+> Visor mantiene historial. Ayuda host actualizada en cuatro idiomas.
+> Usuario añade: mostrar host minimizado al pedir permisos; ConsentService llama
+> ShowForConsent (Restore/Show/Activate) solo en aprobación manual, sin aceptar.
+> También pide casillas Audio/Portapapeles con texto centrado y separado: añadido
+> VerticalContentAlignment Center y Padding 8,0,0,0 en ambas barras.
+> Primer Debug 255/255 y sesión real 31/31 (corte host/visor y visor conserva).
+> Debug final limpio 255/255. UI minimizada host 26/26; barra/emoji visor 8/8,
+> captura real revisada. Primer fallo consentimiento era encoding PS5 sin BOM;
+> corregido en harness externo. Catálogos completos 942 entradas/idioma.
+> Release, publish secuencial e instaladores en ejecución. Paquetes informe 26
+> serán sustituidos al terminar; falta verificar hashes y payload publicado.
+> **Última aclaración:** visor también debe restaurarse al recibir conexión de
+> otro visor. Añadido ShowForConsent y llamado desde ConsentService del visor;
+> HomePage expone IDs UIA ViewerDeviceId/ViewerPassword para QA aislado sin logs.
+> Prueba nativa entrante visor 8/8 aprobada. El primer empaquetado en curso
+> podría NO incluir esta última aclaración: volver a publicar/recompilar visor
+> tras terminar el anterior, sin compiladores Inno concurrentes sobre el mismo EXE.
+> **Petición más reciente:** regenerar los TRES instaladores con la misma fecha.
+> Tanda completa en ejecución (publish visor/host UI/agent/server secuenciales,
+> Inno client/host/server secuenciales). Al terminar se normaliza LastWriteTime
+> de los tres a la misma marca de tanda y se genera manifiesto
+> `artifacts/diagnostics/installers-complete-batch-1.0.1.json`.
+> server.iss excluye data/logs y datos/settings de ejecución; no se borra el log
+> antiguo del payload. Ya NO mantener el hash del instalador servidor anterior
+> como requisito: usuario ahora autoriza regenerarlo, no tocar servidor instalado.
+> Debug/Release últimos limpios 255/255. Regresión UI Release en ejecución.
+
+> **CHAT — revisión actual:** selector, historial filtrado/offline, borrado local
+> confirmado, exportación UTF-8 completa y más de 400 emojis en ocho categorías,
+> tanto en visor como host. Envío dirigido al peer elegido; gate/versionado evita
+> resucitar mensajes borrados. Burbuja enviada conserva sangría de 28 px.
+> Debug/Release finales: 253/253 tests en cada configuración, sin avisos/errores.
+> UI Debug: visor 25/25 y host 19/19 (601 mensajes exportados, cancelación,
+> borrado, otro chat intacto y reinicio). Sesión real cifrada: 21/21, incluyendo
+> audio/clipboard y seis regresiones de chat. Emoji UI visor Debug: 8/8.
+> Fallo Invoke era harness seleccionando contenedor GridView; clic nativo validado
+> inserta 🍏 y llega al peer. No se cambió producción para ese fallo.
+> Ayuda actualizada, 940 entradas por idioma es/en/fr/ca, Shared inventariado,
+> placeholders verificados y traducciones nuevas revisadas manualmente.
+> UI Release visor 25/25 y host 19/19; emoji visor Release 8/8. Idiomas Release
+> visor 18/18 y host 18/18. El ensayo emoji host falló por NavRemote oculto, no
+> representa fallo de producción ni verificación de envío con emoji desde host.
+> Instaladores finales regenerados (00:24:14/00:25:30, 14/11/2026), versiones y
+> payloads limpios verificados; hashes en `artifacts/diagnostics/chat-installers-1.0.1.json`.
+> Informe 26 contiene hashes y límites. UI de payload publicado completada:
+> visor 25/25, host 19/19 y emoji visor con sesión cifrada 8/8. Entrega final lista.
+> ConsentService mantiene solo permisos solicitados. Al elegir dispositivo con
+> credenciales guardadas se muestra aviso y se espera Conectar para revisar
+> permisos, conservando contraseña. Barra escucha ActivePermissions.
+> No instalar ni tocar servidor instalado. El payload servidor contiene un log
+> diagnóstico antiguo: no se empaqueta en esta revisión ni se ha eliminado.
+> FeatureProbe --seed-chat usa datos sintéticos; harness externo en Temp/opencode.
+> El contador centrado en archivos local/remoto conserva WrapPanel opt-in.
+
+> **PULIDO UI — revisión más reciente:** iconos Subir/Ir/Actualizar en paneles
+> local/remoto de visor y host, manteniendo Unidades textual, tooltips e IDs
+> accesibles. CheckBox Audio/Portapapeles de barra con MinWidth=0 y Padding=0
+> (el mínimo nativo de 120 DIP causaba el hueco). Etiquetas de lista/favorito
+> movidas a columna propia centrada con botones. Hover mediante RowHover y
+> SubtleFillColorSecondaryBrush, sin selección persistente ni clic automático.
+> Debug compila; 21/21 UI visor reales pasan con dos filas sintéticas y temas
+> Light/Dark, navegación de iconos y centros de CASA/Editar a <=2 px.
+> Añadidas 6 regresiones de contratos XAML para ambas apps; Debug/Release 242/242
+> tests. Visor publicado pasa también las 21/21 comprobaciones UI. Instaladores
+> visor/host regenerados a las 23:25:34/23:26:46; servidor anterior 22:37:22 sin
+> cambios. Hashes en `artifacts/diagnostics/layout-polish-installers.json` e
+> informe 25. Backup original SHA-256 vuelto a verificar intacto.
+> **Confirmación del usuario:** audio perfecto entre casa y oficina al manejar
+> TeamViewer desde un tercer ordenador. El ruido/ratón iniciales eran el circuito
+> casa(host+TeamViewer) -> oficina(visor) -> casa; no se parcheó entrada ni audio.
+
 > **AUDIO/PORTAPAPELES Y GRIS — revisión más reciente:** implementados audio
 > del sistema remoto (WASAPI loopback, sin micrófono) y portapapeles de texto
 > bidireccional. Permisos nuevos 32/64, peticiones desmarcadas por defecto y

@@ -68,7 +68,7 @@ foreach (var file in Directory.EnumerateFiles(folder, "*.xaml", SearchOption.All
     }
 }
 foreach (var value in new[] { "Color de Windows", "Azul", "Verde", "Turquesa", "Violeta", "Rosa", "Naranja", "Rojo" }) sources.Add(value);
-var folders = uiRoots.Concat(new[] { "CSIViewer.Core", "CSIViewer.Application", "CSIViewer.Services", "CSIViewer.Infrastructure", "CSIViewer.Protocol" }.Select(x => Path.Combine(root, "src", x)));
+var folders = uiRoots.Concat(new[] { "CSIViewer.Core", "CSIViewer.Application", "CSIViewer.Services", "CSIViewer.Infrastructure", "CSIViewer.Protocol", "Shared" }.Select(x => Path.Combine(root, "src", x)));
 foreach (var folder in folders)
 foreach (var file in Directory.EnumerateFiles(folder, "*.cs", SearchOption.AllDirectories).Where(Include))
 {

@@ -190,6 +190,22 @@ public sealed class ChatRepository : IChatRepository
 
     public ChatRepository(IDbContextFactory<ClientDbContext> factory) => _factory = factory;
 
+    public async Task<IReadOnlyList<string>> GetPeerDeviceIdsAsync(CancellationToken cancellationToken = default)
+    {
+        await using var db = await _factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        return await db.ChatMessages.AsNoTracking().Where(x => x.PeerDeviceId != "")
+            .Select(x => x.PeerDeviceId).Distinct().OrderBy(x => x)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task DeleteThreadAsync(string peerDeviceId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(peerDeviceId);
+        await using var db = await _factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        await db.ChatMessages.Where(x => x.PeerDeviceId == peerDeviceId)
+            .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<IReadOnlyList<ChatMessage>> GetThreadAsync(string peerDeviceId, int limit = 500, CancellationToken cancellationToken = default)
     {
         await using var db = await _factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
@@ -235,7 +251,7 @@ public sealed class ContactRepository : IContactRepository
     {
         await using var db = await _factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
         var contacts = await db.Contacts.AsNoTracking()
-            .OrderBy(x => x.DisplayName)
+            .OrderByDescending(x => x.IsFavorite).ThenBy(x => x.DisplayName)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
         return contacts.Select(x => new Contact(
@@ -243,7 +259,8 @@ public sealed class ContactRepository : IContactRepository
                 x.DisplayName,
                 x.Notes,
                 x.CreatedUtc,
-                x.DeviceIds.Split(';', StringSplitOptions.RemoveEmptyEntries)))
+                x.DeviceIds.Split(';', StringSplitOptions.RemoveEmptyEntries),
+                x.Company, x.Email, x.Phone, x.IsFavorite))
             .ToList();
     }
 
@@ -260,6 +277,10 @@ public sealed class ContactRepository : IContactRepository
         entity.DisplayName = contact.DisplayName;
         entity.Notes = contact.Notes;
         entity.DeviceIds = string.Join(';', contact.DeviceIds ?? []);
+        entity.Company = contact.Company;
+        entity.Email = contact.Email;
+        entity.Phone = contact.Phone;
+        entity.IsFavorite = contact.IsFavorite;
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

@@ -35,6 +35,7 @@ public sealed partial class RemoteClient
         public CancellationTokenSource? DirectCts { get; set; }
         public Task? DirectReceiveTask { get; set; }
         public bool ControlOwner { get; set; }
+        public ControlRestriction ControlRestriction { get; init; }
         public bool VideoConfigured { get; set; }
         public ConnectionStateMachine StateMachine { get; } = new();
         public ConnectionHealthMonitor Health { get; } = new();
@@ -428,6 +429,7 @@ public sealed partial class RemoteClient
             }
 
             session.MarkDisconnecting();
+            await ClearTemporaryChatAsync(session.RemoteDeviceId).ConfigureAwait(false);
             _sessionManager.TryRemove(session.Id, out _, out _);
             // Publish the removed session immediately. Capture/file/history
             // cleanup can await slow I/O; the viewer must stop showing the

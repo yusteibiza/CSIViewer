@@ -3,6 +3,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -12,9 +13,16 @@
             <TextBlock Text="Mensajería cifrada con el equipo remoto durante la sesión." Style="{StaticResource MutedTextStyle}" loc:Translate.Text="Mensajería cifrada con el equipo remoto durante la sesión." />
         </StackPanel>
 
-        <InfoBar x:Name="ChatStatusBar" Grid.Row="1" IsOpen="False" Severity="Informational" IsClosable="False" />
+        <Grid Grid.Row="1" ColumnSpacing="8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <ComboBox x:Name="ChatDeviceCombo" Header="Dispositivo" HorizontalAlignment="Stretch" SelectionChanged="ChatDevice_SelectionChanged" AutomationProperties.AutomationId="ChatDeviceCombo" HeaderTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Header="Dispositivo" />
+            <Button x:Name="ExportChatButton" Grid.Column="1" Content="Exportar chat" VerticalAlignment="Bottom" Style="{StaticResource SecondaryButtonStyle}" Click="ExportChat_Click" AutomationProperties.AutomationId="ExportChatButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Exportar chat" />
+            <Button x:Name="DeleteChatButton" Grid.Column="2" Content="Borrar chat" VerticalAlignment="Bottom" Style="{StaticResource DangerButtonStyle}" Click="DeleteChat_Click" AutomationProperties.AutomationId="DeleteChatButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Borrar chat" />
+        </Grid>
 
-        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="0">
+        <InfoBar x:Name="ChatStatusBar" Grid.Row="2" IsOpen="False" Severity="Informational" IsClosable="False" />
+
+        <Border Grid.Row="3" Style="{StaticResource CardStyle}" Padding="0">
             <ListView x:Name="ChatList" SelectionMode="None" Padding="16" VerticalAlignment="Stretch">
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -37,7 +45,7 @@
             </ListView>
         </Border>
 
-        <Grid Grid.Row="3" ColumnSpacing="8">
+        <Grid Grid.Row="4" ColumnSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -46,18 +54,21 @@
             <Button x:Name="EmojiButton" Grid.Column="0" Content="😊" FontSize="18" Width="40" Height="34" Padding="0" ToolTipService.ToolTip="Añadir emoji" AutomationProperties.Name="Añadir emoji" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.ToolTip="Añadir emoji" loc:Translate.AutomationName="Añadir emoji">
                 <Button.Flyout>
                     <Flyout Placement="Top">
-                        <GridView x:Name="EmojiGrid" SelectionMode="None" Width="300" Height="190" Padding="4">
+                        <StackPanel Width="340" Spacing="8">
+                        <ComboBox x:Name="EmojiCategoryCombo" HorizontalAlignment="Stretch" SelectionChanged="EmojiCategory_SelectionChanged" AutomationProperties.AutomationId="EmojiCategoryCombo" AutomationProperties.Name="Categoría de emojis" loc:Translate.AutomationName="Categoría de emojis" />
+                        <GridView x:Name="EmojiGrid" SelectionMode="None" Width="340" Height="240" Padding="4" AutomationProperties.AutomationId="EmojiGrid">
                             <GridView.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Content="{Binding}" Click="Emoji_Click" Width="34" Height="34" Padding="0" FontSize="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+                                    <Button Content="{Binding}" Click="Emoji_Click" Width="36" MinWidth="0" Height="36" Padding="0" FontSize="20" FontFamily="Segoe UI Emoji" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
                                 </DataTemplate>
                             </GridView.ItemTemplate>
                         </GridView>
+                        </StackPanel>
                     </Flyout>
                 </Button.Flyout>
             </Button>
-            <TextBox x:Name="MessageBox" Grid.Column="1" PlaceholderText="Escribe un mensaje…" MaxLength="8000" KeyDown="MessageBox_KeyDown" loc:Translate.PlaceholderText="Escribe un mensaje…" />
-            <Button Grid.Column="2" Content="Enviar" Style="{StaticResource PrimaryButtonStyle}" Click="Send_Click" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Enviar" />
+            <TextBox x:Name="MessageBox" Grid.Column="1" PlaceholderText="Escribe un mensaje…" MaxLength="8000" KeyDown="MessageBox_KeyDown" AutomationProperties.AutomationId="ChatMessageInput" loc:Translate.PlaceholderText="Escribe un mensaje…" />
+            <Button x:Name="SendButton" Grid.Column="2" Content="Enviar" Style="{StaticResource PrimaryButtonStyle}" Click="Send_Click" AutomationProperties.AutomationId="ChatSendButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Enviar" />
         </Grid>
     </Grid>
 </Page>

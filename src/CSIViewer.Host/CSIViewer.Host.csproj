@@ -42,6 +42,9 @@
     <Compile Include="..\Shared\AccentAppearance.cs" Link="Presentation\AccentAppearance.cs" />
     <Compile Include="..\Shared\Translate.cs" Link="Presentation\Translate.cs" />
     <Compile Include="..\Shared\WrapPanel.cs" Link="Presentation\WrapPanel.cs" />
+    <Compile Include="..\Shared\RowHover.cs" Link="Presentation\RowHover.cs" />
+    <Compile Include="..\Shared\ChatViewController.cs" Link="Presentation\ChatViewController.cs" />
+    <Compile Include="..\Shared\ContactEditorDialog.cs" Link="Presentation\ContactEditorDialog.cs" />
     <Compile Include="..\CSIViewer\MainWindow.Accent.cs" Link="MainWindow.Accent.cs" />
     <Compile Include="..\CSIViewer\Views\HostSettingsPage.Accent.cs" Link="Views\HostSettingsPage.Accent.cs" />
     <!-- Shared browser logic is compiled into this independent executable. -->

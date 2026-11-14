@@ -1,5 +1,12 @@
 namespace CSIViewer.Core;
 
+public enum ControlRestriction
+{
+    None,
+    NotGranted,
+    InUse
+}
+
 /// <summary>
 /// Centralizes the meaning of session permissions from the local device's
 /// point of view. SendFiles/ReceiveFiles are described from the controller's
@@ -7,6 +14,12 @@ namespace CSIViewer.Core;
 /// </summary>
 public static class SessionPermissionPolicy
 {
+    public static ControlRestriction GetControlRestriction(SessionPermissions requested, SessionPermissions granted, string? reason)
+    {
+        if (!CanControl(requested) || CanControl(granted)) return ControlRestriction.None;
+        return reason == "control_in_use" ? ControlRestriction.InUse : ControlRestriction.NotGranted;
+    }
+
     public static SessionPermissions Sanitize(SessionPermissions permissions) =>
         permissions & SessionPermissions.All;
 

@@ -76,7 +76,11 @@ public sealed record Contact(
     string DisplayName,
     string Notes,
     DateTimeOffset CreatedUtc,
-    IReadOnlyList<string>? DeviceIds = null);
+    IReadOnlyList<string>? DeviceIds = null,
+    string Company = "",
+    string Email = "",
+    string Phone = "",
+    bool IsFavorite = false);
 
 public sealed record ConnectionHistoryEntry(
     string Id,

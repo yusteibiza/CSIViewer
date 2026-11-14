@@ -56,6 +56,10 @@ public sealed class ContactEntity
     public string Notes { get; set; } = "";
     public DateTimeOffset CreatedUtc { get; set; }
     public string DeviceIds { get; set; } = "";
+    public string Company { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Phone { get; set; } = "";
+    public bool IsFavorite { get; set; }
 }
 
 public sealed class TransferEntity
@@ -129,6 +133,17 @@ public sealed class ClientDbContext : DbContext
         catch
         {
             // The column already exists on new databases.
+        }
+
+        using (var transaction = Database.BeginTransaction())
+        {
+            var columns = Database.SqlQueryRaw<string>("SELECT name AS Value FROM pragma_table_info('Contacts')")
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (!columns.Contains("Company")) Database.ExecuteSqlRaw("ALTER TABLE Contacts ADD COLUMN Company TEXT NOT NULL DEFAULT '';");
+            if (!columns.Contains("Email")) Database.ExecuteSqlRaw("ALTER TABLE Contacts ADD COLUMN Email TEXT NOT NULL DEFAULT '';");
+            if (!columns.Contains("Phone")) Database.ExecuteSqlRaw("ALTER TABLE Contacts ADD COLUMN Phone TEXT NOT NULL DEFAULT '';");
+            if (!columns.Contains("IsFavorite")) Database.ExecuteSqlRaw("ALTER TABLE Contacts ADD COLUMN IsFavorite INTEGER NOT NULL DEFAULT 0;");
+            transaction.Commit();
         }
 
         try

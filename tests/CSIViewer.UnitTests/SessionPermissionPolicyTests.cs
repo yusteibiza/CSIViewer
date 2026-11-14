@@ -6,6 +6,18 @@ namespace CSIViewer.UnitTests;
 public sealed class SessionPermissionPolicyTests
 {
     [TestMethod]
+    [DataRow(SessionPermissions.ViewScreen, SessionPermissions.ViewScreen, "control_in_use", ControlRestriction.None)]
+    [DataRow(SessionPermissions.All, SessionPermissions.All, "control_in_use", ControlRestriction.None)]
+    [DataRow(SessionPermissions.All, SessionPermissions.ViewScreen, "control_in_use", ControlRestriction.InUse)]
+    [DataRow(SessionPermissions.All, SessionPermissions.ViewScreen, "denied", ControlRestriction.NotGranted)]
+    [DataRow(SessionPermissions.All, SessionPermissions.ViewScreen, null, ControlRestriction.NotGranted)]
+    [DataRow(SessionPermissions.All, SessionPermissions.ViewScreen, "unknown", ControlRestriction.NotGranted)]
+    public void MissingControl_IsClassifiedWithoutGrantingPermissions(SessionPermissions requested, SessionPermissions granted, string? reason, ControlRestriction expected)
+    {
+        Assert.AreEqual(expected, SessionPermissionPolicy.GetControlRestriction(requested, granted, reason));
+    }
+
+    [TestMethod]
     public void Controller_CanSendOnlyWithSendFiles()
     {
         Assert.IsTrue(SessionPermissionPolicy.CanSendFiles(

@@ -66,6 +66,7 @@ public sealed partial class RemoteClient
 
         try
         {
+            _state.Post(() => _state.IsAwaitingPeerAuthorization = false);
             if (_state.IsSessionActive)
             {
                 return Result<bool>.Fail("busy", global::CSIViewer.Core.Localization.Text("Ya hay una sesión activa."));
@@ -223,6 +224,7 @@ public sealed partial class RemoteClient
         }
         finally
         {
+            _state.Post(() => _state.IsAwaitingPeerAuthorization = false);
             _connectGate.Release();
         }
     }
@@ -660,6 +662,11 @@ public sealed partial class RemoteClient
         }
 
         SetConnectionState(ConnectionState.Authenticating, global::CSIViewer.Core.Localization.Text("Esperando autorización del equipo remoto…"));
+        _state.Post(() =>
+        {
+            if (ReferenceEquals(Volatile.Read(ref _pendingConnect), pending))
+                _state.IsAwaitingPeerAuthorization = true;
+        });
 
         try
         {
@@ -727,7 +734,8 @@ public sealed partial class RemoteClient
                     payload.RemoteDeviceId,
                     payload.RemoteName,
                     grantedPermissions,
-                    isController: true)
+                    isController: true,
+                    controlRestriction: SessionPermissionPolicy.GetControlRestriction(pending.Permissions, grantedPermissions, payload.Reason))
                 .ConfigureAwait(false);
 
             lock (_sessionLock)
@@ -1012,6 +1020,10 @@ public sealed partial class RemoteClient
         }
 
         effectivePermissions = SessionPermissionPolicy.Sanitize(effectivePermissions);
+        var restriction = SessionPermissionPolicy.GetControlRestriction(incoming.Permissions, effectivePermissions, activationReason);
+        if (restriction != ControlRestriction.None)
+            _logger.LogInformation("Control not granted. Session={SessionId} Restriction={Restriction} Requested={RequestedPermissions} Effective={EffectivePermissions}",
+                sessionGuid, restriction, incoming.Permissions, effectivePermissions);
         if (effectivePermissions.HasFlag(SessionPermissions.ControlInput) &&
             !effectivePermissions.HasFlag(SessionPermissions.ViewScreen))
         {
@@ -1129,7 +1141,8 @@ public sealed partial class RemoteClient
                     pending.TargetId,
                     _remoteName ?? pending.TargetId,
                     SessionPermissionPolicy.Sanitize(result.GrantedPermissions),
-                    isController: true)
+                    isController: true,
+                    controlRestriction: SessionPermissionPolicy.GetControlRestriction(pending.Permissions, result.GrantedPermissions, result.Reason))
                 .ConfigureAwait(false);
 
             lock (_sessionLock)
@@ -1184,7 +1197,8 @@ public sealed partial class RemoteClient
         string remoteId,
         string remoteName,
         SessionPermissions permissions,
-        bool isController)
+        bool isController,
+        ControlRestriction controlRestriction = ControlRestriction.None)
     {
         if (!isController)
         {
@@ -1215,6 +1229,7 @@ public sealed partial class RemoteClient
                     RemoteName = remoteName,
                     Permissions = permissions,
                     IsController = true,
+                    ControlRestriction = controlRestriction,
                     Crypto = _crypto,
                     Handshake = _handshake,
                     StartedUtc = startedAt,

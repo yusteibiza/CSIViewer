@@ -112,7 +112,7 @@
                         <TextBlock x:Name="SessionText" Text="No hay ninguna sesión activa." Style="{StaticResource MutedTextStyle}" loc:Translate.Text="No hay ninguna sesión activa." />
                     </StackPanel>
                     <loc:WrapPanel Grid.Column="1" Spacing="8">
-                        <Button x:Name="ChatButton" Content="Chat" Click="OpenChat_Click" Style="{StaticResource SecondaryButtonStyle}" IsEnabled="False" AutomationProperties.AutomationId="HostChatButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Chat" />
+                        <Button x:Name="ChatButton" Content="Chat" Click="OpenChat_Click" Style="{StaticResource SecondaryButtonStyle}" AutomationProperties.AutomationId="HostChatButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Chat" />
                         <Button x:Name="EndSessionButton" Content="Finalizar sesión" Click="EndSession_Click" Style="{StaticResource DangerButtonStyle}" IsEnabled="False" AutomationProperties.AutomationId="HostEndSessionButton" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Finalizar sesión" />
                     </loc:WrapPanel>
                 </Grid>

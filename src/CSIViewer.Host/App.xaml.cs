@@ -150,6 +150,7 @@ public partial class App : XamlApplication
         });
         services.AddCSIViewerInfrastructure();
         services.AddCSIViewerClient();
+        services.AddSingleton(new ChatHistoryOptions { RetainHistory = false });
         services.AddSingleton(loggingOptions);
         services.AddSingleton<IConsentService, ConsentService>();
         services.AddSingleton<INotificationService, NotificationService>();

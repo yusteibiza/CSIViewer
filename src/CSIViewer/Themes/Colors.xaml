@@ -6,6 +6,8 @@
     <ResourceDictionary.ThemeDictionaries>
         <!-- Fallback neutro; Windows elige Light/Dark según el tema del sistema. -->
         <ResourceDictionary x:Key="Default">
+            <SolidColorBrush x:Key="LinkedDeviceBackgroundBrush" Color="#203B34" />
+            <SolidColorBrush x:Key="LinkedDeviceForegroundBrush" Color="#A7E3CD" />
             <SolidColorBrush x:Key="BrandBrush" Color="#4CC2FF" />
             <SolidColorBrush x:Key="BrandSoftBrush" Color="#173B52" />
             <SolidColorBrush x:Key="ChatSentBrush" Color="#123E5A" />
@@ -22,6 +24,8 @@
         </ResourceDictionary>
 
         <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="LinkedDeviceBackgroundBrush" Color="#E3F3ED" />
+            <SolidColorBrush x:Key="LinkedDeviceForegroundBrush" Color="#175C46" />
             <!-- Keep the navigation pane neutral instead of showing wallpaper-tinted Mica. -->
             <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#F3F3F3" />
             <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#F3F3F3" />
@@ -41,6 +45,11 @@
         </ResourceDictionary>
 
         <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="LinkedDeviceBackgroundBrush" Color="#203B34" />
+            <SolidColorBrush x:Key="LinkedDeviceForegroundBrush" Color="#A7E3CD" />
+            <!-- Opaque neutral pane, without wallpaper/accent tint; HighContrast keeps its native resources. -->
+            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#202020" />
+            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#202020" />
             <SolidColorBrush x:Key="BrandBrush" Color="#4CC2FF" />
             <SolidColorBrush x:Key="BrandSoftBrush" Color="#173B52" />
             <SolidColorBrush x:Key="ChatSentBrush" Color="#123E5A" />
@@ -57,6 +66,8 @@
         </ResourceDictionary>
 
         <ResourceDictionary x:Key="HighContrast">
+            <SolidColorBrush x:Key="LinkedDeviceBackgroundBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+            <SolidColorBrush x:Key="LinkedDeviceForegroundBrush" Color="{ThemeResource SystemColorButtonTextColor}" />
             <SolidColorBrush x:Key="BrandBrush" Color="{ThemeResource SystemColorHighlightColor}" />
             <SolidColorBrush x:Key="BrandSoftBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
             <SolidColorBrush x:Key="ChatSentBrush" Color="{ThemeResource SystemColorHighlightColor}" />

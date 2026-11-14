@@ -8,6 +8,96 @@ namespace CSIViewer.UnitTests;
 [TestClass]
 public sealed class RepositoryTests
 {
+    private static readonly string[] RemainingChatPeer = ["222222222"];
+
+    [TestMethod]
+    public async Task ContactDetailsAndMultipleDevicesRoundTripWithoutTouchingOtherContacts()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"rd-contact-details-{Guid.NewGuid():N}.db");
+        try
+        {
+            var factory = new TestFactory(path);
+            await using (var db = factory.CreateDbContext()) db.EnsureDatabase();
+            var repository = new ContactRepository(factory);
+            var original = new Contact("a", "Ángela", "Notas 😊", DateTimeOffset.UtcNow,
+                ["123456789", "987654321"], "Empresa QA", "qa@example.invalid", "+34 000 000 000", true);
+            await repository.UpsertAsync(original);
+            await repository.UpsertAsync(new Contact("b", "Otro", "Conservar", DateTimeOffset.UtcNow));
+            var restored = (await repository.GetAllAsync())[0];
+            Assert.AreEqual(original.Id, restored.Id);
+            Assert.AreEqual(original.Company, restored.Company);
+            Assert.AreEqual(original.Email, restored.Email);
+            Assert.AreEqual(original.Phone, restored.Phone);
+            Assert.AreEqual(original.Notes, restored.Notes);
+            Assert.AreEqual(original.CreatedUtc, restored.CreatedUtc);
+            Assert.IsTrue(restored.IsFavorite);
+            CollectionAssert.AreEquivalent(original.DeviceIds!.ToArray(), restored.DeviceIds!.ToArray());
+            await repository.UpsertAsync(restored with { Phone = "", DeviceIds = [] });
+            var updated = (await repository.GetAllAsync()).Single(x => x.Id == "a");
+            Assert.AreEqual("", updated.Phone);
+            Assert.AreEqual(0, updated.DeviceIds!.Count);
+            Assert.AreEqual("Conservar", (await repository.GetAllAsync()).Single(x => x.Id == "b").Notes);
+        }
+        finally { TryDelete(path); TryDelete(path + "-shm"); TryDelete(path + "-wal"); }
+    }
+
+    [TestMethod]
+    public async Task ContactSchemaUpgradePreservesLegacyDataAndIsIdempotent()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"rd-contact-upgrade-{Guid.NewGuid():N}.db");
+        try
+        {
+            var factory = new TestFactory(path);
+            await using (var db = factory.CreateDbContext())
+            {
+                db.EnsureDatabase();
+                db.Contacts.Add(new ContactEntity { Id = "legacy", DisplayName = "Existente", Notes = "Mantener", DeviceIds = "123456789;987654321", CreatedUtc = DateTimeOffset.UtcNow });
+                await db.SaveChangesAsync();
+                db.Database.ExecuteSqlRaw("ALTER TABLE Contacts DROP COLUMN Company;");
+                db.Database.ExecuteSqlRaw("ALTER TABLE Contacts DROP COLUMN Email;");
+                db.Database.ExecuteSqlRaw("ALTER TABLE Contacts DROP COLUMN Phone;");
+                db.Database.ExecuteSqlRaw("ALTER TABLE Contacts DROP COLUMN IsFavorite;");
+            }
+            await using (var db = factory.CreateDbContext()) { db.EnsureDatabase(); db.EnsureDatabase(); }
+            var restored = (await new ContactRepository(factory).GetAllAsync()).Single();
+            Assert.AreEqual("Existente", restored.DisplayName);
+            Assert.AreEqual("Mantener", restored.Notes);
+            Assert.AreEqual(2, restored.DeviceIds!.Count);
+            Assert.AreEqual("", restored.Company);
+            Assert.AreEqual("", restored.Email);
+            Assert.AreEqual("", restored.Phone);
+            Assert.IsFalse(restored.IsFavorite);
+        }
+        finally { TryDelete(path); TryDelete(path + "-shm"); TryDelete(path + "-wal"); }
+    }
+    [TestMethod]
+    public async Task ChatDeleteIsPeerScopedAndExportQueryCanReadMoreThanVisibleHistory()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"rd-chat-thread-{Guid.NewGuid():N}.db");
+        try
+        {
+            var factory = new TestFactory(path);
+            await using (var db = factory.CreateDbContext())
+            {
+                db.EnsureDatabase();
+                for (var i = 0; i < 601; i++) db.ChatMessages.Add(new ChatMessageEntity
+                    { Id = "a-" + i, PeerDeviceId = "111111111", SenderDeviceId = "111111111", Text = "QA A " + i, SentUtc = DateTimeOffset.UtcNow.AddSeconds(i) });
+                db.ChatMessages.Add(new ChatMessageEntity { Id = "b", PeerDeviceId = "222222222", Text = "QA B", SentUtc = DateTimeOffset.UtcNow });
+                await db.SaveChangesAsync();
+            }
+            var repo = new ChatRepository(factory);
+            Assert.AreEqual(2, (await repo.GetPeerDeviceIdsAsync()).Count);
+            Assert.AreEqual(500, (await repo.GetThreadAsync("111111111")).Count);
+            Assert.AreEqual(601, (await repo.GetThreadAsync("111111111", int.MaxValue)).Count);
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => repo.DeleteThreadAsync(""));
+            await repo.DeleteThreadAsync("111111111");
+            Assert.AreEqual(0, (await repo.GetThreadAsync("111111111")).Count);
+            Assert.AreEqual("QA B", (await repo.GetThreadAsync("222222222")).Single().Text);
+            CollectionAssert.AreEqual(RemainingChatPeer, (await repo.GetPeerDeviceIdsAsync()).ToArray());
+        }
+        finally { TryDelete(path); TryDelete(path + "-shm"); TryDelete(path + "-wal"); }
+    }
+
     [TestMethod]
     public async Task ConnectionUpdatesPreserveExplicitPasswordRemovalAndDoNotRegressLastSeenOrKey()
     {

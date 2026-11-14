@@ -40,10 +40,12 @@ public sealed class ConsentService : IConsentService
         var registration = cancellationToken.Register(() =>
             completion.TrySetResult(new ConsentDecision(false, SessionPermissions.None)));
 
-        window.DispatcherQueue.TryEnqueue(async () =>
+        if (!window.DispatcherQueue.TryEnqueue(async () =>
         {
             try
             {
+                if (cancellationToken.IsCancellationRequested) return;
+                window.ShowForConsent();
                 var xamlRoot = window.Content?.XamlRoot;
                 if (xamlRoot is null)
                 {
@@ -134,7 +136,11 @@ public sealed class ConsentService : IConsentService
             {
                 registration.Dispose();
             }
-        });
+        }))
+        {
+            registration.Dispose();
+            completion.TrySetResult(new ConsentDecision(false, SessionPermissions.None));
+        }
 
         return completion.Task;
     }

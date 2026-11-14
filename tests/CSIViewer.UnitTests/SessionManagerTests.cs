@@ -128,6 +128,15 @@ public sealed class SessionManagerTests
         manager.TryRemove(first, out var wasOwner, out _);
         Assert.IsTrue(wasOwner);
         Assert.IsNull(manager.ControlOwner);
+        Assert.IsTrue(manager.TryGetActive(second, out var existing));
+        Assert.IsFalse(existing!.RequestedPermissions.HasFlag(SessionPermissions.ControlInput));
+        var third = Guid.NewGuid();
+        Assert.IsTrue(manager.TryAddPending(third, "controller-c", SessionPermissions.All, out _));
+        Assert.IsTrue(manager.TryActivate(third, SessionPermissions.All, out var granted, out var owner, out var reason));
+        Assert.IsTrue(owner);
+        Assert.IsTrue(granted.HasFlag(SessionPermissions.ControlInput));
+        Assert.IsNull(reason);
+        Assert.AreEqual(third, manager.ControlOwner);
     }
 
     [TestMethod]

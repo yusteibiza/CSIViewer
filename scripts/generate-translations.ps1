@@ -56,5 +56,9 @@ foreach($language in @('en','fr','ca')){
    $ordered=[Collections.Generic.SortedDictionary[string,string]]::new([StringComparer]::Ordinal);foreach($source in $sources){if($translated.ContainsKey($source)){$ordered[$source]=$translated[$source]}}
    [IO.File]::WriteAllText($path,[Text.Json.JsonSerializer]::Serialize($ordered,$options))
  }
- Write-Output "$language resources=$($translated.Count)"
+  # Also prune retired UI keys when no translation batches were needed.
+  $ordered=[Collections.Generic.SortedDictionary[string,string]]::new([StringComparer]::Ordinal)
+  foreach($source in $sources){if($translated.ContainsKey($source)){$ordered[$source]=$translated[$source]}}
+  [IO.File]::WriteAllText($path,[Text.Json.JsonSerializer]::Serialize($ordered,$options))
+  Write-Output "$language resources=$($ordered.Count)"
 }

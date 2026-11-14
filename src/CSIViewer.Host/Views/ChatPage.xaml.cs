@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -6,7 +5,10 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using CSIViewer.Core;
 using CSIViewer.Services;
+using CSIViewer.Host.Services;
+using CSIViewer.Presentation;
 using Windows.System;
+using WinRT.Interop;
 
 namespace CSIViewer.Host.Views;
 
@@ -23,7 +25,7 @@ public sealed class ChatRow
 
     private string StateText => Message.DeliveryState switch
     {
-        ChatDeliveryState.Sending => "Enviando",
+        ChatDeliveryState.Sending => Localization.Text("Enviando"),
         ChatDeliveryState.Sent => global::CSIViewer.Core.Localization.Text("Enviado"),
         ChatDeliveryState.Received => global::CSIViewer.Core.Localization.Text("Recibido"),
         ChatDeliveryState.Failed => global::CSIViewer.Core.Localization.Text("Fallido"),
@@ -33,121 +35,41 @@ public sealed class ChatRow
 
 public sealed partial class ChatPage : Page
 {
-    private static readonly string[] Emojis =
-    [
-        "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎",
-        "🤔", "😅", "😢", "😭", "😡", "👍", "👎", "👏",
-        "🙏", "💪", "👋", "❤️", "💙", "🎉", "🔥", "✅"
-    ];
-
-    private readonly AppState _state;
-    private readonly RemoteClient _client;
-    private readonly ObservableCollection<ChatRow> _rows = [];
-    private int _rebuildScheduled;
+    private readonly ChatViewController? _chat;
 
     public ChatPage()
     {
         InitializeComponent();
         NavigationCacheMode = NavigationCacheMode.Required;
-        _state = App.Services.GetRequiredService<AppState>();
-        _client = App.Services.GetRequiredService<RemoteClient>();
-        ChatList.ItemsSource = _rows;
-        _state.ChatMessages.CollectionChanged += (_, _) => ScheduleRebuild();
-        EmojiGrid.ItemsSource = Emojis;
-        _client.ChatMessageReceived += Client_ChatMessageReceived;
-        _client.SessionStarted += Client_SessionStarted;
-        Loaded += async (_, _) =>
-        {
-            RefreshState();
-            if (_state.IsSessionActive && !string.IsNullOrWhiteSpace(_state.RemoteDeviceId))
-            {
-                await _client.LoadChatHistoryAsync(_state.RemoteDeviceId);
-            }
-
-            RebuildRows();
-        };
-    }
-
-    private void RebuildRows()
-    {
-        _rows.Clear();
-        foreach (var message in _state.ChatMessages)
-        {
-            _rows.Add(new ChatRow(message));
-        }
-
-        ScrollToEnd();
-    }
-
-    private void ScheduleRebuild()
-    {
-        if (Interlocked.Exchange(ref _rebuildScheduled, 1) != 0)
-        {
-            return;
-        }
-
-        DispatcherQueue.TryEnqueue(() =>
-        {
-            Interlocked.Exchange(ref _rebuildScheduled, 0);
-            RebuildRows();
-        });
+        _chat = new ChatViewController(App.Services.GetRequiredService<AppState>(),
+            App.Services.GetRequiredService<RemoteClient>(),
+            new ChatViewControls(ChatDeviceCombo, ChatList, ChatStatusBar, MessageBox, SendButton,
+                EmojiButton, EmojiCategoryCombo, EmojiGrid, DeleteChatButton, ExportChatButton),
+            message => new ChatRow(message), () => ThemeService.Current,
+            () => MainWindow.Instance is { } window ? WindowNative.GetWindowHandle(window) : IntPtr.Zero,
+            sessionOnly: true);
+        Loaded += async (_, _) => await _chat.LoadAsync();
     }
 
     private void Emoji_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button { DataContext: string emoji })
-        {
-            return;
-        }
-
-        var position = MessageBox.SelectionStart;
-        MessageBox.Text = MessageBox.Text.Insert(position, emoji);
-        MessageBox.SelectionStart = position + emoji.Length;
-        MessageBox.Focus(FocusState.Programmatic);
+        if (sender is Button { DataContext: string emoji }) _chat?.InsertEmoji(emoji);
     }
 
-    private async void Client_SessionStarted(object? sender, SessionInfo info)
-    {
-        await _client.LoadChatHistoryAsync(info.RemoteDeviceId);
-        DispatcherQueue.TryEnqueue(() =>
-        {
-            RefreshState();
-            ScheduleRebuild();
-        });
-    }
+    private async void ChatDevice_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    { if (_chat is not null) await _chat.SelectDeviceAsync(); }
 
-    private void Client_ChatMessageReceived(object? sender, ChatMessage message)
-    {
-        ScheduleRebuild();
-    }
+    private void EmojiCategory_SelectionChanged(object sender, SelectionChangedEventArgs e) => _chat?.SelectEmojiCategory();
 
-    private void RefreshState()
-    {
-        if (_state.IsSessionActive && _state.ActivePermissions.HasFlag(SessionPermissions.Chat))
-        {
-            ChatStatusBar.IsOpen = false;
-            MessageBox.IsEnabled = true;
-        }
-        else
-        {
-            ChatStatusBar.Severity = InfoBarSeverity.Warning;
-            ChatStatusBar.Message = global::CSIViewer.Core.Localization.Text("Inicia una sesión con permiso de chat para enviar mensajes.");
-            ChatStatusBar.IsOpen = true;
-            MessageBox.IsEnabled = false;
-        }
-    }
+    private async void DeleteChat_Click(object sender, RoutedEventArgs e)
+    { if (_chat is not null) await _chat.DeleteSelectedAsync(); }
 
-    private void ScrollToEnd()
-    {
-        if (_rows.Count > 0)
-        {
-            ChatList.ScrollIntoView(_rows[^1]);
-        }
-    }
+    private async void ExportChat_Click(object sender, RoutedEventArgs e)
+    { if (_chat is not null) await _chat.ExportSelectedAsync(); }
 
     private async void Send_Click(object sender, RoutedEventArgs e)
     {
-        await SendAsync();
+        if (_chat is not null) await _chat.SendAsync();
     }
 
     private async void MessageBox_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -155,29 +77,8 @@ public sealed partial class ChatPage : Page
         if (e.Key == VirtualKey.Enter)
         {
             e.Handled = true;
-            await SendAsync();
+            if (_chat is not null) await _chat.SendAsync();
         }
     }
 
-    private async Task SendAsync()
-    {
-        var text = MessageBox.Text;
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return;
-        }
-
-        MessageBox.Text = "";
-        var message = await _client.SendChatAsync(text);
-        if (message is null)
-        {
-            ChatStatusBar.Severity = InfoBarSeverity.Warning;
-            ChatStatusBar.Message = global::CSIViewer.Core.Localization.Text("No se pudo enviar el mensaje. Comprueba que la sesión tenga permiso de chat.");
-            ChatStatusBar.IsOpen = true;
-        }
-        else
-        {
-            ScrollToEnd();
-        }
-    }
 }

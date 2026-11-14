@@ -1,5 +1,9 @@
 # Audio, portapapeles y panel neutro — 1.0.1
 
+> Confirmación posterior del usuario: audio perfecto entre equipos de casa y
+> oficina al usar un tercer equipo para TeamViewer. El ruido inicial era un bucle
+> porque TeamViewer y el host estaban en el mismo ordenador de casa. Ver informe 25.
+
 ## Uso
 
 1. Actualiza visor, host y servidor: el protocolo añade permisos Audio=32 y

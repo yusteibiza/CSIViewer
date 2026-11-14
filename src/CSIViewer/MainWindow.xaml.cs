@@ -583,6 +583,14 @@ public sealed partial class MainWindow : Window
     /// the Chat page, except while the user is actively controlling a remote
     /// screen in the foreground (that view must not be interrupted).
     /// </summary>
+    public void ShowForConsent()
+    {
+        if (AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter)
+            presenter.Restore();
+        if (!AppWindow.IsVisible) AppWindow.Show();
+        Activate();
+    }
+
     private void ShowChatForIncomingMessage()
     {
         try

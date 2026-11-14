@@ -22,4 +22,24 @@
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../src/CSIViewer/Views/FileTransferPage.xaml" LogicalName="UiContracts.viewer.Files" />
+    <EmbeddedResource Include="../../src/CSIViewer/Themes/Colors.xaml" LogicalName="UiContracts.viewer.Colors" />
+    <EmbeddedResource Include="../../src/CSIViewer/MainWindow.xaml" LogicalName="UiContracts.viewer.Main" />
+    <EmbeddedResource Include="../../src/CSIViewer/Views/ContactsPage.xaml.cs" LogicalName="UiContracts.viewer.ContactsCode" />
+    <EmbeddedResource Include="../../src/CSIViewer.Host/Views/ContactsPage.xaml.cs" LogicalName="UiContracts.host.ContactsCode" />
+    <EmbeddedResource Include="../../src/CSIViewer/Views/RemoteControlPage.xaml.cs" LogicalName="UiContracts.viewer.SessionCode" />
+    <EmbeddedResource Include="../../src/CSIViewer.Host/Views/RemoteControlPage.xaml.cs" LogicalName="UiContracts.host.SessionCode" />
+    <EmbeddedResource Include="../../src/CSIViewer.Host/MainWindow.xaml" LogicalName="UiContracts.host.Main" />
+    <EmbeddedResource Include="../../src/CSIViewer.Host/Themes/Colors.xaml" LogicalName="UiContracts.host.Colors" />
+    <EmbeddedResource Include="../../src/CSIViewer/Views/RemoteControlPage.xaml" LogicalName="UiContracts.viewer.Session" />
+    <EmbeddedResource Include="../../src/CSIViewer/Views/DevicesPage.xaml" LogicalName="UiContracts.viewer.Devices" />
+    <EmbeddedResource Include="../../src/CSIViewer.Host/Views/FileTransferPage.xaml" LogicalName="UiContracts.host.Files" />
+    <EmbeddedResource Include="../../src/CSIViewer.Host/Views/RemoteControlPage.xaml" LogicalName="UiContracts.host.Session" />
+    <EmbeddedResource Include="../../src/CSIViewer.Host/Views/DevicesPage.xaml" LogicalName="UiContracts.host.Devices" />
+    <EmbeddedResource Include="../../src/CSIViewer/Views/ChatPage.xaml" LogicalName="UiContracts.viewer.Chat" />
+    <EmbeddedResource Include="../../src/CSIViewer.Host/Views/ChatPage.xaml" LogicalName="UiContracts.host.Chat" />
+    <EmbeddedResource Include="../../src/CSIViewer/Views/ContactsPage.xaml" LogicalName="UiContracts.viewer.Contacts" />
+    <EmbeddedResource Include="../../src/CSIViewer.Host/Views/ContactsPage.xaml" LogicalName="UiContracts.host.Contacts" />
+  </ItemGroup>
 </Project>

@@ -72,7 +72,8 @@ public sealed partial class RemoteClient : IAsyncDisposable
         IContactRepository contacts,
         IConsentService consent,
         INotificationService notifications,
-        ILogger<RemoteClient> logger)
+        ILogger<RemoteClient> logger,
+        ChatHistoryOptions? chatHistoryOptions = null)
     {
         _state = state;
         _identity = identity;
@@ -81,6 +82,7 @@ public sealed partial class RemoteClient : IAsyncDisposable
         _deviceLists = deviceLists;
         _history = history;
         _chatRepository = chatRepository;
+        _retainChatHistory = chatHistoryOptions?.RetainHistory ?? true;
         _transferRepository = transferRepository;
         _contacts = contacts;
         _consent = consent;
@@ -100,12 +102,19 @@ public sealed partial class RemoteClient : IAsyncDisposable
 
     public bool IsServerOnline => _signal?.IsConnected == true && _state.IsServerOnline;
     public bool IsSessionActive => _state.IsSessionActive;
+    public ControlRestriction RemoteControlRestriction => GetPrimarySession()?.ControlRestriction ?? ControlRestriction.None;
     public long DroppedVideoFrames => Interlocked.Read(ref _droppedVideoFrames);
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
         await _identity.InitializeAsync(cancellationToken).ConfigureAwait(false);
+        if (!_retainChatHistory)
+        {
+            // Remove legacy host transcripts once on startup; never read them into the UI.
+            foreach (var peer in await _chatRepository.GetPeerDeviceIdsAsync(cancellationToken).ConfigureAwait(false))
+                await _chatRepository.DeleteThreadAsync(peer, cancellationToken).ConfigureAwait(false);
+        }
         await LoadLocalDataAsync(cancellationToken).ConfigureAwait(false);
         UpdateSessionManagerLimit();
         StartHeartbeatLoop();

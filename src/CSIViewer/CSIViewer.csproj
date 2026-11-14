@@ -41,6 +41,9 @@
     <Compile Include="..\Shared\AccentAppearance.cs" Link="Presentation\AccentAppearance.cs" />
     <Compile Include="..\Shared\Translate.cs" Link="Presentation\Translate.cs" />
     <Compile Include="..\Shared\WrapPanel.cs" Link="Presentation\WrapPanel.cs" />
+    <Compile Include="..\Shared\RowHover.cs" Link="Presentation\RowHover.cs" />
+    <Compile Include="..\Shared\ChatViewController.cs" Link="Presentation\ChatViewController.cs" />
+    <Compile Include="..\Shared\ContactEditorDialog.cs" Link="Presentation\ContactEditorDialog.cs" />
     <ProjectReference Include="..\CSIViewer.Application\CSIViewer.Application.csproj" />
     <ProjectReference Include="..\CSIViewer.Services\CSIViewer.Services.csproj" />
   </ItemGroup>

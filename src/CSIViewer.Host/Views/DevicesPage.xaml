@@ -53,12 +53,20 @@
         <Border Grid.Row="3" Style="{StaticResource CardStyle}" Padding="0">
             <Grid>
                 <ListView x:Name="DevicesList" SelectionMode="None" Padding="12">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="0" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <Grid Padding="6,10" ColumnSpacing="12">
+                            <Grid Padding="6,10" ColumnSpacing="12" Background="Transparent" CornerRadius="4" loc:RowHover.Brush="{ThemeResource SubtleFillColorSecondaryBrush}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <Border Width="42" Height="42" CornerRadius="10" Background="{ThemeResource BrandSoftBrush}">
@@ -71,18 +79,18 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="{Binding Alias}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding Alias}" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                            <FontIcon Glyph="" FontSize="12" Foreground="{ThemeResource BrandBrush}" Visibility="{Binding FavoriteVisibility}" ToolTipService.ToolTip="Favorito" loc:Translate.ToolTip="Favorito" />
-                                            <Border Background="{ThemeResource BrandSoftBrush}" CornerRadius="4" Padding="6,1" Visibility="{Binding ListVisibility}">
-                                                <TextBlock Text="{Binding ListName}" FontSize="11" Foreground="{ThemeResource BrandBrush}" TextTrimming="CharacterEllipsis" MaxWidth="140" />
-                                            </Border>
-                                        </StackPanel>
                                     </Grid>
                                     <TextBlock Text="{Binding DeviceId}" FontFamily="Consolas" FontSize="12" Style="{StaticResource MutedTextStyle}" />
                                     <TextBlock Text="{Binding Description}" Style="{StaticResource MutedTextStyle}" FontSize="12" TextTrimming="CharacterEllipsis" Visibility="{Binding DescriptionVisibility}" />
                                     <TextBlock Text="{Binding LastSeenText}" FontSize="11" Style="{StaticResource MutedTextStyle}" />
                                 </StackPanel>
-                                <loc:WrapPanel Grid.Column="2" Spacing="6" VerticalAlignment="Center">
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <FontIcon Glyph="" FontSize="12" Foreground="{ThemeResource BrandBrush}" Visibility="{Binding FavoriteVisibility}" ToolTipService.ToolTip="Favorito" loc:Translate.ToolTip="Favorito" />
+                                    <Border Background="{ThemeResource BrandSoftBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center" Visibility="{Binding ListVisibility}">
+                                        <TextBlock Text="{Binding ListName}" FontSize="11" VerticalAlignment="Center" Foreground="{ThemeResource BrandBrush}" TextTrimming="CharacterEllipsis" MaxWidth="140" />
+                                    </Border>
+                                </StackPanel>
+                                <loc:WrapPanel Grid.Column="3" Spacing="6" VerticalAlignment="Center">
                                     <Button Content="Conectar" Click="Connect_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Conectar" />
                                     <Button Content="Editar" Click="Edit_Click" Style="{StaticResource SecondaryButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Editar" />
                                     <Button Content="Eliminar" Click="Delete_Click" Style="{StaticResource DangerButtonStyle}" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Eliminar" />

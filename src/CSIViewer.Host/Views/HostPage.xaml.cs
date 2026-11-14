@@ -73,19 +73,18 @@ public sealed partial class HostPage : Page
         AllowIncomingSwitch.IsOn = _state.Settings.AllowIncomingConnections;
         _updatingToggle = false;
 
+        ChatButton.IsEnabled = _state.IsSessionActive && _state.ActivePermissions.HasFlag(SessionPermissions.Chat);
         if (_state.IsSessionActive)
         {
             SessionText.Text = _state.IsController
                 ? $"Controlando {_state.RemoteDeviceName} ({_state.RemoteDeviceId})."
                 : global::CSIViewer.Core.Localization.Format("Sesión remota de {0} ({1}).",_state.RemoteDeviceName,_state.RemoteDeviceId);
             EndSessionButton.IsEnabled = true;
-            ChatButton.IsEnabled = _state.ActivePermissions.HasFlag(SessionPermissions.Chat);
         }
         else
         {
             SessionText.Text = global::CSIViewer.Core.Localization.Text("No hay ninguna sesión activa.");
             EndSessionButton.IsEnabled = false;
-            ChatButton.IsEnabled = false;
         }
     }
 

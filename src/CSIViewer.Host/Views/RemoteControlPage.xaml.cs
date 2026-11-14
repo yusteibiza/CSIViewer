@@ -38,6 +38,7 @@ public sealed partial class RemoteControlPage : Page
     private bool _rightDown;
     private bool _middleDown;
     private bool _updatingMonitors;
+    private bool _connecting;
     private readonly Dictionary<int, InputEventPayload> _pressedKeys = new();
     private VideoFrame? _pendingFrame;
     private int _renderScheduled;
@@ -80,7 +81,10 @@ public sealed partial class RemoteControlPage : Page
             if (!string.IsNullOrWhiteSpace(PendingTargetId))
             {
                 TargetIdBox.Text = PendingTargetId;
+                // Navigation to a different saved device must not retain the previous device's secret.
+                PasswordBox.Password = PendingPassword ?? "";
                 PendingTargetId = null;
+                PendingPassword = null;
             }
 
             if (!string.IsNullOrWhiteSpace(PendingPassword))
@@ -92,9 +96,13 @@ public sealed partial class RemoteControlPage : Page
             var autoConnect = PendingAutoConnect;
             PendingAutoConnect = false;
             UpdateSessionUi();
-            if (autoConnect)
+            if (autoConnect && !_state.IsSessionActive)
             {
-                _ = ConnectAsync();
+                // Keep prefilled credentials while allowing permission review.
+                StatusBar.Severity = InfoBarSeverity.Informational;
+                StatusBar.Title = Localization.Text("Revisa los permisos");
+                StatusBar.Message = Localization.Text("Selecciona los permisos, incluido audio o portapapeles si los necesitas, y pulsa Conectar.");
+                StatusBar.IsOpen = true;
             }
 
             if (_state.IsSessionActive && _state.IsController)
@@ -114,7 +122,7 @@ public sealed partial class RemoteControlPage : Page
 
     private void State_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is not (nameof(AppState.IsSessionActive) or nameof(AppState.IsController) or nameof(AppState.LastError))) return;
+        if (e.PropertyName is not (nameof(AppState.IsSessionActive) or nameof(AppState.IsController) or nameof(AppState.ActivePermissions) or nameof(AppState.IsAwaitingPeerAuthorization) or nameof(AppState.LastError))) return;
         void Refresh()
         {
             if (!_state.IsSessionActive || !_state.IsController)
@@ -136,6 +144,7 @@ public sealed partial class RemoteControlPage : Page
             _frames = 0;
             UpdateSessionUi();
             StatusBar.IsOpen = false;
+            ShowControlRestrictionNotice();
             await _client.RequestMonitorsAsync();
         });
     }
@@ -332,6 +341,17 @@ public sealed partial class RemoteControlPage : Page
         var active = _state.IsSessionActive;
         EmptyState.Visibility = active ? Visibility.Collapsed : Visibility.Visible;
         SessionView.Visibility = active ? Visibility.Visible : Visibility.Collapsed;
+        var waiting = _connecting && !active;
+        var awaitingConsent = waiting && _state.IsAwaitingPeerAuthorization;
+        ConnectionProgressRing.IsActive = waiting;
+        ConnectionProgressRing.Visibility = waiting ? Visibility.Visible : Visibility.Collapsed;
+        global::CSIViewer.Presentation.Translate.SetText(EmptyStateTitle, awaitingConsent
+            ? "Esperando aceptación del equipo remoto…"
+            : waiting ? "Conectando con el equipo remoto…" : "Listo para conectar");
+        global::CSIViewer.Presentation.Translate.SetText(EmptyStateDetails, awaitingConsent
+            ? "El equipo remoto está validando la conexión y los permisos solicitados. Espera a que la autorice."
+            : waiting ? "Enviando la solicitud y estableciendo una conexión segura. Puede tardar unos instantes."
+            : "Introduce el ID, revisa los permisos y pulsa Conectar.");
 
         if (!active)
         {
@@ -356,7 +376,11 @@ public sealed partial class RemoteControlPage : Page
         }
 
         SessionTitleText.Text = _state.IsController
-            ? global::CSIViewer.Core.Localization.Format("Control de {0}",_state.RemoteDeviceName)
+            ? SessionPermissionPolicy.CanControl(_state.ActivePermissions)
+                ? Localization.Format("Control de {0}", _state.RemoteDeviceName)
+                : SessionPermissionPolicy.CanViewScreen(_state.ActivePermissions)
+                    ? Localization.Format("Vista de {0} (sin control)", _state.RemoteDeviceName)
+                    : Localization.Format("Sesión con {0}", _state.RemoteDeviceName)
             : global::CSIViewer.Core.Localization.Format("Sesión remota de {0}",_state.RemoteDeviceName);
         var transport = _state.Transport switch
         {
@@ -379,8 +403,22 @@ public sealed partial class RemoteControlPage : Page
     private async void Connect_Click(object sender, RoutedEventArgs e)
         => await ConnectAsync();
 
+    private bool ShowControlRestrictionNotice()
+    {
+        var restriction = _client.RemoteControlRestriction;
+        if (restriction == ControlRestriction.None) return false;
+        StatusBar.Severity = InfoBarSeverity.Warning;
+        StatusBar.Title = Localization.Text("Conectado sin control de ratón y teclado");
+        StatusBar.Message = restriction == ControlRestriction.InUse
+            ? Localization.Text("Otra sesión tiene el control de este equipo. Finaliza esa sesión y vuelve a conectar solicitando el permiso de control.")
+            : Localization.Text("El equipo remoto no ha concedido el permiso de control. Finaliza la sesión y vuelve a solicitar «Controlar ratón y teclado».");
+        StatusBar.IsOpen = true;
+        return true;
+    }
+
     private async Task ConnectAsync()
     {
+        if (_connecting) return;
         var target = new string(TargetIdBox.Text.Where(char.IsAsciiDigit).ToArray());
         if (target.Length != 9)
         {
@@ -411,6 +449,8 @@ public sealed partial class RemoteControlPage : Page
         }
 
         ConnectButton.IsEnabled = false;
+        _connecting = true;
+        UpdateSessionUi();
         StatusBar.Severity = InfoBarSeverity.Informational;
         StatusBar.Title = global::CSIViewer.Core.Localization.Text("Conectando…");
         StatusBar.Message = global::CSIViewer.Core.Localization.Format("Solicitando conexión con {0}.",target);
@@ -431,9 +471,12 @@ public sealed partial class RemoteControlPage : Page
             }
             else
             {
-                StatusBar.Severity = InfoBarSeverity.Success;
-                StatusBar.Title = global::CSIViewer.Core.Localization.Text("Conectado");
-                StatusBar.Message = global::CSIViewer.Core.Localization.Text("La sesión está activa.");
+                if (!ShowControlRestrictionNotice())
+                {
+                    StatusBar.Severity = InfoBarSeverity.Success;
+                    StatusBar.Title = global::CSIViewer.Core.Localization.Text("Conectado");
+                    StatusBar.Message = global::CSIViewer.Core.Localization.Text("La sesión está activa.");
+                }
                 UpdateSessionUi();
             }
         }
@@ -445,8 +488,10 @@ public sealed partial class RemoteControlPage : Page
         }
         finally
         {
+            _connecting = false;
             ConnectButton.IsEnabled = true;
             PasswordBox.Password = "";
+            UpdateSessionUi();
         }
     }
 

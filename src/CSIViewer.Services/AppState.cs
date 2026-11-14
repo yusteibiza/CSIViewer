@@ -53,6 +53,9 @@ public sealed partial class AppState : ObservableObject
     private bool _isSessionActive;
 
     [ObservableProperty]
+    private bool _isAwaitingPeerAuthorization;
+
+    [ObservableProperty]
     private bool _isController;
 
     [ObservableProperty]

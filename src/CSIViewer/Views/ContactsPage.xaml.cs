@@ -5,8 +5,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using CSIViewer.Application;
 using CSIViewer.Core;
+using CSIViewer.Infrastructure;
 using CSIViewer.Services;
-using XamlApplication = Microsoft.UI.Xaml.Application;
+using CSIViewer.Presentation;
 
 namespace CSIViewer.Views;
 
@@ -16,6 +17,10 @@ public sealed class ContactRow
     public required ObservableCollection<KnownDevice> Devices { get; init; }
     public string Name => Contact.DisplayName;
     public string Notes => Contact.Notes;
+    public string Details => string.Join(" · ", new[] { Contact.Company, Contact.Email, Contact.Phone }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    public Visibility DetailsVisibility => string.IsNullOrWhiteSpace(Details) ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility NotesVisibility => string.IsNullOrWhiteSpace(Notes) ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility FavoriteVisibility => Contact.IsFavorite ? Visibility.Visible : Visibility.Collapsed;
     public Visibility EmptyVisibility => Devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 }
 
@@ -24,6 +29,7 @@ public sealed partial class ContactsPage : Page
     private readonly AppState _state;
     private readonly IContactRepository _repository;
     private readonly ObservableCollection<ContactRow> _rows = [];
+    private int _refreshQueued;
 
     public ContactsPage()
     {
@@ -32,13 +38,22 @@ public sealed partial class ContactsPage : Page
         _state = App.Services.GetRequiredService<AppState>();
         _repository = App.Services.GetRequiredService<IContactRepository>();
         ContactsList.ItemsSource = _rows;
+        _state.Contacts.CollectionChanged += (_, _) => QueueRefresh();
+        _state.KnownDevices.CollectionChanged += (_, _) => QueueRefresh();
         Loaded += (_, _) => RefreshRows();
+    }
+
+    private void QueueRefresh()
+    {
+        if (Interlocked.Exchange(ref _refreshQueued, 1) != 0) return;
+        if (!DispatcherQueue.TryEnqueue(() => { Interlocked.Exchange(ref _refreshQueued, 0); RefreshRows(); }))
+            Interlocked.Exchange(ref _refreshQueued, 0);
     }
 
     private void RefreshRows()
     {
         _rows.Clear();
-        foreach (var contact in _state.Contacts.OrderBy(x => x.DisplayName))
+        foreach (var contact in _state.Contacts.OrderByDescending(x => x.IsFavorite).ThenBy(x => x.DisplayName))
         {
             var devices = new ObservableCollection<KnownDevice>(
                 (contact.DeviceIds ?? [])
@@ -64,80 +79,8 @@ public sealed partial class ContactsPage : Page
 
     private async Task EditContactAsync(Contact? existing)
     {
-        var nameBox = new TextBox
-        {
-            Text = existing?.DisplayName ?? "",
-            PlaceholderText = global::CSIViewer.Core.Localization.Text("Nombre del contacto"),
-            MaxLength = 80
-        };
-        var notesBox = new TextBox
-        {
-            Text = existing?.Notes ?? "",
-            PlaceholderText = "Notas",
-            AcceptsReturn = true,
-            MaxLength = 500,
-            Height = 70
-        };
-
-        var devicePanel = new StackPanel { Spacing = 4 };
-        var checks = new List<(string DeviceId, CheckBox Box)>();
-        foreach (var device in _state.KnownDevices.OrderBy(x => x.Alias))
-        {
-            var box = new CheckBox
-            {
-                Content = $"{device.Alias} ({device.DeviceId})",
-                IsChecked = existing?.DeviceIds?.Contains(device.DeviceId) == true,
-                Tag = device.DeviceId
-            };
-            checks.Add((device.DeviceId, box));
-            devicePanel.Children.Add(box);
-        }
-
-        if (checks.Count == 0)
-        {
-            devicePanel.Children.Add(new TextBlock
-            {
-                Text = global::CSIViewer.Core.Localization.Text("Todavía no hay dispositivos guardados. Añade uno desde Dispositivos."),
-                Style = (Style)XamlApplication.Current.Resources["MutedTextStyle"],
-                TextWrapping = TextWrapping.Wrap
-            });
-        }
-
-        var content = new StackPanel { Spacing = 8 };
-        content.Children.Add(new TextBlock { Text = global::CSIViewer.Core.Localization.Text("Nombre") });
-        content.Children.Add(nameBox);
-        content.Children.Add(new TextBlock { Text = "Notas" });
-        content.Children.Add(notesBox);
-        content.Children.Add(new TextBlock { Text = "Dispositivos vinculados" });
-        content.Children.Add(new ScrollViewer
-        {
-            Content = devicePanel,
-            MaxHeight = 220,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
-        });
-
-        var dialog = new ContentDialog
-        {
-            RequestedTheme = ThemeService.Current,
-            XamlRoot = MainWindow.Instance?.Content?.XamlRoot,
-            Title = existing is null ? "Nuevo contacto" : "Editar contacto",
-            PrimaryButtonText = global::CSIViewer.Core.Localization.Text("Guardar"),
-            CloseButtonText = global::CSIViewer.Core.Localization.Text("Cancelar"),
-            DefaultButton = ContentDialogButton.Primary,
-            Content = content
-        };
-
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary || string.IsNullOrWhiteSpace(nameBox.Text))
-        {
-            return;
-        }
-
-        var contact = new Contact(
-            existing?.Id ?? Guid.NewGuid().ToString("N"),
-            nameBox.Text.Trim(),
-            notesBox.Text.Trim(),
-            existing?.CreatedUtc ?? DateTimeOffset.UtcNow,
-            checks.Where(x => x.Box.IsChecked == true).Select(x => x.DeviceId).ToArray());
+        var contact = await ContactEditorDialog.ShowAsync(existing, _state.KnownDevices, XamlRoot, ThemeService.Current);
+        if (contact is null) return;
 
         await _repository.UpsertAsync(contact);
         var index = _state.Contacts.ToList().FindIndex(x => x.Id == contact.Id);
@@ -169,9 +112,10 @@ public sealed partial class ContactsPage : Page
     {
         if (sender is Button { DataContext: KnownDevice device })
         {
+            var password = SecretProtector.Unprotect(device.ProtectedPassword, "CSIViewer.DevicePassword.v1");
             RemoteControlPage.PendingTargetId = device.DeviceId;
-            RemoteControlPage.PendingPassword = null;
-            RemoteControlPage.PendingAutoConnect = false;
+            RemoteControlPage.PendingPassword = password;
+            RemoteControlPage.PendingAutoConnect = !string.IsNullOrWhiteSpace(password);
             MainWindow.Instance?.NavigateTo("remote");
         }
     }

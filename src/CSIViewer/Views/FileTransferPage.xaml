@@ -46,12 +46,12 @@
                     <TextBox x:Name="LocalPathBox" Grid.Row="1" PlaceholderText="Ruta local" KeyDown="LocalPath_KeyDown" AutomationProperties.AutomationId="LocalFilePath" loc:Translate.PlaceholderText="Ruta local" />
                     <loc:WrapPanel Grid.Row="2" Spacing="4">
                         <Button Content="Unidades" Click="LocalRoots_Click" Padding="8,4" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Unidades" />
-                        <Button Content="Subir" Click="LocalUp_Click" Padding="8,4" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Subir" />
-                        <Button Content="Ir" Click="LocalGo_Click" Padding="8,4" AutomationProperties.AutomationId="LocalFileGo" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Ir" />
-                        <Button Content="Actualizar" Click="LocalRefresh_Click" Padding="8,4" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Actualizar" />
+                        <Button Click="LocalUp_Click" MinWidth="32" Height="30" Padding="8,4" ToolTipService.ToolTip="Subir" AutomationProperties.Name="Subir" AutomationProperties.AutomationId="LocalFileUp" loc:Translate.ToolTip="Subir" loc:Translate.AutomationName="Subir"><FontIcon Glyph="&#xE74A;" FontSize="14" /></Button>
+                        <Button Click="LocalGo_Click" MinWidth="32" Height="30" Padding="8,4" ToolTipService.ToolTip="Ir" AutomationProperties.Name="Ir" AutomationProperties.AutomationId="LocalFileGo" loc:Translate.ToolTip="Ir" loc:Translate.AutomationName="Ir"><FontIcon Glyph="&#xE72A;" FontSize="14" /></Button>
+                        <Button Click="LocalRefresh_Click" MinWidth="32" Height="30" Padding="8,4" ToolTipService.ToolTip="Actualizar" AutomationProperties.Name="Actualizar" AutomationProperties.AutomationId="LocalFileRefresh" loc:Translate.ToolTip="Actualizar" loc:Translate.AutomationName="Actualizar"><FontIcon Glyph="&#xE72C;" FontSize="14" /></Button>
                     </loc:WrapPanel>
                     <ListView x:Name="LocalFilesList" Grid.Row="3" SelectionMode="Extended" HorizontalContentAlignment="Stretch" ItemTemplate="{StaticResource FileBrowserTemplate}" DoubleTapped="LocalFiles_DoubleTapped" SelectionChanged="BrowserSelection_Changed" AutomationProperties.AutomationId="LocalFilesList" />
-                    <loc:WrapPanel Grid.Row="4" Spacing="6">
+                    <loc:WrapPanel Grid.Row="4" Spacing="6" AlignItemsVertically="True">
                         <Button x:Name="LocalPreviousButton" Content="Anterior" Click="LocalPrevious_Click" Padding="8,4" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Anterior" />
                         <Button x:Name="LocalNextButton" Content="Siguiente" Click="LocalNext_Click" Padding="8,4" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Siguiente" />
                         <TextBlock x:Name="LocalCountText" VerticalAlignment="Center" FontSize="11" />
@@ -72,12 +72,12 @@
                     <TextBox x:Name="RemotePathBox" Grid.Row="1" PlaceholderText="Ruta remota" KeyDown="RemotePath_KeyDown" AutomationProperties.AutomationId="RemoteFilePath" loc:Translate.PlaceholderText="Ruta remota" />
                     <loc:WrapPanel Grid.Row="2" Spacing="4">
                         <Button Content="Unidades" Click="RemoteRoots_Click" Padding="8,4" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Unidades" />
-                        <Button Content="Subir" Click="RemoteUp_Click" Padding="8,4" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Subir" />
-                        <Button Content="Ir" Click="RemoteGo_Click" Padding="8,4" AutomationProperties.AutomationId="RemoteFileGo" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Ir" />
-                        <Button Content="Actualizar" Click="RemoteRefresh_Click" Padding="8,4" AutomationProperties.AutomationId="RemoteFileRefresh" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Actualizar" />
+                        <Button Click="RemoteUp_Click" MinWidth="32" Height="30" Padding="8,4" ToolTipService.ToolTip="Subir" AutomationProperties.Name="Subir" AutomationProperties.AutomationId="RemoteFileUp" loc:Translate.ToolTip="Subir" loc:Translate.AutomationName="Subir"><FontIcon Glyph="&#xE74A;" FontSize="14" /></Button>
+                        <Button Click="RemoteGo_Click" MinWidth="32" Height="30" Padding="8,4" ToolTipService.ToolTip="Ir" AutomationProperties.Name="Ir" AutomationProperties.AutomationId="RemoteFileGo" loc:Translate.ToolTip="Ir" loc:Translate.AutomationName="Ir"><FontIcon Glyph="&#xE72A;" FontSize="14" /></Button>
+                        <Button Click="RemoteRefresh_Click" MinWidth="32" Height="30" Padding="8,4" ToolTipService.ToolTip="Actualizar" AutomationProperties.Name="Actualizar" AutomationProperties.AutomationId="RemoteFileRefresh" loc:Translate.ToolTip="Actualizar" loc:Translate.AutomationName="Actualizar"><FontIcon Glyph="&#xE72C;" FontSize="14" /></Button>
                     </loc:WrapPanel>
                     <ListView x:Name="RemoteFilesList" Grid.Row="3" SelectionMode="Extended" HorizontalContentAlignment="Stretch" ItemTemplate="{StaticResource FileBrowserTemplate}" DoubleTapped="RemoteFiles_DoubleTapped" SelectionChanged="BrowserSelection_Changed" AutomationProperties.AutomationId="RemoteFilesList" />
-                    <loc:WrapPanel Grid.Row="4" Spacing="6">
+                    <loc:WrapPanel Grid.Row="4" Spacing="6" AlignItemsVertically="True">
                         <Button x:Name="RemotePreviousButton" Content="Anterior" Click="RemotePrevious_Click" Padding="8,4" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Anterior" />
                         <Button x:Name="RemoteNextButton" Content="Siguiente" Click="RemoteNext_Click" Padding="8,4" ContentTemplate="{StaticResource WrappedLabelTemplate}" loc:Translate.Content="Siguiente" />
                         <TextBlock x:Name="RemoteCountText" VerticalAlignment="Center" FontSize="11" />
