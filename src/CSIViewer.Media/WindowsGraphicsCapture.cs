@@ -9,6 +9,7 @@ using Windows.Graphics.Imaging;
 using Windows.Security.Cryptography;
 using Windows.Storage.Streams;
 using WinRT;
+using CSIViewer.Core;
 
 namespace CSIViewer.Media;
 
@@ -85,10 +86,12 @@ public sealed class WindowsGraphicsCapture : IAsyncDisposable
             run.Handler = (sender, _) => OnFrameArrived(run, sender);
             run.Pool.FrameArrived += run.Handler;
             run.Session.StartCapture();
+            PipelineTrace.Record(PipelineStage.CaptureState, a: 1, b: monitor.Index);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            PipelineTrace.Record(PipelineStage.GraphicError, a: ex.HResult, b: 1);
             _ = StopAsync();
             return false;
         }
@@ -96,6 +99,7 @@ public sealed class WindowsGraphicsCapture : IAsyncDisposable
 
     private async void OnFrameArrived(CaptureRun run, Direct3D11CaptureFramePool sender)
     {
+        PipelineTrace.Record(PipelineStage.CaptureCallback);
         if (Volatile.Read(ref run.Stopped) != 0 || !await run.FrameGate.WaitAsync(0).ConfigureAwait(false))
         {
             return;
@@ -112,28 +116,36 @@ public sealed class WindowsGraphicsCapture : IAsyncDisposable
             }
 
             run.LastFrameTicks = now;
+            var diagnosticId = PipelineTrace.NextFrame();
+            PipelineTrace.Record(PipelineStage.CaptureBegin, diagnosticId, a: frame.ContentSize.Width, b: frame.ContentSize.Height);
             using var bitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(frame.Surface).AsTask().ConfigureAwait(false);
+            PipelineTrace.Record(PipelineStage.CaptureDone, diagnosticId, a: bitmap.PixelWidth, b: bitmap.PixelHeight);
             if (Volatile.Read(ref run.Stopped) != 0) return;
             if (run.EncodeJpeg)
             {
+                PipelineTrace.Record(PipelineStage.CaptureConversionBegin, diagnosticId);
                 var bytes = await JpegEncoder.EncodeAsync(bitmap, run.Quality, run.MaxWidth)
                     .ConfigureAwait(false);
+                PipelineTrace.Record(PipelineStage.CaptureConversionDone, diagnosticId, a: bytes.Length);
                 if (bytes.Length > 0 && Volatile.Read(ref run.Stopped) == 0)
                 {
-                    run.OnFrame(new CaptureFrame([], 0, 0, bytes));
+                    run.OnFrame(new CaptureFrame([], 0, 0, bytes) { DiagnosticId = diagnosticId });
                 }
             }
             else
             {
+                PipelineTrace.Record(PipelineStage.CaptureConversionBegin, diagnosticId);
                 var raw = JpegEncoder.GetBgra(bitmap, run.MaxWidth);
+                PipelineTrace.Record(PipelineStage.CaptureConversionDone, diagnosticId, a: raw.Bgra.Length);
                 if (raw.Bgra.Length > 0 && Volatile.Read(ref run.Stopped) == 0)
                 {
-                    run.OnFrame(new CaptureFrame(raw.Bgra, raw.Width, raw.Height));
+                    run.OnFrame(new CaptureFrame(raw.Bgra, raw.Width, raw.Height) { DiagnosticId = diagnosticId });
                 }
             }
         }
         catch (Exception ex)
         {
+            PipelineTrace.Record(PipelineStage.GraphicError, a: ex.HResult, b: 2);
             if (Volatile.Read(ref run.Stopped) == 0) run.OnError(ex);
         }
         finally
@@ -149,6 +161,7 @@ public sealed class WindowsGraphicsCapture : IAsyncDisposable
             var run = Interlocked.Exchange(ref _run, null);
             if (run is null) return _cleanupTask;
             Volatile.Write(ref run.Stopped, 1);
+            PipelineTrace.Record(PipelineStage.CaptureState, a: 0);
             // Dispose can block inside a virtual graphics driver. Move it off the
             // caller so RemoteClient's shutdown deadline actually has an effect.
             _cleanupTask = Task.Run(() =>
@@ -373,13 +386,14 @@ public static class JpegEncoder
     private static async Task<byte[]> EncodeCoreAsync(SoftwareBitmap bitmap, int quality)
     {
         using var stream = new InMemoryRandomAccessStream();
-        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, stream);
         var properties = new BitmapPropertySet
         {
             ["ImageQuality"] = new BitmapTypedValue(
-                Math.Clamp(quality / 100.0, 0.2, 0.95), Windows.Foundation.PropertyType.Single)
+                Math.Clamp(quality / 100f, 0.2f, 0.95f), Windows.Foundation.PropertyType.Single)
         };
-        await encoder.BitmapProperties.SetPropertiesAsync(properties);
+        // ImageQuality is a codec creation option, not image metadata.
+        // Setting it via BitmapProperties can fail with 0x88982F41 on Win10.
+        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, stream, properties);
         encoder.SetSoftwareBitmap(bitmap);
         await encoder.FlushAsync();
 

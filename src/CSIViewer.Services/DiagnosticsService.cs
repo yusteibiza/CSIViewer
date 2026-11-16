@@ -75,6 +75,21 @@ public sealed class DiagnosticsService
                 cancellationToken.ThrowIfCancellationRequested();
                 File.Copy(file, Path.Combine(logsDirectory, Path.GetFileName(file)), overwrite: true);
             }
+            foreach (var file in Directory.EnumerateFiles(AppPaths.LogsDirectory, "pipeline-*.jsonl*"))
+            {
+                using var source = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var destination = File.Create(Path.Combine(logsDirectory, Path.GetFileName(file)));
+                await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
+            }
+            if (CSIViewer.Core.PipelineTrace.Recorder is { } recorder)
+            {
+                await File.WriteAllTextAsync(Path.Combine(root, "pipeline-flight-recorder.json"),
+                    System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        Utc = DateTimeOffset.UtcNow, Frequency = System.Diagnostics.Stopwatch.Frequency,
+                        Snapshot = recorder.Snapshot(), Events = recorder.Events()
+                    }), cancellationToken).ConfigureAwait(false);
+            }
 
             var summary = new StringBuilder();
             summary.AppendLine("CSIViewer - diagnóstico");

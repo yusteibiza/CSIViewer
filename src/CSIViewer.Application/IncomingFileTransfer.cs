@@ -39,6 +39,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
     private IncrementalHash? _hash;
     private readonly string _activeKey;
     private readonly string _rootDirectory;
+    private readonly TransferDirectoryLease _directoryLease;
     private long _lastFlushedBytes;
     private int _activeKeyReleased;
     private bool _completed;
@@ -48,6 +49,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
 
     private IncomingFileTransfer(
         string rootDirectory,
+        TransferDirectoryLease directoryLease,
         string transferId,
         string finalPath,
         string tempPath,
@@ -60,6 +62,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
         bool overwrite)
     {
         _rootDirectory = rootDirectory;
+        _directoryLease = directoryLease;
         TransferId = transferId;
         FinalPath = finalPath;
         TempPath = tempPath;
@@ -94,6 +97,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
         bool overwriteConfirmed,
         CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (string.IsNullOrWhiteSpace(transferId) ||
             size < 0 ||
             expectedSha256 is not { Length: 64 } ||
@@ -106,6 +110,8 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
         IncrementalHash? hash = null;
         string? activeTempPath = null;
         var activeRegistered = false;
+        TransferDirectoryLease? directoryLease = null;
+        var leaseTransferred = false;
         try
         {
             var root = Path.GetFullPath(rootDirectory);
@@ -114,11 +120,15 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
             PathValidator.EnsureSafeTransferDestination(root, baseFinalPath);
             var tempDirectory = Path.Combine(root, ".rdpart");
             PathValidator.EnsureNoReparsePoints(root, tempDirectory);
-            Directory.CreateDirectory(tempDirectory);
+            directoryLease = new TransferDirectoryLease(root);
+            directoryLease.SetDestination(baseFinalPath);
 
             var key = ComputeKey(relativePath, size, expectedSha256);
             var sidecarPath = Path.Combine(tempDirectory, key + ".json");
+            if (ActiveTempPaths.ContainsKey(Path.Combine(tempDirectory, key + ".part")))
+                return new IncomingFileOpenResult(IncomingFileOpenStatus.Rejected, Reason: "busy");
             var partial = await ReadPartialAsync(
+                    directoryLease,
                     tempDirectory,
                     sidecarPath,
                     root,
@@ -131,17 +141,17 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
             var tempPath = partial?.TempPath ?? Path.Combine(tempDirectory, key + ".part");
             PathValidator.EnsureNoReparsePoints(root, tempPath);
             var resumeOffset = 0L;
-            if (partial is not null && File.Exists(tempPath))
+            if (partial is not null)
             {
-                var length = new FileInfo(tempPath).Length;
+                var length = directoryLease.TemporaryLength(Path.GetFileName(tempPath));
                 if (length >= 0 && length <= size)
                 {
                     resumeOffset = length;
                 }
                 else
                 {
-                    TryDelete(tempPath);
-                    TryDelete(partial.SidecarPath);
+                    directoryLease.DeleteTemporary(Path.GetFileName(tempPath));
+                    directoryLease.DeleteTemporary(Path.GetFileName(partial.SidecarPath!));
                     partial = null;
                 }
             }
@@ -154,7 +164,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
                 finalPath = PathValidator.EnsureInsideRoot(root, partial.FinalPath);
                 overwrite = partial.Overwrite;
             }
-            else if (Exists(baseFinalPath))
+            else if (directoryLease.DestinationExists)
             {
                 switch (conflictPolicy)
                 {
@@ -174,7 +184,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
                         overwrite = true;
                         break;
                     default:
-                        finalPath = GetUniquePath(baseFinalPath);
+                        finalPath = directoryLease.UniqueDestination();
                         overwrite = false;
                         break;
                 }
@@ -190,12 +200,8 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
                 return new IncomingFileOpenResult(IncomingFileOpenStatus.Rejected, Reason: "no_space");
             }
 
-            var directory = Path.GetDirectoryName(finalPath);
             PathValidator.EnsureSafeTransferDestination(root, finalPath);
-            if (!string.IsNullOrEmpty(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
+            directoryLease.SetDestination(finalPath);
 
             activeTempPath = tempPath;
             if (!ActiveTempPaths.TryAdd(tempPath, 0))
@@ -205,15 +211,9 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
 
             activeRegistered = true;
 
-            if (partial is not null && File.Exists(tempPath) && resumeOffset > 0)
+            if (partial is not null)
             {
-                stream = new FileStream(
-                    tempPath,
-                    FileMode.Open,
-                    FileAccess.ReadWrite,
-                    FileShare.None,
-                    StreamBufferBytes,
-                    FileOptions.Asynchronous | FileOptions.SequentialScan);
+                stream = directoryLease.OpenTemporary(Path.GetFileName(tempPath), resume: true);
                 hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 try
                 {
@@ -244,14 +244,8 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
             }
             else
             {
-                TryDelete(tempPath);
-                stream = new FileStream(
-                    tempPath,
-                    FileMode.CreateNew,
-                    FileAccess.Write,
-                    FileShare.None,
-                    StreamBufferBytes,
-                    FileOptions.Asynchronous | FileOptions.SequentialScan);
+                directoryLease.DeleteTemporary(Path.GetFileName(tempPath));
+                stream = directoryLease.OpenTemporary(Path.GetFileName(tempPath), resume: false);
                 hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 resumeOffset = 0;
             }
@@ -264,13 +258,16 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
                 size,
                 expectedSha256,
                 overwrite);
-            await WriteSidecarAsync(sidecarPath, metadata, cancellationToken).ConfigureAwait(false);
+            await directoryLease.WriteMetadataAsync(Path.GetFileName(sidecarPath), JsonSerializer.Serialize(metadata), cancellationToken).ConfigureAwait(false);
+            directoryLease.SealDestination();
 
             activeRegistered = false;
+            leaseTransferred = true;
             return new IncomingFileOpenResult(
                 IncomingFileOpenStatus.Accepted,
                 new IncomingFileTransfer(
                     root,
+                    directoryLease,
                     transferId,
                     finalPath,
                     tempPath,
@@ -283,6 +280,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
                     overwrite),
                 ResumeOffset: resumeOffset);
         }
+        catch (OperationCanceledException) { throw; }
         catch (UnauthorizedAccessException)
         {
             return new IncomingFileOpenResult(IncomingFileOpenStatus.Rejected, Reason: "access_denied");
@@ -318,6 +316,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
                     ActiveTempPaths.TryRemove(activeTempPath, out _);
                 }
             }
+            if (!leaseTransferred) directoryLease?.Dispose();
         }
     }
 
@@ -371,9 +370,8 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
             PathValidator.EnsureSafeTransferDestination(_rootDirectory, FinalPath);
             PathValidator.EnsureNoReparsePoints(_rootDirectory, TempPath);
             PathValidator.EnsureNoReparsePoints(_rootDirectory, SidecarPath);
+            _directoryLease.PrepareFinalization(FinalPath);
             await _stream!.FlushAsync(cancellationToken).ConfigureAwait(false);
-            await _stream.DisposeAsync().ConfigureAwait(false);
-            _stream = null;
 
             var actual = Convert.ToHexString(_hash!.GetHashAndReset());
             _hash.Dispose();
@@ -382,29 +380,18 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
 
             if (!string.Equals(actual, ExpectedSha256, StringComparison.OrdinalIgnoreCase))
             {
-                TryDelete(TempPath);
-                TryDelete(SidecarPath);
+                await _stream.DisposeAsync().ConfigureAwait(false);
+                _stream = null;
+                _directoryLease.DeleteTemporary(Path.GetFileName(TempPath));
+                _directoryLease.DeleteTemporary(Path.GetFileName(SidecarPath));
                 return new IncomingFileCompleteResult(false, null, "integrity");
             }
 
-            var target = FinalPath;
-            for (var attempt = 0; ; attempt++)
-            {
-                try
-                {
-                    File.Move(TempPath, target, overwrite: Overwrite);
-                    break;
-                }
-                catch (IOException) when (!Overwrite && attempt < 9_999 && Exists(target))
-                {
-                    // Each move is the atomic claim. Another concurrent
-                    // receiver can win any name found by GetUniquePath.
-                    target = GetUniquePath(FinalPath);
-                    PathValidator.EnsureNoReparsePoints(_rootDirectory, target);
-                }
-            }
+            var target = _directoryLease.MoveToDestination(_stream.SafeFileHandle, Overwrite);
+            await _stream.DisposeAsync().ConfigureAwait(false);
+            _stream = null;
 
-            TryDelete(SidecarPath);
+            _directoryLease.DeleteTemporary(Path.GetFileName(SidecarPath));
             return new IncomingFileCompleteResult(true, target);
         }
         catch (UnauthorizedAccessException)
@@ -428,6 +415,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
 
     public async Task AbortAsync(bool deletePartial, CancellationToken cancellationToken = default)
     {
+        var released = false;
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -454,13 +442,14 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
 
             if (deletePartial)
             {
-                TryDelete(TempPath);
-                TryDelete(SidecarPath);
+                _directoryLease.DeleteTemporary(Path.GetFileName(TempPath));
+                _directoryLease.DeleteTemporary(Path.GetFileName(SidecarPath));
             }
+            released = true;
         }
         finally
         {
-            ReleaseActiveKey();
+            if (released) ReleaseActiveKey();
             _gate.Release();
         }
     }
@@ -490,6 +479,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
         }
         finally
         {
+            _directoryLease.Dispose();
             ReleaseActiveKey();
             _gate.Release();
         }
@@ -522,6 +512,7 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
     }
 
     private static async Task<PartialMetadata?> ReadPartialAsync(
+        TransferDirectoryLease directoryLease,
         string tempDirectory,
         string preferredSidecar,
         string root,
@@ -550,13 +541,13 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
             try
             {
                 PathValidator.EnsureNoReparsePoints(root, sidecar);
-                var json = await File.ReadAllTextAsync(sidecar, cancellationToken).ConfigureAwait(false);
+                var json = await directoryLease.ReadMetadataAsync(Path.GetFileName(sidecar), cancellationToken).ConfigureAwait(false);
+                if (json is null) continue;
                 var metadata = JsonSerializer.Deserialize<PartialMetadata>(json);
                 if (metadata is null ||
                     metadata.Size != size ||
                     !string.Equals(metadata.Sha256, expectedSha256, StringComparison.OrdinalIgnoreCase) ||
-                    !string.Equals(metadata.RelativePath, relativePath, StringComparison.OrdinalIgnoreCase) ||
-                    !File.Exists(metadata.TempPath))
+                    !string.Equals(metadata.RelativePath, relativePath, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -575,9 +566,11 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
                 {
                     continue;
                 }
+                _ = directoryLease.TemporaryLength(Path.GetFileName(metadata.TempPath));
 
                 return metadata with { SidecarPath = sidecar };
             }
+            catch (OperationCanceledException) { throw; }
             catch
             {
                 // Ignore an incomplete, corrupt or malicious sidecar.
@@ -585,33 +578,6 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
         }
 
         return null;
-    }
-
-    private static async Task WriteSidecarAsync(
-        string path,
-        PartialMetadata metadata,
-        CancellationToken cancellationToken)
-    {
-        var json = JsonSerializer.Serialize(metadata);
-        var temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
-        var root = Path.GetDirectoryName(Path.GetDirectoryName(path))!;
-        PathValidator.EnsureNoReparsePoints(root, path);
-        PathValidator.EnsureNoReparsePoints(root, temp);
-        try
-        {
-            // Never truncate a pre-existing pathname: even a non-reparse file
-            // can be a hardlink to unrelated data outside the authorized root.
-            await using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write,
-                             FileShare.None, 4096, FileOptions.Asynchronous))
-            {
-                await stream.WriteAsync(Encoding.UTF8.GetBytes(json), cancellationToken).ConfigureAwait(false);
-                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
-            }
-            PathValidator.EnsureNoReparsePoints(root, temp);
-            PathValidator.EnsureNoReparsePoints(root, path);
-            File.Move(temp, path, overwrite: true);
-        }
-        finally { TryDelete(temp); }
     }
 
     private static string ComputeKey(string relativePath, long size, string sha256)
@@ -656,45 +622,6 @@ public sealed class IncomingFileTransfer : IAsyncDisposable
                message.Contains("espacio", StringComparison.OrdinalIgnoreCase)
             ? "no_space"
             : "io_error";
-    }
-
-    private static string GetUniquePath(string path)
-    {
-        if (!Exists(path))
-        {
-            return path;
-        }
-
-        var directory = Path.GetDirectoryName(path) ?? "";
-        var name = Path.GetFileNameWithoutExtension(path);
-        var extension = Path.GetExtension(path);
-        for (var index = 1; index < 10_000; index++)
-        {
-            var candidate = Path.Combine(directory, $"{name} ({index}){extension}");
-            if (!Exists(candidate))
-            {
-                return candidate;
-            }
-        }
-
-        throw new IOException(global::CSIViewer.Core.Localization.Text("No se pudo encontrar un nombre de archivo libre."));
-    }
-
-    private static bool Exists(string path) => File.Exists(path) || Directory.Exists(path);
-
-    private static void TryDelete(string? path)
-    {
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
-            {
-                File.Delete(path);
-            }
-        }
-        catch
-        {
-            // Best effort cleanup.
-        }
     }
 
     private sealed record PartialMetadata(

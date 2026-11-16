@@ -9,4 +9,7 @@ public sealed record CaptureFrame(
     byte[] Bgra,
     int Width,
     int Height,
-    byte[]? Jpeg = null);
+    byte[]? Jpeg = null)
+{
+    public long DiagnosticId { get; init; }
+}

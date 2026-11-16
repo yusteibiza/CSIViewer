@@ -102,6 +102,15 @@ public static class PathValidator
         EnsureNoReparsePoints(root, candidate);
     }
 
+    public static void CreateTransferDirectory(string root, string fullPath)
+    {
+        EnsureSafeTransferDestination(root, fullPath);
+        using var lease = new TransferDirectoryLease(root);
+        // SetDestination creates only the parent chain, relative to root's
+        // native handle. The synthetic leaf is never created.
+        lease.SetDestination(Path.Combine(fullPath, ".directory-lease-only"));
+    }
+
     public static void EnsureNoReparsePoints(string root, string fullPath)
     {
         var candidate = EnsureInsideRoot(root, fullPath);

@@ -12,13 +12,18 @@ public sealed partial class RemoteClient
     private long _lastHostCaptureFrameTicks;
     private long _hostVisualDemandTicks;
     private volatile bool _usingModernCapture;
+    private readonly FrameContentProbe _captureContentProbe = new();
 
     /// <summary>Minimizing/hiding the host changes the desktop, not the session lifetime.</summary>
-    public void NotifyHostWindowVisibilityChanged() => MarkHostVisualChange();
+    public void NotifyHostWindowVisibilityChanged()
+    {
+        MarkHostVisualChange();
+    }
 
     private void MarkHostVisualChange()
     {
         if (!_usingModernCapture || Volatile.Read(ref _captureViewerCount) == 0) return;
+        PipelineTrace.Record(PipelineStage.VisualDemand);
         var frame = Volatile.Read(ref _lastHostCaptureFrameTicks);
         var demand = Volatile.Read(ref _hostVisualDemandTicks);
         // Keep the FIRST outstanding change. Continuous input must not keep
@@ -31,6 +36,12 @@ public sealed partial class RemoteClient
     {
         if (generation != Volatile.Read(ref _hostCaptureGeneration) || Volatile.Read(ref _captureViewerCount) == 0) return;
         Volatile.Write(ref _lastHostCaptureFrameTicks, Stopwatch.GetTimestamp());
+        PipelineTrace.Record(PipelineStage.CaptureDelivered, frame.DiagnosticId, a: generation);
+        if (PipelineTrace.Enabled && _captureContentProbe.TrySample(frame.Bgra, frame.Width, frame.Height, out var changed, out var samples))
+        {
+            PipelineTrace.Record(PipelineStage.CaptureContentSampled, frame.DiagnosticId, a: changed ? 1 : 0, b: samples);
+            if (changed) PipelineTrace.Record(PipelineStage.CaptureContentChanged, frame.DiagnosticId);
+        }
         _ = SendVideoFrameAsync(frame);
     }
 
@@ -54,6 +65,11 @@ public sealed partial class RemoteClient
 
     private void ScheduleModernCaptureFallback(int monitorIndex, int generation, string reason, Exception? error)
     {
+        if (PipelineTrace.Enabled)
+        {
+            PipelineTrace.Record(PipelineStage.RecoverySuppressed, a: generation, b: error?.HResult ?? 0);
+            return;
+        }
         if (generation != Volatile.Read(ref _hostCaptureGeneration) || !_usingModernCapture ||
             Volatile.Read(ref _captureViewerCount) == 0 ||
             Interlocked.CompareExchange(ref _modernCaptureFallbackScheduled, 1, 0) != 0) return;

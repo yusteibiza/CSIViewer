@@ -4,6 +4,7 @@ using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Security.Cryptography;
 using Windows.Storage.Streams;
+using CSIViewer.Core;
 
 namespace CSIViewer.Media;
 
@@ -102,18 +103,22 @@ public sealed class GdiScreenCapture : IHostCapture
             while (!cancellationToken.IsCancellationRequested)
             {
                 var started = Stopwatch.GetTimestamp();
+                var diagnosticId = PipelineTrace.NextFrame();
                 try
                 {
+                    PipelineTrace.Record(PipelineStage.CaptureBegin, diagnosticId, a: targetWidth, b: targetHeight);
                     if (!BitBlt(sourceDc, 0, 0, monitor.Width, monitor.Height, screenDc,
                             monitor.X, monitor.Y, SRCCOPY | CAPTUREBLT) ||
                         !StretchBlt(scaledDc, 0, 0, targetWidth, targetHeight, sourceDc, 0, 0,
                             monitor.Width, monitor.Height, SRCCOPY))
                     {
+                        PipelineTrace.Record(PipelineStage.GraphicError, diagnosticId, a: Marshal.GetLastWin32Error(), b: 3);
                         await Task.Delay(interval, cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
                     var pixels = ReadPixels(scaledDc, scaledBitmap, targetWidth, targetHeight);
+                    PipelineTrace.Record(PipelineStage.CaptureDone, diagnosticId, a: targetWidth, b: targetHeight);
                     if (pixels.Length == 0)
                     {
                         await Task.Delay(interval, cancellationToken).ConfigureAwait(false);
@@ -122,21 +127,24 @@ public sealed class GdiScreenCapture : IHostCapture
 
                     if (encodeJpeg)
                     {
+                        PipelineTrace.Record(PipelineStage.CaptureConversionBegin, diagnosticId);
                         var bytes = await EncodeJpegAsync(
                                 pixels, targetWidth, targetHeight, jpegQuality)
                             .ConfigureAwait(false);
+                        PipelineTrace.Record(PipelineStage.CaptureConversionDone, diagnosticId, a: bytes.Length);
                         if (bytes.Length > 0)
                         {
-                            onFrame(new CaptureFrame([], 0, 0, bytes));
+                            onFrame(new CaptureFrame([], 0, 0, bytes) { DiagnosticId = diagnosticId });
                         }
                     }
                     else
                     {
-                        onFrame(new CaptureFrame(pixels, targetWidth, targetHeight));
+                        onFrame(new CaptureFrame(pixels, targetWidth, targetHeight) { DiagnosticId = diagnosticId });
                     }
                 }
                 catch (Exception ex)
                 {
+                    PipelineTrace.Record(PipelineStage.GraphicError, diagnosticId, a: ex.HResult, b: 3);
                     onError?.Invoke(ex);
                 }
 
@@ -202,13 +210,12 @@ public sealed class GdiScreenCapture : IHostCapture
             BitmapAlphaMode.Ignore);
 
         using var stream = new InMemoryRandomAccessStream();
-        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, stream);
         var properties = new BitmapPropertySet
         {
             ["ImageQuality"] = new BitmapTypedValue(
-                Math.Clamp(quality / 100.0, 0.2, 0.95), PropertyType.Single)
+                Math.Clamp(quality / 100f, 0.2f, 0.95f), PropertyType.Single)
         };
-        await encoder.BitmapProperties.SetPropertiesAsync(properties);
+        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, stream, properties);
 
         encoder.SetSoftwareBitmap(softwareBitmap);
         await encoder.FlushAsync();

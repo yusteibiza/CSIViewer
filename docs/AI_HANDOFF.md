@@ -1,5 +1,123 @@
 # AI_HANDOFF — CSIViewer
 
+> **ÚLTIMO — JPEG CORREGIDO, CONGELACIÓN GENERAL ABIERTA.**
+> 395/395, Release0/0 (`final-audit-20261115-104817.trx`).
+> HoststageErrors produjo0x88982F41 en ImageQuality metadata, faseJPEG a09:29.
+> Nuevos tests físicos iniciales8pasaban antes; dos tests de calidad real
+> fallaron antes (`jpeg-quality-before.trx`) y10JPEG pasan después.
+> Cambiar ambas rutas a BitmapEncoder.CreateAsync(...,options), float Single.
+> Esos4869errores son anteriores al reinicio manualGDI a09:35:37: último
+> congelamientoGDI09:40 tenía captura/H264/red/UI vivos; no afirmar causaúnica.
+> Nueva fuente FrameContentProbe solo cambioRGB muestreado<=2304puntos, no
+> guarda/exporta píxeles o hash. Capture/DecodedContentSampled y Changed.
+> Corrige pendingJPEGhistórico al tener EncodeDone. Documentación docs50.
+> Publicación diag-20261115-jpeg-fix en curso; CMD nuevos usan RunNamevmware04.
+> No tocar instalado/Windows/agente/sesiones desde herramientas.
+> Tras verificar paquete, entregar ZIPnuevo aparte y guiar pruebaWin10.
+> **ZIP ya entregado/verificado:** `artifacts/diagnostics/diag-20261115-jpeg-fix.zip`,
+> 203642653bytes, SHA256
+> `23EB81F4EF1DC37633D915D65E7CA2A959B85C15CF5A0F6309D210C9A108447C`.
+> Copia `C:\Users\AntonioYuste\Desktop\Nueva carpeta\CSIViewer-diagnostico-3.zip`.
+> Hash562archivos/rol, BuildIdPE y colecciones PASS; conservar395casos incluidos
+> 357/378previos. No lanzado todavía; pedir extraer Diagnostico3 físico/VM.
+> Después guiar manualmente cierre de roles anteriores y nuevo arranque .cmd,
+> vmware04. Probar JPEG corregido y después síntoma H264 con contenido
+> muestreado, sin declarar causaúnica ni pedir archivos/contraseñasprivados.
+
+> **PRIORIDAD ACTUAL: RECURRENCIA REAL EN PORTABLE A60.** Usuario confirma
+> no haber cambiado a90. Host sigue captura/entrega e inicia encode sin acabar;
+> visor dejó UI antes que recepción y pidió JPEG por backlog H264.
+> Log normal recibido confirma60 FPS, sin HRESULT exterior (r2 solo Debug).
+> Writer se detuvo DESPUÉS por marker pipeline-dump.request con sharing violation.
+> Fuente corregida: retry seguro marcador, collector share-delete, primer Begin
+> pendiente no renovado por intentos repetidos, JPEG/errorfase y warning único.
+> Añadidos indicadores UI Loaded/Unloaded/oferta/enqueue/begin/end sin recuperar
+> ni cambiar scheduler. Smoke writer con lock4500ms real PASS.
+> Suite final tras UI **378/378**, Release0/0 (`final-audit-20261115-101059.trx`),
+> 357 y375 casos anteriores conservados. Publicación `diag-20261115-stage-errors`
+> en marcha; incluye Start-Host.cmd/Start-Viewer.cmd con RunName vmware03,
+> lanzador y colector corregidos + Compare-Host.ps1.
+> No instalar ni tocar
+> sesión en marcha. Guía actualizada; causa inicial AÚN NO PROBADA.
+> Publicación terminada y validada:
+> `artifacts/diagnostics/diag-20261115-stage-errors.zip`,203640511bytes,
+> SHA256 `22A446C8218422ABF9EA7C51B9F8B2E2B8399345A859A3B8D540A660D7E968BE`.
+> Copia entregada `C:\Users\AntonioYuste\Desktop\Nueva carpeta\CSIViewer-diagnostico-2.zip`.
+> 562 archivos/rol, metadata BuildId y colección sintética PASS, ZIP1133entradas
+> sin datos/agente/instaladores. No arrancado. Pedir extraer en carpeta NUEVA
+> física y VM, conservar r2/logs, después guiar cierre manual rol y arranque
+> por Start-Host.cmd/Start-Viewer.cmd (RunName vmware03), mismos ajustes60FPS.
+
+> **JSON INVITADO RECIBIDO:** `host-comparison-20261115-095640-2fafef0a.json`
+> en carpeta externa del usuario. Hashes instalados Host/Media/Services iguales
+> a los binarios físicos inspeccionados; portable r2 correcto. PID11296 portable
+> con --data-dir, no --unattended, sin Agent listado. Config guardada: instalado
+> 90 FPS vs portable60; resto whitelist coincide (calidad95/ancho2560/WGC/H264).
+> No atribuir causa a FPS sin ensayo. Próximo paso solicitado: usuario pone
+> solo portable a90 desde UI y repite minimizar/restaurar/mover; no tocar
+> instalado, agente o sesión desde herramientas. JSON posterior al ZIP bueno,
+> no garantiza FPS del ensayo anterior. Ver docs48 y FINAL_AUDIT.
+
+> **COMPARACIÓN MÁS RECIENTE:** `docs/48-comparacion-vmware.md`.
+> Release 0/0, **375/375** (`final-audit-20261115-093417.trx`); 357 nombres
+> preservados. Colector corregido para csiviewer.host-*; smoke ZIP seis entradas
+> PASS. Falso positivo capture-quiet en visor corregido y muestras incluyen
+> ajustes vídeo, cambios de fuente aún NO publicados en r2 en marcha.
+> Inspección PE/IL instalado FÍSICO: revisiones 1b82093 vs c27c4d3 portable;
+> ambas Media ya tienen CaptureRun/AsTask/ConfigureAwait, por tanto no atribuir
+> éxito a esos fixes ni inferir contenido exacto desde commit (builds dirty).
+> Difieren releases COM; causa no probada. Faltan hashes/settings del invitado.
+> Se entregó en carpeta de diagnóstico del usuario `Compare-Host.ps1` y
+> `Collect-Diagnostic-Corrected.ps1` nuevos (no sobrescribir originales).
+> Comparador solo lee binarios + whitelist ajustes vídeo, excluye secretos
+> y DB; smoke identidad/privacidad/inmutabilidad PASS. Solicitar al usuario copiar
+> Compare-Host.ps1 a raíz del paquete en VM y ejecutarlo con RunName vmware02;
+> devolver JSON generado. No cerrar sesión ni volver a activar agente.
+
+> **PRUEBA REAL POSTERIOR / LANZADOR CORREGIDO:** usuario observa congelación,
+> VM local responde. Se confirmó host instalado (`C:\Program Files\CSIViewer Host`)
+> y visor de diagnóstico. No hay pipeline del host en logs recuperados.
+> El arranque Host ignora env de datos si falta `--data-dir`: corregido el script
+> para pasarlo y verificar archivo pipeline del PID durante hasta 20 s, detectando
+> salida temprana. Binarios r2 intactos. Copia autorizada junto al ZIP extraído:
+> `C:\Users\AntonioYuste\Desktop\Nueva carpeta\Start-Diagnostic-Corrected.ps1`,
+> SHA256 `9495F06C44D17C06E9CA93680F3EDBAF294465AE6A343612C972B302DB13EDDF`.
+> Mock seguro del arranque PASS (`diagnostic-launcher-fix-smoke.log`);
+> VerifyOnly de los 562 archivos host en carpeta del usuario PASS.
+> Regresión `final-audit-20261115-091158.trx`: 374/374, Release 0/0.
+> Usuario autorizó guiar salida MANUAL del host
+> instalado y abrir portable; no tocar tareas/servicios ni matar procesos.
+> Usar RunName vmware02, carpeta nueva; configurar servidor e ID nuevos por UI.
+> No se ha cerrado aún ninguna sesión. Evidencia sanitizada:
+> `artifacts/audit/vmware-live-20261115.md`. Incidente sigue NO RESUELTO.
+
+> **15-11-2026 — ESTA NOTA PREVALECE SOBRE ETAPAS HISTÓRICAS INFERIORES.**
+> Continuación del diagnóstico VMware, no nueva auditoría.
+> Pasada definitiva `final-audit-20261115-002654.trx`: **374 correctas,
+> 0 fallidas/omitidas**, Release 0/0, incluyendo cancelación previa sin efectos
+> y parcial hardlink reanudado. Comprobados los 357 nombres de referencia
+> `224652` en el TRX final; evidencia `diagnostic-baseline-preservation.txt`.
+> Ver sección nueva de `FINAL_AUDIT.md`: recorder 8192/2 s/16 MiB×3,
+> nonce+1 correlaciona host/visor, I/O nativo relativo por handles,
+> stress ocho inputs + 2000 replays y veinte sesiones cifradas loopback.
+> No hay entrada/captura real en tests ni validación gráfica VMware.
+> `docs/47-diagnostico-vmware.md`, scripts publish/start/collect y verificación
+> sintética `test-diagnostic-package.ps1`; publicar solo diagnóstico portable.
+> Smoke del escritor independiente ejecutado en proceso hijo: JSONL, dos dumps
+> manuales dentro de 30 s y rotación sintética de tres segmentos, PASS
+> (`diagnostic-writer-smoke.log`); no arrancó red/captura/input/UI.
+> **Entrega final de diagnóstico:** `artifacts/diagnostics/diag-20261115-374tests-r2.zip`,
+> 203631302 bytes, SHA256
+> `9E26050F1B57E15CF894D7F8487C3F68A5BCF220EF8B666C9E60489783158ED6`.
+> 562 hashes/rol y BuildId PE comprobados; colección sintética PASS
+> (`diagnostic-package-smoke-r2.log`). Usar r2, no el paquete intermedio sin r2.
+> No se arrancaron las apps publicadas: el host habitual detectado se respetó.
+> Mantener exclusión original HKCU; modo diagnóstico no modifica Run/tareas/
+> notificaciones. Instaladores y backup original comprobados sin cambios.
+> Raíz vinculada al abrir handle, no identidad persistente desde concesión.
+> Win10/SMB/ReFS/filtros y WinUI/VMware físicos pendientes. NO APTA; no declarar
+> resuelto el incidente ni ausencia universal de fugas/operaciones privilegiadas.
+
 > **CONTINUACIÓN MÁS RECIENTE — PRIORIDAD ACTUAL:** ver `FINAL_AUDIT.md` y docs
 > `45-validacion-manual-release.md` / `46-revision-ui-video.md`. Se continuó desde
 > 315, sin eliminar casos. Última suite completada: **357 correctas, 0 fallidas,

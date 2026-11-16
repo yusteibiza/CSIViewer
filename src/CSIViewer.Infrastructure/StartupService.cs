@@ -69,6 +69,10 @@ public sealed class StartupService
 
     public bool SetEnabled(bool enabled)
     {
+        // A portable diagnostic run must never alter the installed application's
+        // real HKCU startup entry, even when saving unrelated UI settings.
+        if (Environment.GetEnvironmentVariable("CSIVIEWER_PIPELINE_DIAGNOSTICS") == "1")
+            return enabled == IsEnabled;
         try
         {
             using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath, writable: true);

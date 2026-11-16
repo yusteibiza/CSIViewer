@@ -45,5 +45,8 @@
     <NuGetAudit>true</NuGetAudit>
     <NuGetAuditMode>direct</NuGetAuditMode>
   </PropertyGroup>
+  <ItemGroup Condition="'$(DiagnosticBuildId)' != ''">
+    <AssemblyMetadata Include="CSIViewerDiagnosticBuild" Value="$(DiagnosticBuildId)" />
+  </ItemGroup>
 
 </Project>

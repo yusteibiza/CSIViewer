@@ -10,4 +10,8 @@ public enum VideoPixelFormat
 /// A decoded video frame delivered to the UI. JPEG frames have unknown
 /// dimensions until decoded; BGRA frames are ready for a WriteableBitmap.
 /// </summary>
-public sealed record VideoFrame(byte[] Data, int Width, int Height, VideoPixelFormat Format);
+public sealed record VideoFrame(byte[] Data, int Width, int Height, VideoPixelFormat Format)
+{
+    public long DiagnosticId { get; init; }
+    public Guid DiagnosticSession { get; init; }
+}

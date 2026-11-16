@@ -167,6 +167,7 @@ public sealed class UnattendedServiceManager
 
     private static async Task<int> RunElevatedAsync(string body, CancellationToken token)
     {
+        if (Environment.GetEnvironmentVariable("CSIVIEWER_PIPELINE_DIAGNOSTICS") == "1") return 5;
         // Status is returned through the process exit code. No elevated writes
         // to user-controlled temporary result files or localized-text parsing.
         var script = $$"""

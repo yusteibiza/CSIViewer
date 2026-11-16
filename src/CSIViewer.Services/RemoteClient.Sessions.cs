@@ -40,6 +40,7 @@ public sealed partial class RemoteClient
         public Task? DirectReceiveTask { get; set; }
         public bool ControlOwner { get; set; }
         public object InputGate { get; } = new();
+        public CancellationTokenSource Lifetime { get; } = new();
         public ControlRestriction ControlRestriction { get; init; }
         public bool VideoConfigured { get; set; }
         public ConnectionStateMachine StateMachine { get; } = new();
@@ -67,10 +68,13 @@ public sealed partial class RemoteClient
             StateMachine.TryTransition(ConnectionState.Connecting, out _);
             StateMachine.TryTransition(ConnectionState.Authenticating, out _);
             StateMachine.TryTransition(ConnectionState.Connected, out _);
+            PipelineTrace.Record(PipelineStage.SessionStarted, session: Id, a: IsController ? 1 : 0, b: (long)Permissions);
         }
 
         public void MarkDisconnecting()
         {
+            Lifetime.Cancel();
+            PipelineTrace.Record(PipelineStage.SessionEnded, session: Id);
             AudioEnabled = ClipboardEnabled = false;
             Interlocked.Exchange(ref PendingClipboardText, null);
             Interlocked.Exchange(ref AudioStream, null)?.Dispose();
@@ -90,6 +94,7 @@ public sealed partial class RemoteClient
 
         public void Dispose()
         {
+            Lifetime.Cancel();
             AudioEnabled = ClipboardEnabled = false;
             Interlocked.Exchange(ref PendingClipboardText, null);
             Interlocked.Exchange(ref AudioStream, null)?.Dispose();
@@ -296,12 +301,13 @@ public sealed partial class RemoteClient
 
         try
         {
+            if (kind == SessionFrameKind.Video) PipelineTrace.Record(PipelineStage.SendWaiting, session: session.Id);
             if (kind is SessionFrameKind.Video or SessionFrameKind.Audio)
             {
                 // Cancelling ClientWebSocket.SendAsync aborts the whole
                 // signaling socket. Video frames are droppable, so never use
                 // a timeout that could tear down every concurrent session.
-                await session.Crypto.EncryptAndSendAsync(kind, plaintext, signal.SendBinaryAsync, cancellationToken)
+                await session.Crypto.EncryptAndSendAsync(kind, plaintext, SendTrackedAsync, cancellationToken)
                     .ConfigureAwait(false);
                 return true;
             }
@@ -309,15 +315,29 @@ public sealed partial class RemoteClient
             using var timeout = CreateTimeoutToken(
                 TimeSpan.FromSeconds(seconds),
                 cancellationToken);
-            await session.Crypto.EncryptAndSendAsync(kind, plaintext, signal.SendBinaryAsync, timeout.Token)
+            await session.Crypto.EncryptAndSendAsync(kind, plaintext, SendTrackedAsync, timeout.Token)
                 .ConfigureAwait(false);
             return true;
+
+            async Task SendTrackedAsync(byte[] frame, CancellationToken token)
+            {
+                long wire = 0;
+                if (kind == SessionFrameKind.Video && PipelineTrace.Enabled &&
+                    SessionFrame.TryReadHeader(frame, out _, out _, out var nonce, out _))
+                    wire = System.Buffers.Binary.BinaryPrimitives.ReadInt64BigEndian(nonce[4..]) + 1;
+                if (kind == SessionFrameKind.Video)
+                    PipelineTrace.Record(PipelineStage.SendBegin, session: session.Id, a: wire, b: frame.Length);
+                await signal.SendBinaryAsync(frame, token).ConfigureAwait(false);
+                if (kind == SessionFrameKind.Video)
+                    PipelineTrace.Record(PipelineStage.SendDone, session: session.Id, a: wire, b: frame.Length);
+            }
         }
         catch (Exception ex) when (ex is IOException or SocketException
                                        or System.Net.WebSockets.WebSocketException
                                        or ObjectDisposedException or OperationCanceledException)
         {
             _logger.LogDebug(ex, "Could not send session frame to {SessionId}", session.SessionId);
+            PipelineTrace.Record(PipelineStage.PipelineError, session: session.Id, a: ex.HResult, b: 6);
             return false;
         }
     }

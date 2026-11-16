@@ -97,6 +97,7 @@ public sealed partial class RemoteClient : IAsyncDisposable
         _incomingFiles = new();
         _outgoingFiles = new();
         StartBackgroundProcessing();
+        StartPipelineDiagnostics();
     }
 
     public event EventHandler<VideoFrame>? VideoFrameReceived;

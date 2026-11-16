@@ -3,11 +3,12 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot
 $isolated = Join-Path $env:LOCALAPPDATA ('Temp/opencode/csiviewer-final-audit-' + [Guid]::NewGuid().ToString('N'))
 $results = Join-Path $root 'artifacts/audit/tests'
-$names = @('TEMP','TMP','CSIVIEWER_DATA_DIR','CSIVIEWER_SERVER_DATA_DIR','CSIVIEWER_SERVER_DB')
+$names = @('TEMP','TMP','CSIVIEWER_DATA_DIR','CSIVIEWER_SERVER_DATA_DIR','CSIVIEWER_SERVER_DB','CSIVIEWER_PIPELINE_DIAGNOSTICS')
 $previous = @{}
 foreach ($name in $names) { $previous[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 New-Item -ItemType Directory -Force -Path $isolated, $results | Out-Null
 try {
+    $env:CSIVIEWER_PIPELINE_DIAGNOSTICS = '0'
     $env:TEMP = $isolated
     $env:TMP = $isolated
     $env:CSIVIEWER_DATA_DIR = Join-Path $isolated 'client-data'

@@ -271,6 +271,8 @@ public sealed partial class MainWindow : Window
 
     private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
     {
+        PipelineTrace.Record(PipelineStage.WindowState, a: AppWindow.Presenter is OverlappedPresenter diagnosticPresenter ? (long)diagnosticPresenter.State : -1,
+            b: AppWindow.IsVisible ? 1 : 0);
         if ((args.DidSizeChange || args.DidPresenterChange) &&
             AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized })
             _client.NotifyHostWindowVisibilityChanged();

@@ -17,6 +17,13 @@ public sealed class EncryptedChatIntegrationTests
 {
     [TestMethod]
     public async Task TwoIsolatedPeersAuthenticateExchangeUnicodeAndEndSession()
+        => await RunFlowAsync(1, revoke: false);
+
+    [TestMethod]
+    public async Task TwentyEncryptedSessionRevocationsLeaveNoActiveSessionsOrTransfers()
+        => await RunFlowAsync(20, revoke: true);
+
+    private static async Task RunFlowAsync(int repetitions, bool revoke)
     {
         Assert.IsFalse(string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CSIVIEWER_DATA_DIR")));
         var previous = AppPaths.DataDirectory;
@@ -72,17 +79,39 @@ public sealed class EncryptedChatIntegrationTests
             var viewer = viewerProvider.GetRequiredService<RemoteClient>();
             var hostState = hostProvider.GetRequiredService<AppState>();
             var viewerState = viewerProvider.GetRequiredService<AppState>();
+            for (var iteration = 0; iteration < repetitions; iteration++)
+            {
+            // Keep production per-controller admission throttles unchanged.
+            // Each stress cycle uses a distinct synthetic controller identity.
+            if (revoke && iteration > 0)
+            {
+                await DisposePeerAsync(viewerProvider);
+                viewerProvider = await Peer("Synthetic viewer " + iteration, false);
+                viewer = viewerProvider.GetRequiredService<RemoteClient>();
+                viewerState = viewerProvider.GetRequiredService<AppState>();
+            }
             var connected = await viewer.ConnectToPeerAsync(hostState.DeviceId, hostState.TemporaryPasswordRaw, SessionPermissions.Chat, true);
             Assert.IsTrue(connected.IsSuccess, connected.Error?.Code);
             await WaitAsync(() => hostState.IsSessionActive && viewerState.IsSessionActive);
             Assert.IsFalse(viewer.CanControlRemote);
-            await Task.WhenAll(viewer.SendChatToDeviceAsync(hostState.DeviceId, "Unicode desde A 😊"),
-                host.SendChatToDeviceAsync(viewerState.DeviceId, "Unicode depuis B àç"));
-            await WaitAsync(() => hostState.ChatMessages.Any(message => !message.IsMine && message.Text == "Unicode desde A 😊") &&
-                                  viewerState.ChatMessages.Any(message => !message.IsMine && message.Text == "Unicode depuis B àç"));
-            await viewer.EndCurrentSessionsAsync("synthetic audit end");
+            var forward = $"Unicode desde A 😊/{iteration}";
+            var backward = $"Unicode depuis B àç/{iteration}";
+            await Task.WhenAll(viewer.SendChatToDeviceAsync(hostState.DeviceId, forward),
+                host.SendChatToDeviceAsync(viewerState.DeviceId, backward));
+            await WaitAsync(() => hostState.ChatMessages.Any(message => !message.IsMine && message.Text == forward) &&
+                                  viewerState.ChatMessages.Any(message => !message.IsMine && message.Text == backward));
+            if (revoke) await host.RevokeAllSessionsAsync("synthetic audit revocation");
+            else await viewer.EndCurrentSessionsAsync("synthetic audit end");
             await WaitAsync(() => !hostState.IsSessionActive && !viewerState.IsSessionActive);
             Assert.IsFalse(viewer.CanControlRemote);
+            Assert.IsNull(await viewer.SendChatToDeviceAsync(hostState.DeviceId, "forbidden after revocation"));
+            foreach (var client in new[] { viewer, host })
+                foreach (var field in new[] { "_sessions", "_incomingRequests", "_incomingFiles", "_outgoingFiles" })
+                {
+                    var dictionary = typeof(RemoteClient).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(client)!;
+                    Assert.AreEqual(0, (int)dictionary.GetType().GetProperty("Count")!.GetValue(dictionary)!);
+                }
+            }
 
             async Task WaitAsync(Func<bool> condition)
             {
@@ -96,13 +125,20 @@ public sealed class EncryptedChatIntegrationTests
         }
         finally
         {
-            if (viewerProvider is not null) await viewerProvider.DisposeAsync();
-            if (hostProvider is not null) await hostProvider.DisposeAsync();
+            if (viewerProvider is not null) await DisposePeerAsync(viewerProvider);
+            if (hostProvider is not null) await DisposePeerAsync(hostProvider);
             await server.StopAsync();
             AppPaths.SetDataDirectory(previous);
             Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
             Directory.Delete(root, recursive: true);
         }
+    }
+
+    private static async Task DisposePeerAsync(ServiceProvider provider)
+    {
+        var http = provider.GetRequiredService<HttpClient>();
+        await provider.DisposeAsync();
+        http.Dispose(); // the fixture explicitly owns the registered instance
     }
 
     private sealed class ChatOnlyConsent : IConsentService

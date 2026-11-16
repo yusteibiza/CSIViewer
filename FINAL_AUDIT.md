@@ -3,6 +3,276 @@
 **Estado: continuación de estabilización ejecutada; aceptación Release bloqueada.**
 No equivale a una certificación interactiva de WinUI, VMware o instalación SCM.
 
+> **Último resultado (JPEG): 395/395 correctas, Release 0 errores/advertencias**,
+> `final-audit-20261115-104817.trx`, `jpeg-fix-full-regression.log`.
+> Defecto demostrado: ImageQuality configurado como metadata produce
+> 0x88982F41 en la VM; en el físico se ignoraba calidad (dos pruebas rojas antes,
+> diez casos JPEG verdes después). Corrección mínima en ambas rutas JPEG:
+> opción de creación BitmapEncoder, valor float real. Ver
+> `docs/50-jpeg-fix-vmware.md`.
+> NO explica por sí sola la última congelación GDI/H264 con etapas avanzando;
+> esos4869 errores acumulados precedían al cambioGDI. Se añade muestreo RGB
+> acotado en memoria (solo cambio/no-cambio, sin píxeles/hashes en logs) y se
+> corrige sospecha JPEG histórica tras éxitoH264. No se toca sesión instalada
+> ni se recuperan componentes automáticamente. Validación JPEG en VM pendiente.
+> Publicación diagnóstica `diag-20261115-jpeg-fix` completada, detalles abajo;
+> no es un instalador ni una certificación de resolución del incidente.
+
+### Entrega JPEG-fix comprobada (prevalece sobre paquetes previos)
+
+- `artifacts/diagnostics/diag-20261115-jpeg-fix.zip`,203642653 bytes, SHA256
+  `23EB81F4EF1DC37633D915D65E7CA2A959B85C15CF5A0F6309D210C9A108447C`.
+- Copia entregada sin sobrescribir archivos previos:
+  `C:\Users\AntonioYuste\Desktop\Nueva carpeta\CSIViewer-diagnostico-3.zip`.
+  Verificados hashes562archivos/rol, identidadPE en cuatro assemblies,
+  helpers coinciden con fuentes y colección sintética PASS. ZIP sin datos
+  privados/agente/instaladores. CMD usan RunNamevmware04.
+- Evidencia: `diagnostic-jpeg-fix-package-smoke.log`,
+  `diagnostic-jpeg-fix-delivery.json`, `jpeg-fix-test-preservation.txt`.
+  Suite395incluye todos los357de referencia y378anteriores; instaladores
+  previos intactos, `git diff --check` sin errores (avisosCRLF/LF únicamente).
+- No se ha cerrado ni actualizado la sesión del usuario desde herramientas.
+  Extraer nueva carpeta Diagnostico3 en ambos extremos y validar en Win10VM,
+  sin sobrescribir Diagnostico2/logs. Incidente general sigue NO RESUELTO.
+
+## Continuación: diagnóstico VMware y operaciones por handle (15-11-2026)
+
+> **ÚLTIMA REPRODUCCIÓN, compilación stage-errors:** usuario vuelve a informar
+> congelación; nuevos logs completos muestran WGC/H264/envío/recepción/render/
+> composición avanzando, vista visible y sin fallback/errores. No es evidencia
+> de encoder parado en esta ocasión. Falta distinguir contenido obsoleto o
+> presentación física de entrada remota sin efecto. Se solicita abrir Inicio
+> desde consola VMware y observar el visor, sin restaurar Host ni reconectar.
+> Detalle sanitizado en `artifacts/audit/vmware-live-20261115.md`.
+> Usuario confirma que restaurar Host no recupera. Cambio manual controlado de
+> Captura moderna aGDI, manteniendoH264/60FPS, más Guardar recupera imagen.
+> Guardar reinicia captura/encoder: confusor conocido, NO prueba causal GDI.
+> Visor de recuperación preservado103617; pendiente minimizar/repetir bajoGDI
+> y verificar logs host. No se han modificado instalación, Windows o servicios.
+> **Recurrencia posterior:** también se congela después de seleccionarGDI y
+> múltiples ciclos buenos, ANTES de ejecutar recogida. No considerar GDI
+> workaround estable ni culpar soloWGC. Visor104008 conserva avance de
+> recepción/decode/UI/composición, sin fallback. Se solicita host para confirmar
+> GDI efectivo y cruzar este episodio, manteniendo sesión/configuración.
+
+### Comparación posterior y correcciones de recogida
+
+> **LOG NORMAL DEL BLOQUEO RECIBIDO:** H264 efectivo1920×1080/60 FPS;
+> writer detuvo registro a09:02:12 UTC por IOException borrando marcador en uso,
+> después del inicio de la congelación. Fallos de transferencia del log abierto
+> a09:06 también posteriores. No atribuirles la causa inicial.
+> Se corrigió el reintento del marcador/compartición de borrado, el seguimiento
+> del primer Begin pendiente, el registro JPEG/HRESULT/fase y la primera
+> excepción exterior (una advertencia/proceso). Ampliación UI informa
+> visibilidad/oferta/enqueue/begin/end sin cambiar scheduling.
+> Smoke aislado con bloqueo real de4500ms + tres dumps/cooldown + rotación PASS
+> (`diagnostic-writer-lock-smoke.log`); colector con logs host PASS.
+> Suite intermedia377/377, Release0/0 (`final-audit-20261115-100913.trx`);
+> regresión final tras observación UI: **378/378, 0 fallidas/omitidas,
+> Release 0 errores/advertencias** (`final-audit-20261115-101059.trx`,
+> `video-stall-ui-diagnostic-regression.log`). Preservados los 357 originales
+> y todos los 375 de la etapa anterior (`stage-errors-test-preservation.txt`).
+> Cambios no aplicados en vivo. Preparación de ZIP diagnóstico identificado
+> `diag-20261115-stage-errors`, con arranque por doble clic Host/Viewer.
+>
+> **Entrega comprobada:** `artifacts/diagnostics/diag-20261115-stage-errors.zip`,
+> 203640511 bytes, SHA256
+> `22A446C8218422ABF9EA7C51B9F8B2E2B8399345A859A3B8D540A660D7E968BE`.
+> Copia nueva en carpeta del usuario `CSIViewer-diagnostico-2.zip`, hash igual.
+> Verificados562 archivos por rol y BuildId en cuatro assemblies; smoke ZIP
+> sintéticoPASS,1133 entradas de paquete sin runs/DB/identidad/secretos/agente/
+> instaladores. Incluye Start-Host.cmd, Start-Viewer.cmd y Compare-Host.ps1.
+> Evidencia `diagnostic-stage-errors-package-smoke.log`/`diagnostic-stage-errors-delivery.json`.
+> No se han arrancado los nuevos binarios, cerrado procesos ni aplicado cambios
+> al invitado. Extraer aparte para conservar logs anteriores. Esta entrega
+> corrige observabilidad y recogida, NO acredita reparación de la congelación.
+
+> **RECURRENCIA:** usuario comunica nueva congelación del portable y confirma
+> que NO llegó a cambiar ajustes a90. Registro visor preservado
+> `Viewer-vmware01-20261115-100034.zip`, sesión
+> `f9c4b076-e3af-447b-ad8e-8e30fe5851d6`. Dispatcher y señalización vivos,
+> presentación detenida antes de parar recepción. Solicitar nuevo pipeline del
+> host sin reconectar ni alterar FPS. La prueba buena previa no demuestra
+> estabilidad prolongada; no atribuir este fallo al cambio a90 no efectuado.
+> Host posterior recibido: captura y entrega siguen, EncodeBegin avanza pero
+> EncodeDone/envío no. Visor registra backlog H264 y petición JPEG. Detectadas
+> dos carencias de instrumentación r2: últimos Begin renovados ocultan intentos
+> sin completarse y outer catch de JPEG solo LogDebug sin evento PipelineError.
+> Falta log normal del portable, omitido por colector antiguo; no declarar aún
+> codec/error concreto ni causa inicial de la detención de presentación.
+
+> JSON del invitado recibido: hashes de Host/Media/Services instalados coinciden
+> con sus homólogos físicos inspeccionados, portable con r2. Solo proceso
+> portable PID11296, --data-dir, sin --unattended, agente no listado.
+> Preferencias guardadas difieren en FPS: instalado 90 frente a portable 60;
+> calidad95/MaxWidth2560/WGC/H264 coinciden. Snapshot posterior al registro
+> exitoso, no prueba de FPS efectivos durante todo el ensayo.
+> Próximo paso manual: portable a 90 FPS, cambiar solo ese ajuste y repetir
+> minimizar/restaurar. No modificar instalado/Windows ni reactivar agente.
+
+- Prueba real buena del portable documentada junto al caso malo en
+  `docs/48-comparacion-vmware.md`; no confundir ambos binarios 1.0.1.0.
+  Inspección PE/IL **solo del instalado físico** muestra revisión informativa
+  1b82093 frente a c27c4d3 del portable, hashes distintos; ambos ya tienen
+  CaptureRun y AsTask/ConfigureAwait. Hay diferencias de liberación COM, no
+  prueba causal. Falta comparar hashes y preferencias del invitado.
+- Preparado `compare-host-diagnostic.ps1`: inspección de solo lectura de
+  binarios y whitelist numérica/booleana de vídeo; sin exportar servidor,
+  contraseñas, identidad, inscripción, settings completos o DB. Tests sintéticos
+  de identidad/privacidad/tipos/inmutabilidad PASS (`host-comparison-smoke.log`).
+- Corregido colector para logs `csiviewer.host-*`/rotaciones, anclaje de extensión
+  y aviso de pipeline ausente. Smoke de integridad r2 y recogida sintética con
+  seis entradas PASS (`collector-host-log-fix-smoke.log`); no se modifica r2.
+- Corregida falsa sospecha de captura en visor/proceso sin captura y añadidos
+  ajustes de vídeo a muestras, solo para una futura compilación. Sin parchear
+  procesos ni introducir recuperación de componentes.
+- **Release 0 errores/advertencias; 375/375 pruebas, 0 fallidas/omitidas**:
+  `final-audit-20261115-093417.trx`, `post-vmware-comparison-regression.log`.
+  Nueva prueba cubre falso positivo sin captura; 357 casos de referencia
+  comprobados en `post-vmware-baseline-preservation.txt`.
+- Copias nuevas en carpeta de diagnóstico del usuario, sin sobrescribir originales:
+  `Compare-Host.ps1` SHA256
+  `57E5AD4EC458CBEA3E371CAD5CC14BCFA0F4DCE2129487FD52EC51BD80F79601`;
+  `Collect-Diagnostic-Corrected.ps1` SHA256
+  `9930A7935FB7ABCAF792451EC5312C8363C338A116B0221F1690867BADD20FAE`.
+  No ejecutados contra el invitado aún. Sin nueva instalación/distribución final.
+
+Sin reiniciar la auditoría ni sustituir instaladores. Referencia inicial de esta
+continuación: 357 casos correctos. Resultados intermedios: 365/365
+(`final-audit-20261115-000400.trx`) y 371/371
+(`final-audit-20261115-001417.trx`), Release 0 errores/0 advertencias.
+La regresión de los últimos cambios y la publicación se registran abajo cuando
+terminen; esos resultados intermedios no certifican cambios posteriores.
+
+- Diagnóstico opt-in `CSIVIEWER_PIPELINE_DIAGNOSTICS=1`: anillo de 8192 eventos,
+  contadores y reloj monotónico; escritor independiente cada 2 s, rotación de
+  aproximadamente 16 MiB × 3 por proceso, volcados por sospecha/error/fin de sesión
+  y solicitud manual. No hay escritura de disco desde el productor por frame.
+  Se observan captura/copia/conversión, encoder, cola/envío cifrado, recepción,
+  decode, entrega WinUI/tick de composición, dispatcher, entrada y errores.
+- Correlación sin cambio de protocolo: `Session` compartido; A de
+  `SendBegin/SendDone` = nonce+1 = `VideoReceived.Frame`. H.264 identifica lotes
+  del decoder, no correspondencia exacta entre píxeles. `CompositionObserved`
+  **no demuestra presentación física**, ni SendInput aceptación por la app.
+  Las sospechas no son diagnósticos concluyentes; no se reinicia WGC al detectar
+  estancamiento en modo diagnóstico. Se mantienen fallbacks por error/backlog.
+- `TransferDirectoryLease`: NtCreateFile relativo, OBJ_DONT_REPARSE, handles
+  de directorio, rechazo de parciales con múltiples enlaces, metadatos acotados,
+  rename nativo del handle abierto e identidad del padre comprobada al commit.
+  La creación de carpetas recibidas usa también operaciones relativas.
+  Fallos iniciales reales error 87/32 conservados en `handle-relative-first.trx`,
+  `handle-relative-second.trx` y `native-lease-smoke.trx`; corregidos sin debilitar
+  tests. La tercera pasada focalizada superó 23 casos.
+- Pruebas nuevas: anillo concurrente/acotado, etapas pendientes/escritorio quieto,
+  sustitución de directorio, 32 finalizaciones bajo swaps de junction/directorio,
+  100 abort/dispose, ocho entradas detenidas antes de inyección y 2000 despachos
+  retrasados/replays tras teardown; backend de entrada simulado, sin SendInput
+  real. Veinte ciclos cifrados reales con Kestrel/SQLite exclusivamente loopback,
+  controladores sintéticos nuevos para conservar throttles de producción.
+  Se verifican tablas vacías y ausencia de chat posrevocación; esto no demuestra
+  ausencia universal de fugas, ni operaciones privilegiadas reales. La
+  cancelación no es una transacción de filesystem: una creación ya iniciada
+  puede haber dejado directorios antes de observar la revocación. No se
+  certifica atomicidad universal entre revocar y todos los efectos de I/O.
+- Lanzamiento portable con datos aislados bajo `runs`, sin matar procesos;
+  modo diagnóstico impide escribir HKCU Run, elevación de tareas y registro
+  de notificaciones. La prueba original de escritura HKCU sigue excluida.
+- Plantilla manual: `artifacts/audit/manual-ui/controls-and-events.csv`
+  (2884 elementos XAML) y `dialogs-and-pickers.csv` (38 construcciones).
+  Son inventario estático **NO EJECUTADO**, no cobertura visual certificada.
+  Aplicar temas claro/oscuro/sistema, teclado/DPI, cancelar/confirmar/error,
+  doble acción y cierre mientras hay trabajo según docs 45/46.
+
+**Límites que bloquean Release:** ejecutar en Windows 10 VMware afectado con
+visor físico, WinUI interactivo, device loss y composición real; validar
+compatibilidad del I/O nativo en Windows 10/SMB/ReFS/filtros. No hay fallback
+inseguro por pathname si falla el I/O nativo. La raíz queda autorizada al abrir
+su handle, no al conceder previamente una ruta textual: sustitución antes de
+ese binding y atacantes privilegiados/kernel no se consideran eliminados.
+Escritor/rotación reales bajo bloqueo de VM y rendimiento gráfico no certificados.
+Guía reproducible: `docs/47-diagnostico-vmware.md`. **NO APTA PARA RELEASE;
+incidente VMware NO RESUELTO** hasta comprobarlo en el entorno afectado.
+
+### Resultado automatizado de esta continuación
+
+- `final-audit-20261115-002524.trx`: 372/372; después de añadir dos casos,
+  **`final-audit-20261115-002654.trx`: 374/374, 0 fallidas, 0 omitidas**.
+  Restore/build Release de solución: **0 errores, 0 advertencias**.
+  Logs: `diagnostic-final-regression.log` y `diagnostic-delivery-regression.log`.
+- Dos casos adicionales ejecutados: cancelación previa de apertura no crea
+  directorios; apertura nativa de parcial con hardlink se rechaza sin cambiar
+  bytes del destino. No se modificó ni ejecutó el test original de escritura Run.
+- Instaladores viewer/host/server y backup 1.0.0 conservan los SHA-256 registrados
+  en la etapa anterior; evidencia `diagnostic-installer-preservation.json`.
+  No se generan nuevos instaladores ni se altera su versión 1.0.1.0.
+- Conservación nominal comprobada: los **357 casos** de `224652` están presentes
+  en los 374 resultados finales y todos son Passed
+  (`diagnostic-baseline-preservation.txt`). `git diff --check` sin errores;
+  Git avisa de normalización CRLF/LF, no se fuerza cambio global de finales.
+- Smoke del escritor en **proceso hijo aislado**, sin iniciar red/captura/input/UI:
+  activación, JSONL parseable, dos solicitudes manuales en menos de 30 s y
+  rotación a tres segmentos bajo presión sintética de 16 MiB. Resultado PASS,
+  `diagnostic-writer-smoke.log`; fixture y datos en `artifacts/audit/writer-smoke*`.
+  La presión inyectada no es un benchmark de vídeo ni un bloqueo real de VMware.
+
+### Entrega portable identificada y comprobada
+
+> **Resultado manual posterior en VM afectada:** tras cerrar con autorización
+> el agente y host instalado y arrancar el portable con script corregido,
+> el usuario confirma control e imagen funcionales con host minimizado.
+> Pipeline real PID11296/Build r2 verificado; WGC activo, H264 en visor,
+> captura/encode/envío/recepción/composición progresan, 508 paquetes
+> correlacionados en anillos solapados, sin GraphicError/PipelineError/
+> RecoverySuppressed en host. Hubo reconexiones y resoluciones 1280×720 y
+> 1920×1080, por lo que no se afirma equivalencia de configuración ni causa
+> raíz. Evidencia sanitizada: `artifacts/audit/vmware-live-20261115.md`.
+> El colector omite logs normales `csiviewer.host-*` por patrón de nombre:
+> pendiente corregirlo; el pipeline sí se recogió. Incidente no cerrado.
+
+> **Incidente real posterior:** se confirmó que el usuario estaba conectado al
+> host de `C:\Program Files\CSIViewer Host`, no al portable. El ZIP del host solo
+> contenía manifiesto/collection.txt; los logs normales recuperados coinciden en
+> SessionId con el visor, pero falta pipeline del host. Además, revisión del
+> arranque confirma que el host anula el env de datos si falta `--data-dir`.
+> Las comprobaciones sintéticas anteriores no detectaron esta diferencia del
+> ejecutable real: no equivalían a aislamiento WinUI ejecutado.
+> Corregido el script para pasar `--data-dir` con comillas y exigir evidencia
+> pipeline del PID lanzado durante hasta 20 s. No se matan procesos al fallar.
+> Prueba sintética nueva: quoting/datos, readiness, env restaurado, VerifyOnly,
+> rechazo de proceso existente y detección de salida prematura PASS
+> (`diagnostic-launcher-fix-smoke.log`). Regresión completa ejecutada:
+> `final-audit-20261115-091158.trx`, 374/374 correctas, 0 fallidas/omitidas;
+> Release 0 errores/advertencias (`diagnostic-launcher-fix-regression.log`).
+> Parche copiado con autorización a la carpeta de diagnóstico como
+> `Start-Diagnostic-Corrected.ps1`, SHA256
+> `9495F06C44D17C06E9CA93680F3EDBAF294465AE6A343612C972B302DB13EDDF`.
+> VerifyOnly comprobó los 562 archivos host sin lanzar la aplicación.
+> Binarios r2 sin cambios; parche de lanzador aparte, no instalador.
+> Hechos sanitizados: `artifacts/audit/vmware-live-20261115.md`.
+
+- **Entregar `artifacts/diagnostics/diag-20261115-374tests-r2.zip`**,
+  203631302 bytes. BuildId `diag-20261115-374tests-r2`.
+  SHA-256:
+  `9E26050F1B57E15CF894D7F8487C3F68A5BCF220EF8B666C9E60489783158ED6`.
+- Publicación Release win-x64 autocontenida de visor y host por separado,
+  sin instalador/agente/provisión. ZIP inspeccionado: 1130 entradas,
+  sin runs, bases de datos, settings/identity, claves/certificados o instaladores.
+  El manifiesto identifica archivos; SHA no equivale a firma de editor.
+- Verificados los hashes de **562 archivos por rol** y el atributo de assembly
+  `CSIViewerDiagnosticBuild` en ambos ejecutables gestionados y ambos Services.dll
+  mediante lectura PE/metadata, sin cargar/arrancar las apps.
+- `test-diagnostic-package.ps1`: PASS de integridad, identidad y recogida de
+  logs sintéticos (cuatro entradas esperadas, sin settings/identity).
+  Evidencias: `diagnostic-package-smoke-r2.log`, `diagnostic-delivery.json` y
+  `diagnostic-publication-r2.log`.
+- El primer paquete `diag-20261115-374tests.zip` queda como evidencia intermedia:
+  VerifyOnly rechazó el host habitual abierto. Se corrigió **solo el script**
+  para permitir comprobación sin iniciar procesos; el lanzamiento real sigue
+  rechazando instancias existentes y no las detiene. Entregar únicamente r2.
+- Guía dentro del ZIP: `LEEME.md` (copia de docs 47). No se ejecutaron las apps
+  gráficas del paquete, ni se modificó la instalación del host detectado.
+  Pendiente la reproducción manual afectada; **NO APTA PARA RELEASE**.
+
 ## Plan y reglas de ejecución
 
 1. Inventario reproducible de proyectos/dependencias, tipos/métodos, XAML,

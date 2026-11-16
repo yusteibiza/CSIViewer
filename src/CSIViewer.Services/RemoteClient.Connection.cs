@@ -798,6 +798,8 @@ public sealed partial class RemoteClient
         await DisposeSignalAsync().ConfigureAwait(false);
 
         _lifetimeCts.Cancel();
+        try { await _pipelineTask.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false); }
+        catch (TimeoutException) { _logger.LogWarning("Pipeline diagnostic writer has not completed shutdown"); }
         _receiveQueue.Writer.TryComplete();
         if (_messageLoopTask is not null)
         {

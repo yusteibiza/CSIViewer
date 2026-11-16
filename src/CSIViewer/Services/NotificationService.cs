@@ -10,6 +10,7 @@ public sealed class NotificationService : INotificationService
 
     public void Register()
     {
+        if (Environment.GetEnvironmentVariable("CSIVIEWER_PIPELINE_DIAGNOSTICS") == "1") return;
         try
         {
             AppNotificationManager.Default.Register();

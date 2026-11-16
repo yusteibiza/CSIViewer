@@ -655,7 +655,8 @@ public sealed partial class RemoteClient
                     offer.Size,
                     offer.Sha256,
                     effectivePolicy,
-                    overwriteConfirmed)
+                    overwriteConfirmed,
+                    session?.Lifetime.Token ?? _lifetimeCts.Token)
                 .ConfigureAwait(false);
 
             if (opened.Status == IncomingFileOpenStatus.Skipped)
@@ -1072,7 +1073,7 @@ public sealed partial class RemoteClient
             var path = PathValidator.GetSafeDestinationPath(root, directory.RelativePath);
             PathValidator.EnsureSafeTransferDestination(root, path);
             if (directory.DestinationToken is not null) ValidateBrowserWritePath(root, path);
-            Directory.CreateDirectory(path);
+            PathValidator.CreateTransferDirectory(root, path);
             if (session is not null && directory.RequestId is not null)
                 await SendFileControlAsync(session, "file.directory.result", new FileDirectoryResponse(directory.RequestId)).ConfigureAwait(false);
         }

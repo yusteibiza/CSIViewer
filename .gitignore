@@ -70,3 +70,4 @@ logs/
 *.rej
 Thumbs.db
 desktop.ini
+opencode/*

@@ -50,6 +50,11 @@ public sealed partial class RemoteControlPage : Page
     private long _lastMouseMoveTicks;
     private int _pageVisible;
     private int _frameGeneration;
+    private bool _diagnosticRenderingSubscribed;
+    private long _diagnosticFrame;
+    private Guid _diagnosticSession;
+    private long _diagnosticSubmitVersion;
+    private long _diagnosticCompositionVersion;
     private bool _pointerOverToolbar;
     private long _toolbarLastActivityTicks;
     private readonly DispatcherTimer _toolbarHideTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
@@ -77,6 +82,12 @@ public sealed partial class RemoteControlPage : Page
         Loaded += (_, _) =>
         {
             Volatile.Write(ref _pageVisible, 1);
+            PipelineTrace.Record(PipelineStage.UiViewState, a: 1);
+            if (PipelineTrace.Enabled && !_diagnosticRenderingSubscribed)
+            {
+                Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += DiagnosticCompositionRendering;
+                _diagnosticRenderingSubscribed = true;
+            }
             _normalPadding = RootGrid.Padding;
             if (!string.IsNullOrWhiteSpace(PendingTargetId))
             {
@@ -113,8 +124,14 @@ public sealed partial class RemoteControlPage : Page
         Unloaded += (_, _) =>
         {
             _toolbarHideTimer.Stop();
+            if (_diagnosticRenderingSubscribed)
+            {
+                Microsoft.UI.Xaml.Media.CompositionTarget.Rendering -= DiagnosticCompositionRendering;
+                _diagnosticRenderingSubscribed = false;
+            }
             Interlocked.Increment(ref _frameGeneration);
             Volatile.Write(ref _pageVisible, 0);
+            PipelineTrace.Record(PipelineStage.UiViewState, a: 0);
             Interlocked.Exchange(ref _pendingFrame, null);
             ApplyFullScreen(false);
         };
@@ -134,6 +151,13 @@ public sealed partial class RemoteControlPage : Page
         }
         if (DispatcherQueue.HasThreadAccess) Refresh();
         else DispatcherQueue.TryEnqueue(Refresh);
+    }
+
+    private void DiagnosticCompositionRendering(object? sender, object e)
+    {
+        if (_diagnosticSubmitVersion == _diagnosticCompositionVersion || Volatile.Read(ref _pageVisible) == 0) return;
+        _diagnosticCompositionVersion = _diagnosticSubmitVersion;
+        PipelineTrace.Record(PipelineStage.CompositionObserved, _diagnosticFrame, _diagnosticSession);
     }
 
     private void Client_SessionStarted(object? sender, SessionInfo info)
@@ -214,6 +238,9 @@ public sealed partial class RemoteControlPage : Page
 
     private void Client_VideoFrameReceived(object? sender, VideoFrame frame)
     {
+        PipelineTrace.Record(PipelineStage.UiFrameOffered, frame.DiagnosticId, frame.DiagnosticSession,
+            a: (Volatile.Read(ref _pageVisible) != 0 ? 1 : 0) | (_state.IsSessionActive ? 2 : 0) | (_state.IsController ? 4 : 0),
+            b: Volatile.Read(ref _renderScheduled));
         if (Volatile.Read(ref _pageVisible) == 0 || !_state.IsSessionActive || !_state.IsController)
         {
             _ = Interlocked.Increment(ref _uiDroppedFrames);
@@ -230,12 +257,14 @@ public sealed partial class RemoteControlPage : Page
 
         if (Interlocked.Exchange(ref _renderScheduled, 1) == 0)
         {
-            DispatcherQueue.TryEnqueue(RenderLatestFrame);
+            var accepted = DispatcherQueue.TryEnqueue(RenderLatestFrame);
+            PipelineTrace.Record(PipelineStage.UiRenderQueued, frame.DiagnosticId, frame.DiagnosticSession, a: accepted ? 1 : 0);
         }
     }
 
     private async void RenderLatestFrame()
     {
+        VideoFrame? rendering = null;
         try
         {
             // One frame per dispatcher turn. BGRA rendering is synchronous;
@@ -245,6 +274,8 @@ public sealed partial class RemoteControlPage : Page
                 var frame = Interlocked.Exchange(ref _pendingFrame, null);
                 if (frame is not null)
                 {
+                    rendering = frame;
+                    PipelineTrace.Record(PipelineStage.UiRenderBegin, frame.DiagnosticId, frame.DiagnosticSession);
                     await ShowFrameAsync(frame);
                 }
             }
@@ -255,13 +286,16 @@ public sealed partial class RemoteControlPage : Page
         }
         finally
         {
+            if (rendering is not null)
+                PipelineTrace.Record(PipelineStage.UiRenderDone, rendering.DiagnosticId, rendering.DiagnosticSession);
             Volatile.Write(ref _renderScheduled, 0);
             if (Volatile.Read(ref _pageVisible) != 0 &&
                 _state.IsSessionActive && _state.IsController &&
                 Volatile.Read(ref _pendingFrame) is not null &&
                 Interlocked.Exchange(ref _renderScheduled, 1) == 0)
             {
-                DispatcherQueue.TryEnqueue(RenderLatestFrame);
+                var accepted = DispatcherQueue.TryEnqueue(RenderLatestFrame);
+                PipelineTrace.Record(PipelineStage.UiRenderQueued, a: accepted ? 1 : 0);
             }
         }
     }
@@ -315,13 +349,19 @@ public sealed partial class RemoteControlPage : Page
 
                 stream.Seek(0);
                 var bitmap = new BitmapImage();
+                PipelineTrace.Record(PipelineStage.DecodeBegin, frame.DiagnosticId, frame.DiagnosticSession);
                 await bitmap.SetSourceAsync(stream);
+                PipelineTrace.Record(PipelineStage.DecodeDone, frame.DiagnosticId, frame.DiagnosticSession, a: 1);
                 if (generation != Volatile.Read(ref _frameGeneration) || !_state.IsSessionActive || !_state.IsController || Volatile.Read(ref _pageVisible) == 0) return;
                 RemoteImage.Source = bitmap;
                 _frameWidth = bitmap.PixelWidth;
                 _frameHeight = bitmap.PixelHeight;
             }
 
+            _diagnosticFrame = frame.DiagnosticId;
+            _diagnosticSession = frame.DiagnosticSession;
+            _diagnosticSubmitVersion++;
+            PipelineTrace.Record(PipelineStage.UiSubmitted, frame.DiagnosticId, frame.DiagnosticSession, _frameWidth, _frameHeight);
             _lastRenderMilliseconds =
                 Stopwatch.GetElapsedTime(renderStarted).TotalMilliseconds;
             _frames++;
@@ -343,8 +383,9 @@ public sealed partial class RemoteControlPage : Page
                     $"{_client.DroppedVideoFrames} red · {_uiDroppedFrames} UI";
             }
         }
-        catch
+        catch (Exception ex)
         {
+            PipelineTrace.Record(PipelineStage.GraphicError, frame.DiagnosticId, frame.DiagnosticSession, a: ex.HResult, b: 7);
             // A malformed or partial frame is dropped; the next frame replaces it.
         }
     }
@@ -697,6 +738,7 @@ public sealed partial class RemoteControlPage : Page
 
     private void RemoteSurface_PointerMoved(object sender, PointerRoutedEventArgs e)
     {
+        PipelineTrace.Record(PipelineStage.LocalPointerMove);
         var count = Interlocked.Increment(ref _pointerLogCounter);
         if (!CanControl())
         {

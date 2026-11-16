@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Buffers.Binary;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -20,8 +21,10 @@ public sealed partial class RemoteClient
     private readonly SemaphoreSlim _sessionStartGate = new(1, 1);
     private readonly SemaphoreSlim _sessionEndGate = new(1, 1);
     private readonly SemaphoreSlim _decoderGate = new(1, 1);
-    private readonly record struct QueuedVideoFrame(byte[] Data, int Generation);
+    private readonly record struct QueuedVideoFrame(byte[] Data, int Generation, long DiagnosticId, Guid Session);
     private int _videoGeneration;
+    private int _videoDiagnosticFaultLogged;
+    private readonly FrameContentProbe _decodedContentProbe = new();
     private int _videoDecodeFallback;
     private readonly Channel<QueuedVideoFrame> _decodeQueue = Channel.CreateBounded<QueuedVideoFrame>(
         new BoundedChannelOptions(2)
@@ -1651,7 +1654,8 @@ public sealed partial class RemoteClient
         {
             VideoFrameReceived?.Invoke(
                 this,
-                new VideoFrame(payload[1..], 0, 0, VideoPixelFormat.Jpeg));
+                new VideoFrame(payload[1..], 0, 0, VideoPixelFormat.Jpeg)
+                { DiagnosticId = PipelineTrace.Current.Frame, DiagnosticSession = PipelineTrace.Current.Session });
             return;
         }
 
@@ -1675,7 +1679,9 @@ public sealed partial class RemoteClient
             return;
         }
         EnsureVideoDecodeLoop();
-        if (!_decodeQueue.Writer.TryWrite(new QueuedVideoFrame(payload[1..], Volatile.Read(ref _videoGeneration))))
+        PipelineTrace.Record(PipelineStage.DecodeQueued);
+        if (!_decodeQueue.Writer.TryWrite(new QueuedVideoFrame(payload[1..], Volatile.Read(ref _videoGeneration),
+                PipelineTrace.Current.Frame, PipelineTrace.Current.Session)))
         {
             _ = Interlocked.Increment(ref _droppedVideoFrames);
             if (Interlocked.Exchange(ref _videoDecodeFallback, 1) == 0)
@@ -1738,7 +1744,9 @@ public sealed partial class RemoteClient
                     }
 
                     var started = Stopwatch.GetTimestamp();
+                    PipelineTrace.Record(PipelineStage.DecodeBegin, queued.DiagnosticId, queued.Session);
                     var frames = await _h264Decoder.DecodeAsync(queued.Data).ConfigureAwait(false);
+                    PipelineTrace.Record(PipelineStage.DecodeDone, queued.DiagnosticId, queued.Session, a: frames.Count);
                     Volatile.Write(
                         ref _lastDecodeMilliseconds,
                         Stopwatch.GetElapsedTime(started).TotalMilliseconds);
@@ -1746,11 +1754,18 @@ public sealed partial class RemoteClient
                     foreach (var frame in frames)
                     {
                         if (Volatile.Read(ref _videoDecodeFallback) != 0) break;
-                        VideoFrameReceived?.Invoke(this, frame);
+                        if (PipelineTrace.Enabled && _decodedContentProbe.TrySample(frame.Data, frame.Width, frame.Height, out var changed, out var samples))
+                        {
+                            PipelineTrace.Record(PipelineStage.DecodedContentSampled, queued.DiagnosticId, queued.Session, a: changed ? 1 : 0, b: samples);
+                            if (changed) PipelineTrace.Record(PipelineStage.DecodedContentChanged, queued.DiagnosticId, queued.Session);
+                        }
+                        VideoFrameReceived?.Invoke(this, PipelineTrace.Enabled
+                            ? frame with { DiagnosticId = queued.DiagnosticId, DiagnosticSession = queued.Session } : frame);
                     }
                 }
                 catch (Exception ex)
                 {
+                    PipelineTrace.Record(PipelineStage.PipelineError, queued.DiagnosticId, queued.Session, a: ex.HResult, b: 5);
                     _logger.LogWarning(ex, "H264 decoder failed; requesting JPEG");
                     Volatile.Write(ref _videoDecodeFallback, 1);
                     _h264Decoder?.Dispose();
@@ -1776,16 +1791,21 @@ public sealed partial class RemoteClient
 
     private async Task SendVideoFrameAsync(CaptureFrame frame)
     {
+        var previousContext = PipelineTrace.Current;
+        if (PipelineTrace.Enabled) PipelineTrace.Current = new PipelineFrameContext(frame.DiagnosticId, Guid.Empty);
         // At 90/120 FPS the encoder or the network can be slower than the
         // capture source. Drop the new frame instead of queueing work forever.
         if (Interlocked.Exchange(ref _videoSendBusy, 1) != 0)
         {
+            PipelineTrace.Record(PipelineStage.FrameDropped, frame.DiagnosticId, a: 1);
+            if (PipelineTrace.Enabled) PipelineTrace.Current = previousContext;
             _ = Interlocked.Increment(ref _droppedVideoFrames);
             return;
         }
 
         try
         {
+            PipelineTrace.Record(PipelineStage.EncodeWaiting, frame.DiagnosticId);
             await _encoderGate.WaitAsync().ConfigureAwait(false);
             try
             {
@@ -1797,8 +1817,10 @@ public sealed partial class RemoteClient
                 return;
             }
 
+            long diagnosticPhase = 1; // preparation=1, H264=2, JPEG=3, packet/send=4
             try
             {
+                PipelineTrace.Record(PipelineStage.EncodeBegin, frame.DiagnosticId, a: frame.Width, b: frame.Height);
                 var width = frame.Width;
                 var height = frame.Height;
                 var bgra = frame.Bgra;
@@ -1806,6 +1828,7 @@ public sealed partial class RemoteClient
 
                 if (_state.Settings.PreferH264 && !_h264EncoderDisabled)
                 {
+                    diagnosticPhase = 2;
                     try
                     {
                         if (bgra.Length == 0 && jpeg is { Length: > 0 })
@@ -1853,6 +1876,7 @@ public sealed partial class RemoteClient
                             if (_h264Encoder is not null)
                             {
                                 var h264 = _h264Encoder.Encode(bgra);
+                                PipelineTrace.Record(PipelineStage.EncodeDone, frame.DiagnosticId, a: h264.Length);
                                 if (h264.Length > 0)
                                 {
                                     var payload = new byte[h264.Length + 1];
@@ -1888,6 +1912,7 @@ public sealed partial class RemoteClient
                     }
                     catch (Exception ex)
                     {
+                        PipelineTrace.Record(PipelineStage.PipelineError, frame.DiagnosticId, a: ex.HResult, b: 4);
                         _logger.LogWarning(ex, "H264 encoder failed; falling back to JPEG");
                         _h264Encoder?.Dispose();
                         _h264Encoder = null;
@@ -1895,6 +1920,7 @@ public sealed partial class RemoteClient
                     }
                 }
 
+                diagnosticPhase = 3;
                 if (jpeg is null or { Length: 0 })
                 {
                     if (bgra.Length == 0 || width <= 0 || height <= 0)
@@ -1902,6 +1928,7 @@ public sealed partial class RemoteClient
                         return;
                     }
 
+                    PipelineTrace.Record(PipelineStage.JpegEncodeBegin, frame.DiagnosticId, a: width, b: height);
                     jpeg = await JpegEncoder.EncodeBgraAsync(
                             bgra,
                             width,
@@ -1909,6 +1936,7 @@ public sealed partial class RemoteClient
                             _state.Settings.ImageQuality,
                             _state.Settings.MaxWidth)
                         .ConfigureAwait(false);
+                    PipelineTrace.Record(PipelineStage.JpegEncodeDone, frame.DiagnosticId, a: jpeg.Length);
                 }
 
                 if (jpeg.Length == 0)
@@ -1916,6 +1944,8 @@ public sealed partial class RemoteClient
                     return;
                 }
 
+                PipelineTrace.Record(PipelineStage.EncodeDone, frame.DiagnosticId, a: jpeg.Length);
+                diagnosticPhase = 4;
                 var jpegPayload = new byte[jpeg.Length + 1];
                 jpegPayload[0] = 0;
                 jpeg.CopyTo(jpegPayload, 1);
@@ -1930,7 +1960,13 @@ public sealed partial class RemoteClient
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Dropped video frame");
+                PipelineTrace.Record(PipelineStage.PipelineError, frame.DiagnosticId, a: ex.HResult, b: 8);
+                if (diagnosticPhase != 4)
+                    PipelineTrace.Record(PipelineStage.EncodeFailed, frame.DiagnosticId, a: ex.HResult, b: diagnosticPhase);
+                if (PipelineTrace.Enabled && Interlocked.CompareExchange(ref _videoDiagnosticFaultLogged, 1, 0) == 0)
+                    _logger.LogWarning(ex, "First diagnostic video failure. Phase={Phase} HRESULT={HResult}; further failures remain in the bounded recorder", diagnosticPhase, ex.HResult);
+                else if (!PipelineTrace.Enabled)
+                    _logger.LogDebug(ex, "Dropped video frame");
             }
             }
             finally
@@ -1941,6 +1977,7 @@ public sealed partial class RemoteClient
         finally
         {
             Interlocked.Exchange(ref _videoSendBusy, 0);
+            if (PipelineTrace.Enabled) PipelineTrace.Current = previousContext;
         }
     }
 
@@ -1960,11 +1997,12 @@ public sealed partial class RemoteClient
 
     private async Task HandleBinaryAsync(byte[] data)
     {
-        if (!SessionFrame.TryReadHeader(data, out var sessionGuid, out var headerKind, out _, out _))
+        if (!SessionFrame.TryReadHeader(data, out var sessionGuid, out var headerKind, out var diagnosticNonce, out _))
         {
             return;
         }
 
+        var diagnosticWireId = PipelineTrace.Enabled ? BinaryPrimitives.ReadInt64BigEndian(diagnosticNonce[4..]) + 1 : 0;
         if (_incomingRequests.TryGetValue(sessionGuid, out var pending))
         {
             if (!pending.Crypto.TryDecrypt(data, out var pendingKind, out var pendingPayload))
@@ -1993,6 +2031,11 @@ public sealed partial class RemoteClient
                 return;
             }
 
+            var previousContext = PipelineTrace.Current;
+            if (PipelineTrace.Enabled) PipelineTrace.Current = new PipelineFrameContext(diagnosticWireId, session.Id);
+            try
+            {
+            if (kind == SessionFrameKind.Video) PipelineTrace.Record(PipelineStage.VideoReceived, a: plaintext.Length);
             session.Health.RecordActivity(DateTimeOffset.UtcNow);
 
             if (HandleFeatureFrame(session, kind, plaintext)) return;
@@ -2005,7 +2048,8 @@ public sealed partial class RemoteClient
             {
                 await HandleHostSessionFrameAsync(session, kind, plaintext).ConfigureAwait(false);
             }
-
+            }
+            finally { if (PipelineTrace.Enabled) PipelineTrace.Current = previousContext; }
             return;
         }
 
@@ -2096,6 +2140,8 @@ public sealed partial class RemoteClient
             case SessionFrameKind.Input:
                 var input = System.Text.Json.JsonSerializer.Deserialize<InputEventPayload>(
                     plaintext, ProtocolJson.Options);
+                if (input?.Kind == "mouse")
+                    PipelineTrace.Record(PipelineStage.InputReceived, session: session.Id, a: input.X, b: input.Y, trace: input.TraceId);
                 var loggedAction = InputEventDiagnostics.SafeAction(input);
                 var traceInput = input is not null && input.Kind == "mouse" && (input.Action != "move" || input.TraceSampled);
                 if (traceInput)
@@ -2136,6 +2182,13 @@ public sealed partial class RemoteClient
                         }
 
                         sent = _input.Send(input, bounds, out diagnostics);
+                        if (input.Kind == "mouse")
+                        {
+                            PipelineTrace.Record(sent ? PipelineStage.InputWindowsAccepted : PipelineStage.InputRejected,
+                                session: session.Id, a: diagnostics?.Inserted ?? 0, b: diagnostics?.LastError ?? 0, trace: input.TraceId);
+                            if (diagnostics?.CursorX is int cx && diagnostics.CursorY is int cy)
+                                PipelineTrace.Record(PipelineStage.CursorObserved, session: session.Id, a: cx, b: cy, trace: input.TraceId);
+                        }
                     }
                     if (sent && input.Action != "move") MarkHostVisualChange();
                     if (traceInput || !sent)
@@ -2535,6 +2588,8 @@ public sealed partial class RemoteClient
         }
 
         var payload = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(input, ProtocolJson.Options);
+        if (input.Kind == "mouse")
+            PipelineTrace.Record(PipelineStage.InputSent, session: session.Id, a: input.X, b: input.Y, trace: input.TraceId);
         var transportSent = false;
         try
         {
@@ -2551,6 +2606,8 @@ public sealed partial class RemoteClient
             return;
         }
 
+        if (input.Kind == "mouse")
+            PipelineTrace.Record(PipelineStage.InputSendCompleted, session: session.Id, a: transportSent ? 1 : 0, trace: input.TraceId);
         if (traceInput || !transportSent)
         {
             _logger.LogInformation(
